@@ -1,0 +1,24 @@
+{
+  "name": "@payin/docs",
+  "version": "1.0.0",
+  "description": "PayIn documentation website powered by VitePress",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.13"
+  },
+  "keywords": [
+    "payin",
+    "documentation",
+    "vitepress",
+    "payment",
+    "blockchain"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT"
+}

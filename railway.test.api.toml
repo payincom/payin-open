@@ -1,0 +1,39 @@
+# ============================================================
+# Railway Deployment Configuration for PayIn API (Test Environment)
+# ============================================================
+# Documentation: https://docs.railway.app/deploy/config-as-code
+#
+# Environment: Test (Sandbox)
+# Railway Project: https://railway.com/project/<RAILWAY_PROJECT_ID>?environmentId=<RAILWAY_TEST_ENVIRONMENT_ID>
+# API Domain: api.sandbox.payin.com
+# Admin Domain: sandbox.payin.com
+#
+# Deployment: Git push triggers automatic build and deploy on Railway
+# ============================================================
+
+[build]
+# Use Nixpacks builder (Railway builds on server)
+builder = "NIXPACKS"
+
+# Build all packages and apps/api on Railway
+buildCommand = "npm install && npx tsc --build packages/shared packages/monitor packages/notification packages/email packages/processor packages/auth packages/manager --force && npm run build -w apps/api"
+
+# Watch paths - only trigger builds when these paths change
+watchPaths = [
+  "apps/api/**",
+  "packages/**",
+  "railway.test.api.toml"
+]
+
+[deploy]
+# Start command: run the API server
+# Note: Set NODE_ENV=test via Railway environment variables
+startCommand = "node apps/api/dist/index.js"
+
+# Health check configuration
+healthcheckPath = "/health"
+healthcheckTimeout = 300    # 5 minutes for initial startup
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

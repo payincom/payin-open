@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "composite": true,
+    "paths": {
+      "@payin/shared": ["../shared/dist"],
+      "@payin/shared/*": ["../shared/dist/*"],
+      "@payin/processor": ["../processor/dist"],
+      "@payin/processor/*": ["../processor/dist/*"],
+      "@payin/auth": ["../auth/dist"],
+      "@payin/auth/*": ["../auth/dist/*"],
+      "@payin/manager": ["../manager/dist"],
+      "@payin/manager/*": ["../manager/dist/*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../processor"
+    },
+    {
+      "path": "../auth"
+    },
+    {
+      "path": "../manager"
+    }
+  ]
+}

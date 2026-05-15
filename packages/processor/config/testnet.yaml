@@ -1,0 +1,97 @@
+# Processor Testnet Configuration
+# This file overrides default.yaml for testnet environments
+# Only includes testnet chains and their tokens (Sepolia, Amoy, Nile, Devnet, etc.)
+
+# Chain Configurations - Only Testnets
+chains:
+  ethereum-sepolia:
+    protocol: evm
+    name: Ethereum Sepolia Testnet
+    network: testnet
+    confirmations: 3
+    metadata:
+      explorer_url: https://sepolia.etherscan.io
+  polygon-amoy:
+    protocol: evm
+    name: Polygon Amoy Testnet
+    network: testnet
+    confirmations: 10
+    metadata:
+      explorer_url: https://amoy.polygonscan.com
+  tron-nile:
+    protocol: tron
+    name: Tron Nile Testnet
+    network: testnet
+    confirmations: 3
+    metadata:
+      explorer_url: https://nile.tronscan.org
+  solana-devnet:
+    protocol: solana
+    name: Solana Devnet
+    network: testnet
+    confirmations: 1
+    metadata:
+      explorer_url: https://explorer.solana.com
+  arbitrum-sepolia:
+    protocol: evm
+    name: Arbitrum Sepolia Testnet
+    network: testnet
+    confirmations: 3
+    metadata:
+      explorer_url: https://sepolia.arbiscan.io
+  xlayer-testnet:
+    protocol: evm
+    name: X Layer Testnet
+    network: testnet
+    confirmations: 3
+    metadata:
+      explorer_url: https://www.oklink.com/xlayer-test
+
+# Token Configurations - Only Testnet Contracts
+tokens:
+  USDC:
+    symbol: USDC
+    name: USD Coin
+    decimals: 6
+    contracts:
+      ethereum-sepolia: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+      polygon-amoy: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"
+      solana-devnet: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+      arbitrum-sepolia: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"
+      xlayer-testnet: "0xcb8bf24c6ce16ad21d707c9505421a17f2bec79d"
+  USDT:
+    symbol: USDT
+    name: Tether USD
+    decimals: 6
+    contracts:
+      tron-nile: "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+      ethereum-sepolia: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
+  PYUSD:
+    symbol: PYUSD
+    name: PayPal USD
+    decimals: 6
+    contracts:
+      ethereum-sepolia: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9"
+      solana-devnet: "CXk2AMBfi3TwaEL2468s6zP8xq9NxTXjp9gjMgzeUynM"
+
+# RPC Configuration - Only Testnet Chains
+rpc:
+  chains:
+    ethereum-sepolia:
+      preferredProviders: [alchemy, infura, publicnode]
+      timeout: 5000
+    polygon-amoy:
+      preferredProviders: [alchemy, ankr, publicnode]
+      timeout: 6000
+    tron-nile:
+      preferredProviders: [trongrid]
+      timeout: 8000
+    solana-devnet:
+      preferredProviders: [publicnode]
+      timeout: 5000
+    arbitrum-sepolia:
+      preferredProviders: [alchemy, publicnode]
+      timeout: 6000
+    xlayer-testnet:
+      preferredProviders: [xlayer-public, xlayer-okx]
+      timeout: 6000

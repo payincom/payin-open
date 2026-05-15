@@ -1,0 +1,104 @@
+# RPC Provider Configuration with Custom Providers
+# This example demonstrates how to add custom RPC providers via YAML
+
+rpc:
+  # Custom provider definitions (optional)
+  # These can extend or override built-in providers
+  customProviders:
+    # Example: Custom enterprise RPC node
+    my-enterprise-rpc:
+      displayName: "My Enterprise RPC"
+      authType: header
+      urlTemplate: "https://rpc.mycompany.com/{network}"
+      headers:
+        Authorization: "Bearer {apiKey}"
+      requiresApiKey: true
+      supportedChains:
+        - ethereum-sepolia
+        - ethereum-mainnet
+        - polygon-amoy
+        - polygon-mainnet
+      defaultTimeout: 2000
+      defaultWeight: 500
+      defaultMaxRequestsPerSecond: 100
+
+    # Example: Public backup node (no API key)
+    public-backup:
+      displayName: "Public Backup Node"
+      authType: none
+      baseUrl: "https://eth-rpc.publicnode.com"
+      requiresApiKey: false
+      supportedChains:
+        - ethereum-mainnet
+      defaultTimeout: 8000
+      defaultWeight: 50
+      defaultMaxRequestsPerSecond: 3
+
+    # Example: Override built-in alchemy configuration
+    alchemy:
+      displayName: "Alchemy Custom"
+      authType: url_path
+      urlTemplate: "https://custom-alchemy-url/{network}/{apiKey}"
+      requiresApiKey: true
+      supportedChains:
+        - ethereum-sepolia
+      defaultTimeout: 10000
+      defaultWeight: 150
+      defaultMaxRequestsPerSecond: 20
+
+  # Chain configurations
+  chains:
+    ethereum-sepolia:
+      # Mix custom and built-in providers
+      # Priority order: my-enterprise-rpc > alchemy (custom override) > infura (built-in)
+      strategy: round_robin
+      availableProviders:
+        - my-enterprise-rpc
+        - alchemy
+        - infura
+      defaultSettings:
+        weight: 50
+        timeout: 30000
+        maxRequestsPerSecond: 10
+      healthCheck:
+        enabled: true
+        interval: 60000
+        timeout: 10000
+        maxFailures: 3
+
+    ethereum-mainnet:
+      # Use only custom providers
+      strategy: failover
+      availableProviders:
+        - my-enterprise-rpc
+        - public-backup
+      defaultSettings:
+        weight: 50
+        timeout: 30000
+        maxRequestsPerSecond: 10
+
+    polygon-amoy:
+      # Use built-in providers only
+      strategy: round_robin
+      availableProviders:
+        - alchemy
+        - ankr
+      defaultSettings:
+        weight: 50
+        timeout: 30000
+        maxRequestsPerSecond: 10
+
+  # Global settings
+  settings:
+    healthCheck:
+      enabled: true
+      interval: 60000
+      timeout: 10000
+    retry:
+      maxRetries: 3
+      backoffMultiplier: 2
+      initialDelay: 1000
+    rateLimit:
+      enabled: true
+      windowMs: 1000
+      maxRequests: 10

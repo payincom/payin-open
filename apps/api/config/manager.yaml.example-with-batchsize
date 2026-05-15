@@ -1,0 +1,154 @@
+# Manager Configuration Example with Chain-Specific BatchSize
+# This file demonstrates how to configure different blockRangeSize (batchSize) for each chain
+
+# Database connection
+database:
+  connectionString: "postgresql://postgres:password@host:5432/database"
+
+# Monitor RPC Configuration
+monitor:
+  # Monitored chains
+  chains:
+    - ethereum-sepolia
+    - polygon-amoy
+    - tron-nile
+
+  # RPC Provider API Keys
+  rpcKeys:
+    alchemy: "your-alchemy-key"
+    infura: "your-infura-key"
+    trongrid: "your-trongrid-key"
+    ankr: "your-ankr-key"
+
+  # ✨ Global scanning configuration
+  scanInterval: 5000       # Scan interval in milliseconds (default: 5000)
+  blockRangeSize: 10       # Default block range size (fallback value)
+  maxConcurrentScans: 5    # Maximum concurrent scans
+  safeBlockDistance: 1     # Safe block distance to avoid reorgs
+
+  # ✨ Per-chain settings (consolidates range limits and performance settings)
+  # This is especially important for fast-growing chains like Polygon
+  chainSettings:
+    # Ethereum Sepolia - slow block time (~12 seconds)
+    ethereum-sepolia:
+      batchSize: 50        # Medium batch size for moderate recovery speed
+
+    # Polygon Amoy - fast block time (~2 seconds)
+    polygon-amoy:
+      batchSize: 200       # Large batch size to catch up quickly
+      # NOTE: Without this, you may never catch up with Polygon's latest block!
+
+    # Tron Nile - medium block time (~3 seconds)
+    tron-nile:
+      batchSize: 100       # Medium-large batch size
+
+# Configuration metadata registry
+configMetadata:
+  # Business Rules Category
+  - key: "orders.payment_window_seconds"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 600
+    validationRules:
+      min: 60
+      max: 3600
+    description: "Order payment window duration in seconds"
+
+  - key: "orders.grace_period_seconds"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 300
+    validationRules:
+      min: 0
+      max: 1800
+    description: "Grace period after payment window in seconds"
+
+  - key: "orders.expired_orders_cleanup_hours"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 72
+    validationRules:
+      min: 1
+      max: 720
+    description: "Hours after which expired orders can be cleaned up"
+
+  # Address Pool Category
+  - key: "address_pool.cooldown_minutes"
+    category: "address_pool"
+    dataType: "integer"
+    defaultValue: 30
+    validationRules:
+      min: 0
+      max: 1440
+    description: "Address cooldown period in minutes after release"
+
+  - key: "address_pool.low_threshold"
+    category: "address_pool"
+    dataType: "integer"
+    defaultValue: 10
+    validationRules:
+      min: 1
+      max: 100
+    description: "Low address pool threshold for warnings"
+
+  # Chain Operations Category
+  - key: "chains.ethereum_sepolia.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 3
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Ethereum Sepolia"
+
+  - key: "chains.polygon_amoy.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 10
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Polygon Amoy"
+
+  - key: "chains.tron_nile.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 19
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Tron Nile"
+
+  # Service Switches Category
+  - key: "services.order_service_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable order payment service"
+
+  - key: "services.deposit_service_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable user deposit service"
+
+  - key: "services.monitor_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable blockchain monitoring"
+
+# ============================================================
+# USAGE NOTES:
+# ============================================================
+#
+# 1. Copy this file to manager.yaml
+# 2. Update the database connection string
+# 3. Add your RPC API keys
+# 4. Adjust batchSize values based on your needs:
+#    - For recovery mode: Use larger values (200-500)
+#    - For normal mode: Use smaller values (10-50)
+# 5. Monitor the logs to see actual batchSize being used:
+#    [INFO] 🚀 RECOVERY SCAN: polygon-amoy { from: X, to: Y, batchSize: 200 }
+#
+# For more details, see: docs/monitor-chain-specific-batchsize.md

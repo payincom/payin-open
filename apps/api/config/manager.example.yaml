@@ -1,0 +1,177 @@
+# ============================================================
+# Manager Configuration Template
+# ============================================================
+# This file serves as a complete configuration reference
+# Copy to manager.development.yaml or manager.production.yaml
+# and fill in actual values
+#
+# Sensitive values use environment variable placeholders: ${VAR_NAME}
+# See .env.example for required environment variables
+# ============================================================
+
+# Database connection
+# Environment variable: DB_CONNECTION_STRING
+database:
+  connectionString: ${DB_CONNECTION_STRING}
+
+# Processor Configuration
+# Optional: specify which Processor config file to use
+# - development.yaml: Only testnet chains (ethereum-sepolia, polygon-amoy, etc.)
+# - default.yaml (omit this section): All chains (mainnet + testnet)
+processor:
+  configFile: development.yaml  # For development/test environments
+  # configFile: production.yaml   # For production (if you create one)
+  # (omit for default.yaml with all chains)
+
+# Monitor RPC Configuration
+monitor:
+  # Blockchain networks to monitor
+  # - Solana deposits are currently disabled; only EVM and Tron chains are supported.
+  # - For development/test: use testnets (ethereum-sepolia, polygon-amoy, tron-nile)
+  # - For production: use mainnets (ethereum, polygon, tron)
+  chains:
+    - ethereum-sepolia        # or ethereum for mainnet
+    - polygon-amoy           # or polygon for mainnet
+    - tron-nile              # or tron for mainnet
+
+  # RPC Provider API Keys (from environment variables)
+  # Get your keys from respective provider websites
+  rpcKeys:
+    alchemy: ${ALCHEMY_API_KEY}          # https://www.alchemy.com/
+    infura: ${INFURA_API_KEY}            # https://infura.io/
+    trongrid: ${TRONGRID_API_KEY}        # https://www.trongrid.io/
+    ankr: ${ANKR_API_KEY}                # https://www.ankr.com/
+
+  # Global scanning configuration
+  # Development: faster scanning for quick feedback
+  # Production: slower scanning to reduce RPC costs
+  scanInterval: ${SCAN_INTERVAL:-5000}          # milliseconds (5s dev, 15s prod)
+  blockRangeSize: ${BLOCK_RANGE_SIZE:-10}       # blocks per scan
+  maxConcurrentScans: ${MAX_CONCURRENT_SCANS:-5}      # concurrent scans (5 dev, 10 prod)
+  safeBlockDistance: ${SAFE_BLOCK_DISTANCE:-1}        # blocks to avoid reorgs (1 dev, 3 prod)
+
+  # Per-chain settings
+  # Adjust batchSize and requiredConfirmations based on chain characteristics
+  chainSettings:
+    ethereum-sepolia:         # or ethereum for mainnet
+      batchSize: 50          # Medium batch size
+      requiredConfirmations: 2    # Testnet: 2, Mainnet: 12
+
+    polygon-amoy:            # or polygon for mainnet
+      batchSize: 200         # Large batch to keep up with fast blocks
+      requiredConfirmations: 5     # Testnet: 5, Mainnet: 128
+
+    tron-nile:               # or tron for mainnet
+      batchSize: 100         # Medium-large batch
+      requiredConfirmations: 10    # Testnet: 10, Mainnet: 19
+
+  # RPC provider preferences per chain
+  # Providers are tried in order (left to right) until one succeeds
+  rpc:
+    chains:
+      ethereum-sepolia:      # or ethereum for mainnet
+        preferredProviders: [alchemy, infura, publicnode]    # prod: add quicknode first
+      polygon-amoy:          # or polygon for mainnet
+        preferredProviders: [alchemy, publicnode]            # prod: add quicknode first
+      tron-nile:             # or tron for mainnet
+        preferredProviders: [trongrid, publicnode]
+
+
+# Configuration metadata registry
+# Defines all runtime-configurable settings
+# These can be modified via API without redeploying
+configMetadata:
+  # ===== Business Rules =====
+  - key: "orders.payment_window_seconds"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 600          # 10 minutes
+    validationRules:
+      min: 60                  # At least 1 minute
+      max: 3600                # At most 1 hour
+    description: "Order payment window duration in seconds"
+
+  - key: "orders.grace_period_seconds"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 300          # 5 minutes
+    validationRules:
+      min: 0                   # Can be disabled
+      max: 1800                # At most 30 minutes
+    description: "Grace period after payment window in seconds"
+
+  - key: "orders.expired_orders_cleanup_hours"
+    category: "business_rules"
+    dataType: "integer"
+    defaultValue: 72           # 3 days
+    validationRules:
+      min: 1
+      max: 720                 # 30 days
+    description: "Hours after which expired orders can be cleaned up"
+
+  # ===== Address Pool =====
+  - key: "address_pool.cooldown_minutes"
+    category: "address_pool"
+    dataType: "integer"
+    defaultValue: 30           # 30 minutes
+    validationRules:
+      min: 0                   # Can be disabled
+      max: 1440                # At most 24 hours
+    description: "Address cooldown period in minutes after release"
+
+  - key: "address_pool.low_threshold"
+    category: "address_pool"
+    dataType: "integer"
+    defaultValue: 10
+    validationRules:
+      min: 1
+      max: 100
+    description: "Low address pool threshold for warnings"
+
+  # ===== Chain Operations =====
+  # Note: These are defaults, actual values come from chainSettings above
+  - key: "chains.ethereum_sepolia.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 3
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Ethereum Sepolia"
+
+  - key: "chains.polygon_amoy.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 10
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Polygon Amoy"
+
+  - key: "chains.tron_nile.required_confirmations"
+    category: "chain_operations"
+    dataType: "integer"
+    defaultValue: 19
+    validationRules:
+      min: 1
+      max: 100
+    description: "Required confirmations for Tron Nile"
+
+  # ===== Service Switches =====
+  - key: "services.order_service_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable order payment service"
+
+  - key: "services.deposit_service_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable user deposit service"
+
+  - key: "services.monitor_enabled"
+    category: "service_switches"
+    dataType: "boolean"
+    defaultValue: true
+    description: "Enable/disable blockchain monitoring"

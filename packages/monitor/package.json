@@ -1,0 +1,72 @@
+{
+  "name": "@payin/monitor",
+  "version": "0.1.0",
+  "description": "Multi-chain blockchain monitoring system for PayIn",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --build --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
+    "solana:generate-wallets": "tsx scripts/generate-solana-wallets.ts",
+    "solana:mint-usdc": "tsx scripts/mint-devnet-usdc.ts",
+    "solana:fund": "tsx scripts/fund-test-usdc.ts",
+    "test:solana-monitor": "tsx scripts/test-solana-monitor.ts",
+    "run": "tsx scripts/run-monitor.ts"
+  },
+  "keywords": [
+    "blockchain",
+    "monitor",
+    "multi-chain",
+    "ethereum",
+    "tron",
+    "usdt",
+    "usdc",
+    "payin"
+  ],
+  "author": "PayIn Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "@payin/shared": "file:../shared",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "ethers": "^6.15.0",
+    "tronweb": "^6.0.4",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "@vitest/coverage-v8": "^1.6.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "typescript": "^5.9.3",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

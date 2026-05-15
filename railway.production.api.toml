@@ -1,0 +1,39 @@
+# ============================================================
+# Railway Deployment Configuration for PayIn API (Production Environment)
+# ============================================================
+# Documentation: https://docs.railway.app/deploy/config-as-code
+#
+# Environment: Production
+# Railway Project: https://railway.com/project/<RAILWAY_PROJECT_ID>?environmentId=<RAILWAY_PRODUCTION_ENVIRONMENT_ID>
+# API Domain: api.payin.com
+# Admin Domain: app.payin.com
+#
+# Deployment: Git push triggers automatic build and deploy on Railway
+# ============================================================
+
+[build]
+# Use Nixpacks builder (Railway builds on server)
+builder = "NIXPACKS"
+
+# Build all packages and apps/api on Railway
+buildCommand = "npm install && npx tsc --build packages/shared packages/monitor packages/notification packages/email packages/processor packages/auth packages/manager --force && npm run build -w apps/api"
+
+# Watch paths - only trigger builds when these paths change
+watchPaths = [
+  "apps/api/**",
+  "packages/**",
+  "railway.production.api.toml"
+]
+
+[deploy]
+# Start command: run the API server
+# Note: Set NODE_ENV=production via Railway environment variables
+startCommand = "node apps/api/dist/index.js"
+
+# Health check configuration
+healthcheckPath = "/health"
+healthcheckTimeout = 300    # 5 minutes for initial startup
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

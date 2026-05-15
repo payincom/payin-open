@@ -1,0 +1,55 @@
+# Production Environment Configuration
+# Usage: export MONITOR_CONFIG_FILE=config/examples/production.yaml
+
+rpc:
+  # Production-grade defaults
+  defaults:
+    timeout: 5000
+    maxRetries: 3
+    healthCheckInterval: 15000  # More frequent health checks
+
+  # Chain-specific production settings
+  chainDefaults:
+    strategy: round_robin
+    healthCheck:
+      enabled: true
+      interval: 15000  # More frequent health checks
+      timeout: 3000
+      maxFailures: 2   # Lower tolerance for failures
+    retry:
+      maxRetries: 3
+      backoffMultiplier: 2.0  # Aggressive backoff
+      initialDelay: 500
+
+  chains:
+    ethereum-mainnet:
+      preferredProviders: [alchemy, infura, publicnode]
+      timeout: 3000    # Tight timeouts for mainnet
+      strategy: fastest  # Use fastest provider
+
+    polygon-mainnet:
+      preferredProviders: [alchemy, ankr, publicnode]
+      timeout: 4000
+      strategy: fastest
+
+    tron-mainnet:
+      preferredProviders: [trongrid]
+      timeout: 6000
+
+monitor:
+  # Production scanning settings
+  scanning:
+    defaultConfirmations: 6    # High security confirmations
+    maxBlockRange: 1000        # Efficient batch processing
+    scanInterval: 8000         # Balanced scanning frequency
+
+  # Production event handling
+  events:
+    maxListeners: 500
+    errorRetryInterval: 10000  # Longer retry intervals
+
+  # Optimized performance for production
+  performance:
+    enableCache: true
+    cacheSize: 2000           # Larger cache for production
+    concurrentRequests: 10    # Higher concurrency

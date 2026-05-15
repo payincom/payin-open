@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@payin/shared": ["../shared/dist/index.js"],
+      "@payin/shared/*": ["../shared/dist/*"],
+      "@payin/test-utils": ["../test-utils/dist/index.js"],
+      "@payin/test-utils/*": ["../test-utils/dist/*"]
+    }
+  }
+}

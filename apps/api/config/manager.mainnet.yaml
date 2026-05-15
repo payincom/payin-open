@@ -1,0 +1,169 @@
+database:
+  connectionString: ${DB_CONNECTION_STRING}
+processor:
+  configFile: mainnet.yaml
+monitor:
+  chains:
+  - ethereum-mainnet
+  - polygon-mainnet
+  - tron-mainnet
+  - solana-mainnet
+  - arbitrum-mainnet
+  - xlayer-mainnet
+  rpcKeys:
+    alchemy: ${ALCHEMY_API_KEY}
+    infura: ${INFURA_API_KEY}
+    trongrid: ${TRONGRID_API_KEY}
+    ankr: ${ANKR_API_KEY}
+    helius: ${HELIUS_API_KEY:-}
+    tatum: ${TATUM_API_KEY:-}
+  scanInterval: ${SCAN_INTERVAL:-20000}
+  blockRangeSize: ${BLOCK_RANGE_SIZE:-10}
+  maxConcurrentScans: ${MAX_CONCURRENT_SCANS:-4}
+  safeBlockDistance: ${SAFE_BLOCK_DISTANCE:-3}
+  chainSettings:
+    ethereum-mainnet:
+      batchSize: 25
+      requiredConfirmations: 12
+    polygon-mainnet:
+      batchSize: 100
+      requiredConfirmations: 128
+    tron-mainnet:
+      batchSize: 50
+      requiredConfirmations: 19
+    solana-mainnet:
+      batchSize: 50
+      requiredConfirmations: 32
+    arbitrum-mainnet:
+      batchSize: 10
+      requiredConfirmations: 64
+    xlayer-mainnet:
+      batchSize: 50
+      requiredConfirmations: 10
+  rpc:
+    chains:
+      ethereum-mainnet:
+        preferredProviders:
+        - publicnode
+        - alchemy
+        - infura
+      polygon-mainnet:
+        preferredProviders:
+        - publicnode
+        - ankr
+        - alchemy
+      tron-mainnet:
+        preferredProviders:
+        - trongrid
+      solana-mainnet:
+        preferredProviders:
+        - solana-public
+        - helius
+        excludeProviders:
+        - tatum
+        weight: 100
+      arbitrum-mainnet:
+        preferredProviders:
+        - alchemy
+        - publicnode
+      xlayer-mainnet:
+        preferredProviders:
+        - xlayer-okx
+        - xlayer-public
+
+configMetadata:
+- key: orders.payment_window_seconds
+  category: business_rules
+  dataType: integer
+  defaultValue: 600
+  validationRules:
+    min: 60
+    max: 3600
+  description: Order payment window duration in seconds
+- key: orders.grace_period_seconds
+  category: business_rules
+  dataType: integer
+  defaultValue: 300
+  validationRules:
+    min: 0
+    max: 1800
+  description: Grace period after payment window in seconds
+- key: orders.expired_orders_cleanup_hours
+  category: business_rules
+  dataType: integer
+  defaultValue: 72
+  validationRules:
+    min: 1
+    max: 720
+  description: Hours after which expired orders can be cleaned up
+- key: address_pool.cooldown_minutes
+  category: address_pool
+  dataType: integer
+  defaultValue: 30
+  validationRules:
+    min: 0
+    max: 1440
+  description: Address cooldown period in minutes after release
+- key: address_pool.low_threshold
+  category: address_pool
+  dataType: integer
+  defaultValue: 10
+  validationRules:
+    min: 1
+    max: 100
+  description: Low address pool threshold for warnings
+- key: chains.ethereum_mainnet.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 12
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Ethereum Mainnet
+- key: chains.polygon_mainnet.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 128
+  validationRules:
+    min: 1
+    max: 200
+  description: Required confirmations for Polygon Mainnet
+- key: chains.tron_mainnet.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 19
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Tron Mainnet
+- key: chains.solana_mainnet.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 32
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Solana Mainnet
+- key: chains.arbitrum_mainnet.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 64
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Arbitrum Mainnet
+- key: services.order_service_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable order payment service
+- key: services.deposit_service_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable user deposit service
+- key: services.monitor_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable blockchain monitoring

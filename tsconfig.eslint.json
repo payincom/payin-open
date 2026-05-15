@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.d.ts",
+    "build",
+    "tmp",
+    "apps/api/public/dist",
+    "coverage",
+    "apps/admin/dist"
+  ]
+}

@@ -1,0 +1,15 @@
+# ============================================================
+# Railway Deployment Configuration for PayIn Demo Shop (Test/Sandbox)
+# ============================================================
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "cd apps/demo && npm install"
+watchPaths = ["apps/demo/**", "railway.test.demo.toml"]
+
+[deploy]
+startCommand = "node apps/demo/server.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

@@ -1,0 +1,38 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "paths": {
+      "@payin/shared": ["../shared/dist"],
+      "@payin/shared/*": ["../shared/dist/*"],
+      "@payin/email": ["../email/dist"],
+      "@payin/email/*": ["../email/dist/*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../email"
+    }
+  ]
+}

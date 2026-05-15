@@ -1,0 +1,48 @@
+{
+  "name": "@payin/notification",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Notification service for PayIn with webhook, email and telegram support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@payin/shared": "file:../shared",
+    "pg": "^8.16.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.15.6",
+    "@types/uuid": "^9.0.8",
+    "@vitest/coverage-v8": "^1.6.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  },
+  "keywords": [
+    "notification",
+    "webhook",
+    "email",
+    "telegram",
+    "event",
+    "delivery"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT"
+}

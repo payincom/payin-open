@@ -1,0 +1,42 @@
+{
+  "name": "@payin/manager",
+  "version": "0.1.0",
+  "description": "Database Configuration Management System for PayIn",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:integration": "vitest run tests/integration",
+    "type-check": "tsc --noEmit",
+    "dev": "tsc --build --watch"
+  },
+  "keywords": [
+    "configuration",
+    "database",
+    "management",
+    "validation"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT",
+  "dependencies": {
+    "nanoid": "^5.1.6",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.15.6",
+    "dotenv": "^16.3.1",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.0"
+  }
+}

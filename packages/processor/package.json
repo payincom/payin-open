@@ -1,0 +1,74 @@
+{
+  "name": "@payin/processor",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Multi-chain stablecoin processor for PayIn with order processing, deposit processing and blockchain monitoring integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:quick": "tsx tests/quick-validation.ts",
+    "test:all": "tsx tests/run-all-tests.ts",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:scenarios": "vitest run tests/scenarios",
+    "test:solana-order": "vitest run tests/scenarios/solana-order-payment.test.ts",
+    "test:solana-deposit": "vitest run tests/scenarios/solana-deposit-flow.test.ts",
+    "test:solana": "vitest run tests/scenarios/solana-order-payment.test.ts tests/scenarios/solana-deposit-flow.test.ts",
+    "demo:phase2": "tsx demo/phase2-demo.ts",
+    "demo:simple": "tsx demo/phase2-simple-demo.ts",
+    "run": "tsx scripts/run-processor.ts",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.11",
+    "@payin/monitor": "file:../monitor",
+    "@payin/shared": "file:../shared",
+    "@payin/test-utils": "file:../test-utils",
+    "@solana/web3.js": "^1.98.4",
+    "better-sqlite3": "^12.4.1",
+    "bip39": "^3.1.0",
+    "decimal.js": "^10.6.0",
+    "ed25519-hd-key": "^1.3.0",
+    "js-yaml": "^4.1.0",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.15.6",
+    "@types/qrcode": "^1.5.6",
+    "@types/uuid": "^9.0.8",
+    "@vitest/coverage-v8": "^1.6.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  },
+  "keywords": [
+    "processor",
+    "payment",
+    "deposit",
+    "orders",
+    "lifecycle",
+    "blockchain",
+    "stablecoin",
+    "monitoring"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT"
+}

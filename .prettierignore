@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage reports
+coverage
+.nyc_output
+
+# Cache directories
+.npm
+.yarn
+.cache
+
+# IDE
+.vscode
+.idea
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+
+# Package-lock files
+package-lock.json
+yarn.lock
+
+# Temporary files
+tmp
+temp

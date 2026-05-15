@@ -1,0 +1,23 @@
+# PayIn Web Server Configuration
+# This file supports environment variable interpolation using ${VAR_NAME} syntax
+
+# Server settings
+server:
+  port: ${PORT:-3000}
+  host: ${HOST:-0.0.0.0}
+
+# Database connection (Supabase PostgreSQL)
+# Use DB_CONNECTION_STRING environment variable in production
+database:
+  connectionString: ${DB_CONNECTION_STRING:-postgresql://postgres:postgres@localhost:5432/payin_test}
+
+# Manager configuration file path (relative to config directory)
+managerConfigFile: "./manager.yaml"
+
+# Processor configuration (optional overrides)
+processor:
+  # If not specified, will use Manager's configuration
+  # Can override specific settings here if needed
+  # orders:
+  #   paymentWindow: 600000  # 10 minutes
+  #   graceperiod: 300000    # 5 minutes

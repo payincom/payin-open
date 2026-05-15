@@ -1,0 +1,38 @@
+# Development Environment Configuration
+# Usage: export MONITOR_CONFIG_FILE=config/examples/development.yaml
+
+rpc:
+  # Development defaults
+  defaults:
+    timeout: 10000  # Longer timeouts for dev debugging
+    maxRetries: 1   # Fail fast for development
+
+  # Chain configurations optimized for development
+  chains:
+    ethereum-sepolia:
+      preferredProviders: [alchemy, infura]  # Reliable providers for dev
+      timeout: 8000
+      strategy: round_robin
+
+    polygon-amoy:
+      preferredProviders: [alchemy, ankr]
+      timeout: 8000
+      strategy: round_robin
+
+monitor:
+  # More frequent scanning for development
+  scanning:
+    defaultConfirmations: 1  # Fast confirmations for dev
+    maxBlockRange: 100       # Smaller batches
+    scanInterval: 5000       # More frequent scanning
+
+  # Enhanced debugging
+  events:
+    maxListeners: 200
+    errorRetryInterval: 3000
+
+  # Development performance settings
+  performance:
+    enableCache: true
+    cacheSize: 500
+    concurrentRequests: 3

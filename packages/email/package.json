@@ -1,0 +1,30 @@
+{
+  "name": "@payin/email",
+  "version": "1.0.0",
+  "description": "Email service for PayIn - Multi-chain stablecoin payment system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "email",
+    "smtp",
+    "brevo",
+    "transactional-email"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.21",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  }
+}

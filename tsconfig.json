@@ -1,0 +1,64 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@payin/shared": ["./packages/shared/src"],
+      "@payin/shared/*": ["./packages/shared/src/*"],
+      "@payin/processor": ["./packages/processor/src"],
+      "@payin/processor/*": ["./packages/processor/src/*"],
+      "@payin/monitor": ["./packages/monitor/src"],
+      "@payin/monitor/*": ["./packages/monitor/src/*"],
+      "@payin/core": ["./packages/core/src"],
+      "@payin/core/*": ["./packages/core/src/*"],
+      "@payin/manager": ["./packages/manager/src"],
+      "@payin/manager/*": ["./packages/manager/src/*"],
+      "@payin/auth": ["./packages/auth/src"],
+      "@payin/auth/*": ["./packages/auth/src/*"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "apps/*/src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "*.min.js"
+  ],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/monitor" },
+    { "path": "./packages/processor" },
+    { "path": "./packages/notification" },
+    { "path": "./packages/email" },
+    { "path": "./packages/manager" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/test-utils" }
+  ]
+}

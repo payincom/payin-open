@@ -1,0 +1,112 @@
+# Processor Mainnet Configuration
+# This file overrides default.yaml for production mainnet environments
+# Only includes mainnet chains and their tokens (Ethereum, Polygon, Tron, Solana, etc.)
+
+skipMonitorRecovery: true
+
+# Chain Configurations - Only Mainnets
+chains:
+  ethereum-mainnet:
+    protocol: evm
+    name: Ethereum Mainnet
+    network: mainnet
+    confirmations: 12
+    metadata:
+      explorer_url: https://etherscan.io
+  polygon-mainnet:
+    protocol: evm
+    name: Polygon Mainnet
+    network: mainnet
+    confirmations: 128
+    metadata:
+      explorer_url: https://polygonscan.com
+  tron-mainnet:
+    protocol: tron
+    name: Tron Mainnet
+    network: mainnet
+    confirmations: 19
+    metadata:
+      explorer_url: https://tronscan.org
+  solana-mainnet:
+    protocol: solana
+    name: Solana Mainnet
+    network: mainnet
+    confirmations: 32
+    metadata:
+      explorer_url: https://explorer.solana.com
+  arbitrum-mainnet:
+    protocol: evm
+    name: Arbitrum One
+    network: mainnet
+    confirmations: 64
+    metadata:
+      explorer_url: https://arbiscan.io
+  xlayer-mainnet:
+    protocol: evm
+    name: X Layer Mainnet
+    network: mainnet
+    confirmations: 10
+    metadata:
+      explorer_url: https://www.oklink.com/xlayer
+
+# Token Configurations - Only Mainnet Contracts
+tokens:
+  USDC:
+    symbol: USDC
+    name: USD Coin
+    decimals: 6
+    contracts:
+      ethereum-mainnet: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      polygon-mainnet: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      solana-mainnet: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      arbitrum-mainnet: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+      xlayer-mainnet: "0x74b7f16337b8972027f6196a17a631ac6de26d22"
+  USDT:
+    symbol: USDT
+    name: Tether USD
+    decimals: 6
+    contracts:
+      ethereum-mainnet: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+      polygon-mainnet: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      tron-mainnet: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+      arbitrum-mainnet: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+      xlayer-mainnet: "0x779ded0c9e1022225f8e0630b35a9b54be713736"
+  DAI:
+    symbol: DAI
+    name: Dai Stablecoin
+    decimals: 18
+    contracts:
+      ethereum-mainnet: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+      polygon-mainnet: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063"
+      arbitrum-mainnet: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
+  PYUSD:
+    symbol: PYUSD
+    name: PayPal USD
+    decimals: 6
+    contracts:
+      ethereum-mainnet: "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8"
+      solana-mainnet: "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo"
+
+# RPC Configuration - Only Mainnet Chains
+rpc:
+  chains:
+    ethereum-mainnet:
+      preferredProviders: [publicnode, alchemy, infura]
+      timeout: 10000
+    polygon-mainnet:
+      preferredProviders: [publicnode, ankr, alchemy]
+      timeout: 10000
+    tron-mainnet:
+      preferredProviders: [trongrid]
+      timeout: 12000
+    solana-mainnet:
+      preferredProviders: [solana-public, helius]
+      excludeProviders: [tatum]
+      weight: 100
+      timeout: 10000
+    arbitrum-mainnet:
+      preferredProviders: [alchemy, publicnode]
+      timeout: 10000
+    xlayer-mainnet:
+      preferredProviders: [xlayer-okx, xlayer-public]
+      timeout: 10000

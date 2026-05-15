@@ -1,0 +1,127 @@
+monitor:
+  chains:
+    - ethereum-sepolia
+    - polygon-amoy
+    - tron-nile
+    - solana-devnet
+  rpcKeys:
+    trongrid: "your_trongrid_key"
+    alchemy: "your_alchemy_key"
+    infura: "your_infura_key"
+
+  # Performance and RPC overrides
+  # scanInterval: 20000 # 20 seconds
+
+  customProviders:
+    tatum:
+      displayName: "Tatum"
+      authType: "header"
+      baseUrl: "https://solana-devnet.gateway.tatum.io/"
+      headers:
+        x-api-key: "${TATUM_API_KEY:-}"
+      supportedChains: ["solana-devnet"]
+      requiresApiKey: false
+      defaultTimeout: 8000
+      defaultWeight: 90
+    helius:
+      displayName: "Helius"
+      authType: "query_param"
+      baseUrl: "https://devnet.helius-rpc.com/"
+      queryParams:
+        api-key: "${HELIUS_API_KEY:-}"
+      supportedChains: ["solana-devnet"]
+      requiresApiKey: false
+      defaultTimeout: 8000
+      defaultWeight: 90
+
+  chainSettings:
+    'ethereum-sepolia':
+      batchSize: 50
+    'polygon-amoy':
+      batchSize: 50
+    'solana-devnet':
+      batchSize: 300
+
+  rpc:
+    chains:
+      solana-devnet:
+        preferredProviders: [publicnode, tatum, helius]
+
+# Skip recovery in tests (can be overridden per test)
+skipMonitorRecovery: false
+
+# Services Configuration
+services:
+  orders: true
+  deposits: true
+
+# Order Configuration - fast timeouts for quick tests
+orders:
+  defaultPaymentWindowMinutes: 5     # Short payment window
+  defaultGracePeriodMinutes: 2
+  maxTotalTimeoutMinutes: 30
+  maintenanceIntervalMs: 5000        # Frequent maintenance (5 seconds)
+
+# Delayed Confirmation - very fast checks for tests
+delayedConfirmation:
+  enabled: true
+  checkInterval: 1000                # Check every second for fast tests
+  maxPendingTime: 60000              # 1 minute max pending
+  maxPendingTransactions: 100
+  maxRetries: 2
+
+# Deposit Configuration - small values for tests
+deposits:
+  poolManagement:
+    defaultCooldownMinutes: 1        # Very short cooldown for tests
+    maxPoolSize: 100
+    lowPoolThreshold: 10
+
+  importValidation:
+    validateDerivationPath: true
+    maxImportBatchSize: 50
+
+# Chain Configurations - only test networks
+chains:
+  ethereum-sepolia:
+    protocol: evm
+    name: Ethereum Sepolia Testnet
+    network: testnet
+    metadata:
+      explorer_url: https://sepolia.etherscan.io
+  polygon-amoy:
+    protocol: evm
+    name: Polygon Amoy Testnet
+    network: testnet
+    metadata:
+      explorer_url: https://amoy.polygonscan.com
+  tron-nile:
+    protocol: tron
+    name: Tron Nile Testnet
+    network: testnet
+    metadata:
+      explorer_url: https://nile.tronscan.org
+  solana-devnet:
+    protocol: solana
+    name: Solana Devnet
+    network: testnet
+    metadata:
+      explorer_url: https://explorer.solana.com
+      rpc_url: https://api.devnet.solana.com
+
+# Token Configurations - test network contracts
+tokens:
+  USDC:
+    symbol: USDC
+    name: USD Coin
+    decimals: 6
+    contracts:
+      ethereum-sepolia: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+      polygon-amoy: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"
+      solana-devnet: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"  # Official Devnet USDC
+  USDT:
+    symbol: USDT
+    name: Tether USD
+    decimals: 6
+    contracts:
+      tron-nile: "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"  # USDT on Tron Nile testnet

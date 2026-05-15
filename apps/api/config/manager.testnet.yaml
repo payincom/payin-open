@@ -1,0 +1,136 @@
+database:
+  connectionString: ${DB_CONNECTION_STRING}
+processor:
+  configFile: testnet.yaml
+monitor:
+  chains:
+  - ethereum-sepolia
+  - polygon-amoy
+  - tron-nile
+  - solana-devnet
+  - arbitrum-sepolia
+  - xlayer-testnet
+  rpcKeys:
+    alchemy: ${ALCHEMY_API_KEY}
+    infura: ${INFURA_API_KEY}
+    trongrid: ${TRONGRID_API_KEY}
+    ankr: ${ANKR_API_KEY}
+    tatum: ${TATUM_API_KEY}
+    helius: ${HELIUS_API_KEY}
+  scanInterval: ${SCAN_INTERVAL:-5000}
+  blockRangeSize: ${BLOCK_RANGE_SIZE:-10}
+  maxConcurrentScans: ${MAX_CONCURRENT_SCANS:-5}
+  safeBlockDistance: ${SAFE_BLOCK_DISTANCE:-1}
+  chainSettings:
+    ethereum-sepolia:
+      batchSize: 50
+      requiredConfirmations: 2
+    polygon-amoy:
+      batchSize: 200
+      requiredConfirmations: 5
+    tron-nile:
+      batchSize: 100
+      requiredConfirmations: 10
+    solana-devnet:
+      batchSize: 300
+      requiredConfirmations: 1
+  rpc:
+    chains:
+      ethereum-sepolia:
+        preferredProviders:
+        - alchemy
+        - infura
+      polygon-amoy:
+        preferredProviders:
+        - alchemy
+      tron-nile:
+        preferredProviders:
+        - trongrid
+      solana-devnet:
+        preferredProviders:
+        - helius
+        - tatum
+      arbitrum-sepolia:
+        preferredProviders:
+        - alchemy
+        - publicnode
+configMetadata:
+- key: orders.payment_window_seconds
+  category: business_rules
+  dataType: integer
+  defaultValue: 600
+  validationRules:
+    min: 60
+    max: 3600
+  description: Order payment window duration in seconds
+- key: orders.grace_period_seconds
+  category: business_rules
+  dataType: integer
+  defaultValue: 300
+  validationRules:
+    min: 0
+    max: 1800
+  description: Grace period after payment window in seconds
+- key: orders.expired_orders_cleanup_hours
+  category: business_rules
+  dataType: integer
+  defaultValue: 72
+  validationRules:
+    min: 1
+    max: 720
+  description: Hours after which expired orders can be cleaned up
+- key: address_pool.cooldown_minutes
+  category: address_pool
+  dataType: integer
+  defaultValue: 30
+  validationRules:
+    min: 0
+    max: 1440
+  description: Address cooldown period in minutes after release
+- key: address_pool.low_threshold
+  category: address_pool
+  dataType: integer
+  defaultValue: 10
+  validationRules:
+    min: 1
+    max: 100
+  description: Low address pool threshold for warnings
+- key: chains.ethereum_sepolia.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 3
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Ethereum Sepolia
+- key: chains.polygon_amoy.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 10
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Polygon Amoy
+- key: chains.tron_nile.required_confirmations
+  category: chain_operations
+  dataType: integer
+  defaultValue: 19
+  validationRules:
+    min: 1
+    max: 100
+  description: Required confirmations for Tron Nile
+- key: services.order_service_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable order payment service
+- key: services.deposit_service_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable user deposit service
+- key: services.monitor_enabled
+  category: service_switches
+  dataType: boolean
+  defaultValue: true
+  description: Enable/disable blockchain monitoring

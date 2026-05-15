@@ -1,0 +1,37 @@
+{
+  "name": "@payin/mcp-server",
+  "version": "1.0.0",
+  "description": "PayIn MCP Server for AI-powered integration and operations",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "npm run generate:docs && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "generate:docs": "node scripts/generate-docs.js",
+    "build": "npm run generate:docs && tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.114.15"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "payin",
+    "payment",
+    "blockchain",
+    "cloudflare-workers"
+  ],
+  "author": "PayIn Team",
+  "license": "MIT"
+}

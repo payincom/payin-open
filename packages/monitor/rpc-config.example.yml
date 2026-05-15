@@ -1,0 +1,74 @@
+# RPC Configuration Example
+# 将此文件复制为 rpc-config.yml 并填入你的API keys
+
+chains:
+  ethereum_sepolia:
+    strategy: "round_robin"  # round_robin | failover | fastest
+    endpoints:
+      - name: "alchemy-primary"
+        provider: "alchemy"
+        apiKey: "${ALCHEMY_API_KEY}"  # 从环境变量读取
+        weight: 70
+        timeout: 5000
+        maxRequestsPerSecond: 10
+        enabled: true
+      
+      - name: "infura-backup"
+        provider: "infura" 
+        apiKey: "${INFURA_API_KEY}"
+        weight: 30
+        timeout: 3000
+        maxRequestsPerSecond: 8
+        enabled: true
+    
+    healthCheck:
+      enabled: true
+      interval: 30000  # 30秒检查一次
+      timeout: 5000
+      maxFailures: 3
+    
+    retry:
+      maxRetries: 3
+      backoffMultiplier: 1.5
+      initialDelay: 1000
+
+  tron_nile:
+    strategy: "failover"
+    endpoints:
+      - name: "trongrid-main"
+        provider: "trongrid"
+        apiKey: "${TRONGRID_API_KEY}"
+        weight: 100
+        timeout: 8000
+        maxRequestsPerSecond: 5
+        enabled: true
+
+  polygon_amoy:
+    strategy: "fastest"
+    endpoints:
+      - name: "alchemy-polygon"
+        provider: "alchemy"
+        apiKey: "${ALCHEMY_API_KEY}"
+        weight: 80
+      
+      - name: "infura-polygon"
+        provider: "infura"
+        apiKey: "${INFURA_API_KEY}"
+        weight: 70
+
+# 全局设置
+settings:
+  healthCheck:
+    enabled: true
+    interval: 30000
+    timeout: 5000
+  
+  retry:
+    maxRetries: 3
+    backoffMultiplier: 1.5
+    initialDelay: 1000
+  
+  rateLimit:
+    enabled: true
+    windowMs: 60000      # 1分钟窗口
+    maxRequests: 100     # 每分钟最多100个全局请求

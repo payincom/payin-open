@@ -1,0 +1,67 @@
+# PayIn MCP Server - Local Development Environment Variables
+# Copy this file to .dev.vars and fill in your values
+# .dev.vars is gitignored and will be loaded by wrangler dev
+
+# ============================================================================
+# API Configuration - Network-Specific URLs (Recommended)
+# ============================================================================
+
+# Testnet API URL (used when X-PayIn-Network: testnet or by default)
+# PAYIN_TESTNET_API_URL=http://localhost:3000
+
+# Mainnet API URL (used when X-PayIn-Network: mainnet)
+# PAYIN_MAINNET_API_URL=https://api.mainnet.payin.com
+
+# ============================================================================
+# API Configuration - Override (Optional)
+# ============================================================================
+
+# Explicit API URL override (ignores network type selection)
+# Uncomment this if you want to use a single API URL regardless of network type
+# PAYIN_API_URL=http://localhost:3000
+
+# PayIn API Key (optional, can be provided via X-API-Key header instead)
+# ⚠️ If set, requests without X-API-Key header will use this key as fallback
+# ⚠️ For security, consider using header-based auth in production
+# PAYIN_API_KEY=pk_test_550e8400e29b41d4a716446655440001
+
+# ============================================================================
+# Security Configuration
+# ============================================================================
+
+# Require API key from header only (recommended for production)
+# Set to "true" to disable fallback to PAYIN_API_KEY environment variable
+# REQUIRE_API_KEY_HEADER=false
+
+# ============================================================================
+# Server Configuration
+# ============================================================================
+
+# Log level: debug, info, warn, error
+# LOG_LEVEL=debug
+
+# ============================================================================
+# Example Configurations
+# ============================================================================
+
+# Example 1: Local development with network-specific URLs
+# PAYIN_TESTNET_API_URL=http://localhost:3000
+# PAYIN_MAINNET_API_URL=https://api.mainnet.payin.com
+# PAYIN_API_KEY=pk_test_550e8400e29b41d4a716446655440001
+# LOG_LEVEL=debug
+
+# Example 2: Production environment with network selection
+# PAYIN_TESTNET_API_URL=https://app.testnet.payin.com
+# PAYIN_MAINNET_API_URL=https://app.mainnet.payin.com
+# PAYIN_API_KEY=pk_test_your_key
+# LOG_LEVEL=info
+
+# Example 3: Single API URL override (ignores network type)
+# PAYIN_API_URL=http://localhost:3000
+# PAYIN_API_KEY=pk_test_550e8400e29b41d4a716446655440001
+# LOG_LEVEL=debug
+
+# Example 4: Secure mode (require header-based auth only)
+# PAYIN_TESTNET_API_URL=http://localhost:3000
+# REQUIRE_API_KEY_HEADER=true
+# LOG_LEVEL=info

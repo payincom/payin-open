@@ -1,0 +1,16 @@
+# Minimal Configuration Example
+# Shows only the essential settings needed for custom configuration
+
+rpc:
+  # Only specify what you want to override
+  chains:
+    ethereum-sepolia:
+      preferredProviders: [alchemy]  # Use only Alchemy
+
+    polygon-amoy:
+      preferredProviders: [alchemy, publicnode]  # Alchemy + public fallback
+
+monitor:
+  # Only override specific scanning behavior
+  scanning:
+    scanInterval: 15000  # Less frequent scanning

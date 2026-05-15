@@ -1,0 +1,272 @@
+rpc:
+  providers:
+    alchemy:
+      displayName: Alchemy
+      authType: url_path
+      urlPattern: https://{network}.g.alchemy.com/v2/{apiKey}
+      supportedNetworks:
+      - eth-mainnet
+      - eth-sepolia
+      - polygon-mainnet
+      - polygon-amoy
+      - arbitrum-mainnet
+      - arbitrum-sepolia
+      networkMappings:
+        ethereum-mainnet: eth-mainnet
+        ethereum-sepolia: eth-sepolia
+        arbitrum-mainnet: arb-mainnet
+        arbitrum-sepolia: arb-sepolia
+      defaultSettings:
+        timeout: 5000
+        weight: 100
+        maxRequestsPerSecond: 15
+    infura:
+      displayName: Infura
+      authType: url_path
+      urlPattern: https://{network}.infura.io/v3/{apiKey}
+      supportedNetworks:
+      - mainnet
+      - sepolia
+      - polygon-mainnet
+      - polygon-amoy
+      networkMappings:
+        ethereum-mainnet: mainnet
+        ethereum-sepolia: sepolia
+      defaultSettings:
+        timeout: 5000
+        weight: 90
+        maxRequestsPerSecond: 10
+    ankr:
+      displayName: Ankr
+      authType: url_path
+      urlPattern: https://rpc.ankr.com/{network}/{apiKey}
+      supportedNetworks:
+      - eth
+      - eth_sepolia
+      - polygon
+      - polygon_amoy
+      networkMappings:
+        ethereum-mainnet: eth
+        ethereum-sepolia: eth_sepolia
+        polygon-mainnet: polygon
+        polygon-amoy: polygon_amoy
+      defaultSettings:
+        timeout: 5000
+        weight: 85
+        maxRequestsPerSecond: 12
+    trongrid:
+      displayName: TronGrid
+      authType: header
+      urlPattern: https://{network}.trongrid.io/jsonrpc
+      headerTemplate:
+        TRON-PRO-API-KEY: '{apiKey}'
+      supportedNetworks: []
+      networkMappings:
+        tron-mainnet: api
+        tron-nile: nile
+      defaultSettings:
+        timeout: 8000
+        weight: 80
+        maxRequestsPerSecond: 8
+    helius:
+      displayName: Helius
+      authType: query_param
+      urlPattern: https://{network}.helius-rpc.com/?api-key={apiKey}
+      queryTemplate:
+        api-key: '{apiKey}'
+      supportedNetworks: []
+      networkMappings:
+        solana-mainnet: mainnet
+        solana-devnet: devnet
+      defaultSettings:
+        timeout: 5000
+        weight: 100
+        maxRequestsPerSecond: 15
+    tatum:
+      displayName: Tatum
+      authType: header
+      urlPattern: https://{network}.gateway.tatum.io/
+      headerTemplate:
+        x-api-key: '{apiKey}'
+      supportedNetworks: []
+      networkMappings:
+        solana-mainnet: solana-mainnet
+        solana-devnet: solana-devnet
+      defaultSettings:
+        timeout: 8000
+        weight: 90
+        maxRequestsPerSecond: 12
+    quicknode:
+      displayName: QuickNode
+      authType: none
+      urlPattern: '{apiKey}'
+      supportedNetworks:
+      - solana-mainnet
+      - solana-devnet
+      defaultSettings:
+        timeout: 6000
+        weight: 95
+        maxRequestsPerSecond: 12
+    publicnode:
+      displayName: PublicNode
+      authType: none
+      urlPattern: https://{network}-rpc.publicnode.com
+      supportedNetworks:
+      - ethereum
+      - ethereum-sepolia
+      - polygon
+      - polygon-amoy
+      - arbitrum
+      - arbitrum-sepolia
+      - bsc
+      - bsc-testnet
+      networkMappings:
+        ethereum-mainnet: ethereum
+        polygon-mainnet: polygon-bor
+        arbitrum-mainnet: arbitrum
+        arbitrum-sepolia: arbitrum-sepolia
+      defaultSettings:
+        timeout: 8000
+        weight: 60
+        maxRequestsPerSecond: 3
+    cloudflare:
+      displayName: Cloudflare Web3
+      authType: none
+      urlPattern: https://cloudflare-eth.com
+      supportedNetworks:
+      - ethereum-mainnet
+      defaultSettings:
+        timeout: 8000
+        weight: 50
+        maxRequestsPerSecond: 3
+    solana-public:
+      displayName: Solana Public RPC
+      authType: none
+      urlPattern: https://api.{network}.solana.com
+      supportedNetworks: []
+      networkMappings:
+        solana-mainnet: mainnet-beta
+        solana-devnet: devnet
+      defaultSettings:
+        timeout: 10000
+        weight: 60
+        maxRequestsPerSecond: 5
+    xlayer-public:
+      displayName: X Layer Public RPC
+      authType: none
+      urlPattern: https://{network}
+      supportedNetworks:
+        - xlayer-mainnet
+        - xlayer-testnet
+      networkMappings:
+        xlayer-mainnet: rpc.xlayer.tech
+        xlayer-testnet: testrpc.xlayer.tech/terigon
+      defaultSettings:
+        timeout: 10000
+        weight: 70
+        maxRequestsPerSecond: 5
+    xlayer-okx:
+      displayName: X Layer OKX RPC
+      authType: none
+      urlPattern: https://{network}
+      supportedNetworks:
+        - xlayer-mainnet
+        - xlayer-testnet
+      networkMappings:
+        xlayer-mainnet: xlayerrpc.okx.com
+        xlayer-testnet: xlayertestrpc.okx.com/terigon
+      defaultSettings:
+        timeout: 10000
+        weight: 60
+        maxRequestsPerSecond: 5
+  defaults:
+    timeout: 5000
+    maxRetries: 3
+    healthCheckInterval: 30000
+  chainDefaults:
+    strategy: round_robin
+    healthCheck:
+      enabled: true
+      interval: 30000
+      timeout: 5000
+      maxFailures: 3
+    retry:
+      maxRetries: 3
+      backoffMultiplier: 1.5
+      initialDelay: 1000
+  chains:
+    ethereum-mainnet:
+      preferredProviders:
+      - alchemy
+      - infura
+      - publicnode
+      timeout: 5000
+    ethereum-sepolia:
+      preferredProviders:
+      - alchemy
+      - infura
+      - publicnode
+      timeout: 5000
+    polygon-mainnet:
+      preferredProviders:
+      - alchemy
+      - ankr
+      - publicnode
+      timeout: 6000
+    polygon-amoy:
+      preferredProviders:
+      - alchemy
+      - ankr
+      - publicnode
+      timeout: 6000
+    tron-mainnet:
+      preferredProviders:
+      - trongrid
+      timeout: 8000
+    tron-nile:
+      preferredProviders:
+      - trongrid
+      timeout: 8000
+    solana-mainnet:
+      preferredProviders:
+      - quicknode
+      - solana-public
+      timeout: 10000
+    solana-devnet:
+      preferredProviders:
+      - quicknode
+      - helius
+      - solana-public
+      timeout: 10000
+    arbitrum-mainnet:
+      preferredProviders:
+      - alchemy
+      - publicnode
+      timeout: 6000
+    arbitrum-sepolia:
+      preferredProviders:
+      - alchemy
+      - publicnode
+      timeout: 6000
+    xlayer-mainnet:
+      preferredProviders:
+      - xlayer-public
+      - xlayer-okx
+      timeout: 10000
+    xlayer-testnet:
+      preferredProviders:
+      - xlayer-public
+      - xlayer-okx
+      timeout: 6000
+monitor:
+  scanning:
+    defaultConfirmations: 3
+    maxBlockRange: 1000
+    scanInterval: 10000
+  events:
+    maxListeners: 100
+    errorRetryInterval: 5000
+  performance:
+    enableCache: true
+    cacheSize: 1000
+    concurrentRequests: 5

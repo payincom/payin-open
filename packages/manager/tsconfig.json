@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "outDir": "./dist",
+    "composite": true,
+    "rootDir": "./src",
+    "paths": {
+      "@payin/shared": ["../shared/dist"],
+      "@payin/shared/*": ["../shared/dist/*"],
+      "@payin/notification": ["../notification/dist"],
+      "@payin/notification/*": ["../notification/dist/*"],
+      "@payin/processor": ["../processor/dist"],
+      "@payin/processor/*": ["../processor/dist/*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ],
+  "references": [
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../notification"
+    },
+    {
+      "path": "../processor"
+    }
+  ]
+}

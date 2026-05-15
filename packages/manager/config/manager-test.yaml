@@ -1,0 +1,48 @@
+# Manager Integration Test Configuration
+# This file is used for testing Manager + Processor integration
+
+# Monitor Configuration
+monitor:
+  chains:
+    - ethereum-sepolia
+    - polygon-amoy
+
+# Skip recovery in integration tests
+skipMonitorRecovery: false
+
+# Services Configuration
+services:
+  orders: true
+  deposits: true
+
+# Order Configuration - fast timeouts for quick tests
+orders:
+  defaultPaymentWindowMinutes: 10
+  defaultGracePeriodMinutes: 5
+  maxTotalTimeoutMinutes: 30
+  maintenanceIntervalMs: 5000
+
+# Delayed Confirmation - fast checks for integration tests
+delayedConfirmation:
+  enabled: true
+  checkInterval: 1000              # Check every second
+  maxPendingTime: 60000            # 1 minute max pending
+  maxPendingTransactions: 100
+  maxRetries: 2
+
+# Deposit Configuration
+deposits:
+  poolManagement:
+    defaultCooldownMinutes: 30     # Standard 30-minute cooldown
+    maxPoolSize: 1000
+    lowPoolThreshold: 50
+
+  importValidation:
+    validateDerivationPath: true
+    maxImportBatchSize: 100
+
+# Chain Configurations - from database
+# Manager will populate these from Processor defaults
+
+# Token Configurations - from database
+# Manager will populate these from Processor defaults
