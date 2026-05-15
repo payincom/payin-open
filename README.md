@@ -40,7 +40,7 @@ payin-open/
 ├── apps/
 │   ├── api/              # Payment API and payment pages
 │   ├── admin/            # Admin dashboard
-│   ├── docs/             # Public VitePress docs site
+│   ├── docs/             # Repository-local docs preview/source
 │   └── mcp-server/       # MCP server for AI-assisted workflows
 ├── packages/             # Shared libraries, monitor, processor, auth, manager
 ├── docs/
@@ -71,13 +71,18 @@ npm run lint:check     # Check linting
 npm run db:migrate:up  # Run database migrations
 ```
 
-## Self-hosting Documentation
+## Public Docs and Self-hosting Documentation
 
-Start here:
+Public product and concept docs live in the PayIn website repository and site:
+
+- Website repository: https://github.com/payincom/payin-com
+- Public docs hub: https://payincom.github.io/payin-com/docs/
+
+This repository keeps the AI-agent skill and self-hosting reference material used to deploy PayIn Open. Start here:
 
 | Document | Best for |
 | --- | --- |
-| [`apps/docs/`](apps/docs/) | Public documentation website source |
+| [`apps/docs/`](apps/docs/) | Repository-local docs preview/source; public docs belong in `payin-com` |
 | [`docs/self-hosting/README.md`](docs/self-hosting/README.md) | Self-hosting documentation index |
 | [`docs/self-hosting/getting-started.md`](docs/self-hosting/getting-started.md) | First-time setup overview |
 | [`docs/self-hosting/configuration.md`](docs/self-hosting/configuration.md) | Runtime configuration overview |
@@ -98,7 +103,7 @@ Use these rules when adding or changing docs:
 - Do not include PayIn Cloud production runbooks or hosted-service-only procedures.
 - Do not include private Railway project IDs, customer-specific details, or secrets.
 - Do not publish temporary planning notes, one-off debugging logs, or obsolete deployment experiments.
-- Put durable self-hosting material under `docs/self-hosting/`.
+- Put public product/concept docs in `payin-com`; put durable self-hosting material under `docs/self-hosting/`.
 - Put low-level configuration references under `docs/reference/`.
 - Put developer design notes under `docs/dev/` only when they remain useful.
 

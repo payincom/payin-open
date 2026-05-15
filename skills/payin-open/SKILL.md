@@ -115,9 +115,8 @@ When a payment is not detected:
 Use these repository paths as source material:
 
 - `README.md`
-- `apps/docs/`
+- Public docs hub: `https://payincom.github.io/payin-com/docs/`
 - `docs/self-hosting/`
-- `docs/reference/`
 - `docs/reference/`
 - `docs/self-hosting/troubleshooting.md`
 
