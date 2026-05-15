@@ -361,7 +361,7 @@ Admin UI 提供用户友好的界面，可进行验证导入。
 **分步指南**：
 
 1. **登录 PayIn Admin**
-   - 导航到 [testnet.payin.com](https://testnet.payin.com) 或您的 PayIn 实例
+   - 导航到 [your-payin.example.com](https://your-payin.example.com) 或您的 PayIn 实例
    - 使用您的账户登录
 
 2. **导航到地址池**
@@ -422,7 +422,7 @@ import fs from 'fs';
 
 const csvContent = fs.readFileSync('evm-addresses-2025-01-20-full.csv', 'utf8');
 
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/import', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/import', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -484,7 +484,7 @@ with open('evm-addresses-2025-01-20-full.csv', 'r') as f:
     csv_content = f.read()
 
 response = requests.post(
-    'https://testnet.payin.com/api/v1/address-pool/import',
+    'https://your-payin.example.com/api/v1/address-pool/import',
     headers={
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {os.getenv("PAYIN_API_KEY")}'
@@ -726,7 +726,7 @@ ORDER BY recycled_at ASC
 **请求**：
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/status', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/status', {
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
   }
@@ -851,7 +851,7 @@ Admin UI 提供可视化池监控：
 2. 通过 Admin UI 导入地址
 3. 检查分配模式
 
-查看详情：https://testnet.payin.com/address-pool
+查看详情：https://your-payin.example.com/address-pool
 
 —
 PayIn 警报系统
@@ -891,7 +891,7 @@ import { PayInClient } from '@payin/sdk';
 
 const client = new PayInClient({
   apiKey: process.env.PAYIN_API_KEY,
-  baseUrl: 'https://testnet.payin.com'
+  baseUrl: 'https://your-payin.example.com'
 });
 
 async function checkPoolHealth() {
@@ -1029,7 +1029,7 @@ if (errors === 0) {
 ```typescript
 const csvContent = fs.readFileSync('self-managed-addresses.csv', 'utf8');
 
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/import', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/import', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

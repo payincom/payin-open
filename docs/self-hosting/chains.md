@@ -255,6 +255,6 @@ Types of property 'chains' are incompatible
 
 ## 相关文档
 
-- [配置体系概览](./configuration-overview.md)
+- [配置体系概览](./configuration.md)
 - [Processor 配置指南](../../packages/processor/config/README.md)
 - [Manager 配置指南](../../apps/api/config/manager.example.yaml)

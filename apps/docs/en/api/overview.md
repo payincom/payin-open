@@ -6,12 +6,12 @@ Complete REST API reference for PayIn multi-chain stablecoin payment infrastruct
 
 **Production:**
 ```
-https://app.payin.com/api/v1
+https://your-payin.example.com/api/v1
 ```
 
 **Testnet:**
 ```
-https://testnet.payin.com/api/v1
+https://your-payin.example.com/api/v1
 ```
 
 **Local Development:**
@@ -33,7 +33,7 @@ X-API-Key: your-api-key-here
 
 ### Generating API Keys
 
-1. Log in to [PayIn Admin Dashboard](https://testnet.payin.com)
+1. Log in to [PayIn Admin Dashboard](https://your-payin.example.com)
 2. Navigate to **Settings → API Keys**
 3. Click **Create API Key**
 4. Give it a descriptive name
@@ -224,7 +224,7 @@ Idempotency-Key: unique-key-123
 
 **Example:**
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -H "Idempotency-Key: order-2025-001-retry-1" \
@@ -379,7 +379,7 @@ Manage organizations and API keys (admin only).
 **TypeScript:**
 ```typescript
 try {
-  const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+  const response = await fetch('https://your-payin.example.com/api/v1/orders', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -424,7 +424,7 @@ import requests
 
 try:
     response = requests.post(
-        'https://testnet.payin.com/api/v1/orders',
+        'https://your-payin.example.com/api/v1/orders',
         headers={
             'Content-Type': 'application/json',
             'X-API-Key': os.getenv('PAYIN_API_KEY')
@@ -457,7 +457,7 @@ except requests.exceptions.HTTPError as e:
 The PayIn API uses URL versioning:
 
 ```
-https://testnet.payin.com/api/v1/...
+https://your-payin.example.com/api/v1/...
 ```
 
 **Current Version:** `v1`
@@ -482,7 +482,7 @@ Official SDKs:
 ### Test Mode
 
 Use testnet for testing:
-- Base URL: `https://testnet.payin.com/api/v1`
+- Base URL: `https://your-payin.example.com/api/v1`
 - Free test tokens
 - Same API as production
 - Safe to experiment
@@ -504,7 +504,7 @@ Use testnet for testing:
 
 ```bash
 # 1. Create order on testnet
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-testnet-key" \
   -d '{
@@ -517,7 +517,7 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
 # 2. Send test USDT to the payment address
 
 # 3. Check order status
-curl https://testnet.payin.com/api/v1/orders/ord_xxx \
+curl https://your-payin.example.com/api/v1/orders/ord_xxx \
   -H "X-API-Key: your-testnet-key"
 
 # 4. Verify webhook received (if configured)

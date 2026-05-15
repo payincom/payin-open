@@ -1204,7 +1204,7 @@ console.log('Block number:', parseInt(response.result, 16));
 
 ## Related Documentation
 
-- [Monitor Architecture Documentation](./monitor.md)
+- [Monitor Architecture Documentation](./rpc-configuration.en.md)
 - [RPC Provider Templates](../../packages/monitor/src/rpc/config/provider-templates.ts)
 - [Environment Variables Guide](../../packages/monitor/config/environment-variables.md)
 - [Configuration Examples](../../packages/monitor/config/examples/)

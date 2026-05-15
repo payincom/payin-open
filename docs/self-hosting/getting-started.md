@@ -36,5 +36,5 @@
 ## 下一步
 
 - 参考《docs/examples/mcp-persona-scenarios.md》中的提示词设计常用操作脚本。
-- 在 `docs/troubleshooting.md` 查阅通用错误与处理步骤，确保 API 返回错误时能快速定位并修复。
+- 在 `docs/self-hosting/troubleshooting.md` 查阅通用错误与处理步骤，确保 API 返回错误时能快速定位并修复。
 

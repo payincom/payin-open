@@ -341,7 +341,7 @@ curl -X POST http://localhost:8787/mcp \
 
 遇到问题？
 
-1. 查看 `docs/troubleshooting.md`
+1. 查看 `docs/self-hosting/troubleshooting.md`
 2. 使用 AI 的 `troubleshoot` Prompt
 3. GitHub Issues
 4. 邮箱: support@payin.com
@@ -352,5 +352,5 @@ curl -X POST http://localhost:8787/mcp \
 
 下一步：
 1. 阅读 `DEPLOYMENT.md` 了解部署流程
-2. 阅读 `docs/getting-started.md` 了解如何使用
+2. 阅读 `docs/self-hosting/getting-started.md` 了解如何使用
 3. 配置 Claude Desktop 开始集成

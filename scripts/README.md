@@ -171,8 +171,8 @@ npm run dev
 
 ## Documentation
 
-- [Database Initialization Guide](../docs/deployment/database-initialization.md) - Detailed initialization documentation
-- [Deployment Guide](../docs/deployment/README.md) - Complete deployment guide
+- [Database Initialization Guide](../docs/self-hosting/database-initialization.md) - Detailed initialization documentation
+- [Deployment Guide](../docs/self-hosting/README.md) - Complete deployment guide
 
 ## Development
 
@@ -230,6 +230,6 @@ npm run db:init:force
 
 ## Related Documentation
 
-- [Environment Configuration](../docs/deployment/configuration-overview.md)
+- [Environment Configuration](../docs/self-hosting/configuration-overview.md)
 - [Database Schema](../packages/processor/docs/database-schema-methods.md)
-- [Deployment Guide](../docs/deployment/README.md)
+- [Deployment Guide](../docs/self-hosting/README.md)

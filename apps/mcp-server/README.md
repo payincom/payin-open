@@ -225,7 +225,7 @@ wrangler secret list --env production
 ## Documentation
 
 - [Configuration Guide](./CONFIGURATION.md) - **Complete configuration reference**
-- [Getting Started](./docs/getting-started.md) - Quick start guide
+- [Getting Started](./docs/self-hosting/getting-started.md) - Quick start guide
 - [Integration Guide](./docs/integration-guide.md) - Integrate PayIn with AI assistance
 - [API Reference](./docs/api-reference.md) - Complete API documentation
 - [Examples](./docs/examples/) - Code examples and use cases

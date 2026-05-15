@@ -6,7 +6,7 @@ PayIn provides two separate environments to support your development and product
 
 | Aspect | Testnet | Mainnet |
 |--------|---------|---------|
-| **URL** | [testnet.payin.com](https://testnet.payin.com) | [app.payin.com](https://app.payin.com) |
+| **URL** | [your-payin.example.com](https://your-payin.example.com) | [your-payin.example.com](https://your-payin.example.com) |
 | **Purpose** | Development & Testing | Production Operations |
 | **Tokens** | Test tokens (no value) | Real cryptocurrencies |
 | **Blockchain** | Test networks (Sepolia, Amoy, Shasta) | Main networks (Ethereum, Polygon, Tron) |
@@ -162,7 +162,7 @@ Change the `X-PayIn-API-URL` header in your MCP configuration:
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-testnet-api-key",
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -178,7 +178,7 @@ Change the `X-PayIn-API-URL` header in your MCP configuration:
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-mainnet-api-key",
-        "X-PayIn-API-URL": "https://app.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -192,11 +192,11 @@ Change the base URL in your code:
 **TypeScript Example:**
 ```typescript
 // Testnet
-const PAYIN_API_URL = 'https://testnet.payin.com/api/v1';
+const PAYIN_API_URL = 'https://your-payin.example.com/api/v1';
 const API_KEY = process.env.PAYIN_TESTNET_API_KEY;
 
 // Mainnet
-const PAYIN_API_URL = 'https://app.payin.com/api/v1';
+const PAYIN_API_URL = 'https://your-payin.example.com/api/v1';
 const API_KEY = process.env.PAYIN_MAINNET_API_KEY;
 ```
 
@@ -244,8 +244,8 @@ Testnet and Mainnet use **completely separate API keys**. Never use a mainnet AP
 // Good practice
 const config = {
   apiUrl: process.env.NODE_ENV === 'production'
-    ? 'https://app.payin.com/api/v1'
-    : 'https://testnet.payin.com/api/v1',
+    ? 'https://your-payin.example.com/api/v1'
+    : 'https://your-payin.example.com/api/v1',
   apiKey: process.env.NODE_ENV === 'production'
     ? process.env.PAYIN_MAINNET_API_KEY
     : process.env.PAYIN_TESTNET_API_KEY
@@ -256,11 +256,11 @@ const config = {
 
 ```bash
 # .env.development
-PAYIN_API_URL=https://testnet.payin.com/api/v1
+PAYIN_API_URL=https://your-payin.example.com/api/v1
 PAYIN_API_KEY=your-testnet-api-key
 
 # .env.production
-PAYIN_API_URL=https://app.payin.com/api/v1
+PAYIN_API_URL=https://your-payin.example.com/api/v1
 PAYIN_API_KEY=your-mainnet-api-key
 ```
 

@@ -64,7 +64,7 @@ POST /api/v1/deposits/references
 **Example (cURL):**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/deposits/references \
+curl -X POST https://your-payin.example.com/api/v1/deposits/references \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -d '{
@@ -79,7 +79,7 @@ curl -X POST https://testnet.payin.com/api/v1/deposits/references \
 ```typescript
 async function createDepositAddress(userId: string) {
   const response = await fetch(
-    'https://testnet.payin.com/api/v1/deposits/references',
+    'https://your-payin.example.com/api/v1/deposits/references',
     {
       method: 'POST',
       headers: {
@@ -128,7 +128,7 @@ async function createDepositAddress(userId: string) {
 ```python
 def create_deposit_address(user_id: str):
     response = requests.post(
-        'https://testnet.payin.com/api/v1/deposits/references',
+        'https://your-payin.example.com/api/v1/deposits/references',
         headers={
             'Content-Type': 'application/json',
             'X-API-Key': os.getenv('PAYIN_API_KEY')
@@ -203,7 +203,7 @@ GET /api/v1/deposits/references/:depositReference
 **Example (cURL):**
 
 ```bash
-curl https://testnet.payin.com/api/v1/deposits/references/user_alice_123 \
+curl https://your-payin.example.com/api/v1/deposits/references/user_alice_123 \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -212,7 +212,7 @@ curl https://testnet.payin.com/api/v1/deposits/references/user_alice_123 \
 ```typescript
 async function getDepositAddress(depositReference: string) {
   const response = await fetch(
-    `https://testnet.payin.com/api/v1/deposits/references/${depositReference}`,
+    `https://your-payin.example.com/api/v1/deposits/references/${depositReference}`,
     {
       headers: {
         'X-API-Key': process.env.PAYIN_API_KEY!
@@ -286,11 +286,11 @@ GET /api/v1/deposits/references
 
 ```bash
 # List all deposit references
-curl "https://testnet.payin.com/api/v1/deposits/references?limit=50" \
+curl "https://your-payin.example.com/api/v1/deposits/references?limit=50" \
   -H "X-API-Key: your-api-key"
 
 # Search for specific user
-curl "https://testnet.payin.com/api/v1/deposits/references?search=alice" \
+curl "https://your-payin.example.com/api/v1/deposits/references?search=alice" \
   -H "X-API-Key": your-api-key"
 ```
 
@@ -352,11 +352,11 @@ GET /api/v1/deposits
 
 ```bash
 # Get all deposits for a user
-curl "https://testnet.payin.com/api/v1/deposits?depositReference=user_alice_123" \
+curl "https://your-payin.example.com/api/v1/deposits?depositReference=user_alice_123" \
   -H "X-API-Key: your-api-key"
 
 # Get pending deposits
-curl "https://testnet.payin.com/api/v1/deposits?status=pending" \
+curl "https://your-payin.example.com/api/v1/deposits?status=pending" \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -365,7 +365,7 @@ curl "https://testnet.payin.com/api/v1/deposits?status=pending" \
 ```typescript
 async function getUserDepositHistory(depositReference: string) {
   const response = await fetch(
-    `https://testnet.payin.com/api/v1/deposits?depositReference=${depositReference}&sortBy=detectedAt&sortOrder=desc`,
+    `https://your-payin.example.com/api/v1/deposits?depositReference=${depositReference}&sortBy=detectedAt&sortOrder=desc`,
     {
       headers: {
         'X-API-Key': process.env.PAYIN_API_KEY!
@@ -427,11 +427,11 @@ DELETE /api/v1/deposits/references/:depositReference
 
 ```bash
 # Unbind all addresses for a deposit reference
-curl -X DELETE https://testnet.payin.com/api/v1/deposits/references/user_alice_123 \
+curl -X DELETE https://your-payin.example.com/api/v1/deposits/references/user_alice_123 \
   -H "X-API-Key: your-api-key"
 
 # Unbind specific chain only
-curl -X DELETE "https://testnet.payin.com/api/v1/deposits/references/user_alice_123?chainId=ethereum-sepolia" \
+curl -X DELETE "https://your-payin.example.com/api/v1/deposits/references/user_alice_123?chainId=ethereum-sepolia" \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -443,7 +443,7 @@ async function closeUserAccount(userId: string) {
 
   // Unbind all deposit addresses
   const response = await fetch(
-    `https://testnet.payin.com/api/v1/deposits/references/${depositReference}`,
+    `https://your-payin.example.com/api/v1/deposits/references/${depositReference}`,
     {
       method: 'DELETE',
       headers: {

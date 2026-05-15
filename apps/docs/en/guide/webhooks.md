@@ -102,7 +102,7 @@ app.listen(3000);
 
 ### Step 2: Configure in Admin Dashboard
 
-1. Log in to PayIn Admin: [testnet.payin.com](https://testnet.payin.com)
+1. Log in to PayIn Admin: [your-payin.example.com](https://your-payin.example.com)
 2. Navigate to **Settings** → **Webhooks**
 3. Click **Create Webhook Endpoint**
 4. Enter your endpoint URL (e.g., `https://yourapp.com/webhooks/payin`)

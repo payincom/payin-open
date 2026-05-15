@@ -50,7 +50,7 @@ features:
 
 PayIn Open is the open-source payment gateway in the PayIn product family.
 
-PayInGo is a separate face-to-face payment product for small merchants, powered by X402, and remains private for now while the commercial strategy is clarified.
+PayIn Go is a separate face-to-face payment product for in-person merchants.
 
 ## Recommended First Step
 

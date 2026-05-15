@@ -725,9 +725,9 @@ services:
 
 ## 相关文档
 
-- [Processor 主文档](../processor.md)
-- [Monitor RPC 配置](../monitor/rpc-configuration.zh-CN.md)
-- [配置文件示例](../../packages/processor/config/config.example.yaml)
+- [Processor 主文档](./processor-configuration.en.md)
+- [Monitor RPC 配置](./rpc-configuration.zh-CN.md)
+- [配置文件示例](../../packages/processor/config/default.yaml)
 - [环境变量示例](../../packages/processor/.env.example)
 
 ---

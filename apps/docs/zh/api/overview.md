@@ -6,12 +6,12 @@
 
 **生产环境：**
 ```
-https://app.payin.com/api/v1
+https://your-payin.example.com/api/v1
 ```
 
 **测试网络：**
 ```
-https://testnet.payin.com/api/v1
+https://your-payin.example.com/api/v1
 ```
 
 **本地开发：**
@@ -33,7 +33,7 @@ X-API-Key: your-api-key-here
 
 ### 生成 API 密钥
 
-1. 登录 [PayIn 管理后台](https://testnet.payin.com)
+1. 登录 [PayIn 管理后台](https://your-payin.example.com)
 2. 导航至 **设置 → API 密钥**
 3. 点击 **创建 API 密钥**
 4. 给它一个描述性的名称
@@ -224,7 +224,7 @@ Idempotency-Key: unique-key-123
 
 **示例：**
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -H "Idempotency-Key: order-2025-001-retry-1" \
@@ -379,7 +379,7 @@ POST /api/v1/webhooks/endpoints
 **TypeScript:**
 ```typescript
 try {
-  const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+  const response = await fetch('https://your-payin.example.com/api/v1/orders', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -424,7 +424,7 @@ import requests
 
 try:
     response = requests.post(
-        'https://testnet.payin.com/api/v1/orders',
+        'https://your-payin.example.com/api/v1/orders',
         headers={
             'Content-Type': 'application/json',
             'X-API-Key': os.getenv('PAYIN_API_KEY')
@@ -457,7 +457,7 @@ except requests.exceptions.HTTPError as e:
 PayIn API 使用 URL 版本控制：
 
 ```
-https://testnet.payin.com/api/v1/...
+https://your-payin.example.com/api/v1/...
 ```
 
 **当前版本：** `v1`
@@ -482,7 +482,7 @@ https://testnet.payin.com/api/v1/...
 ### 测试模式
 
 使用测试网络进行测试：
-- Base URL: `https://testnet.payin.com/api/v1`
+- Base URL: `https://your-payin.example.com/api/v1`
 - 免费测试代币
 - 与生产环境相同的 API
 - 可安全实验
@@ -504,7 +504,7 @@ https://testnet.payin.com/api/v1/...
 
 ```bash
 # 1. 在测试网络上创建订单
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-testnet-key" \
   -d '{
@@ -517,7 +517,7 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
 # 2. 将测试 USDT 发送到支付地址
 
 # 3. 检查订单状态
-curl https://testnet.payin.com/api/v1/orders/ord_xxx \
+curl https://your-payin.example.com/api/v1/orders/ord_xxx \
   -H "X-API-Key: your-testnet-key"
 
 # 4. 验证是否收到 webhook（如果已配置）

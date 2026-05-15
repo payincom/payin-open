@@ -9,7 +9,7 @@ PayIn Open 设计时就考虑了 AI Agent 的使用方式。商家可以让自�
 1. PayIn Open repository：`https://github.com/payincom/payin-open`
 2. `apps/docs/` 里的公众文档
 3. PayIn Open skill：`skills/payin-open/SKILL.md`
-4. `docs/deployment/` 里的部署文档
+4. `docs/self-hosting/` 里的部署文档
 
 ## 推荐 Prompt
 

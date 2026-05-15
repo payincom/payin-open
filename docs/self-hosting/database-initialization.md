@@ -273,7 +273,7 @@ npm run deploy
 ## 相关文档
 
 - [Deployment Guide](./README.md) - 完整部署指南
-- [Environment Configuration](./configuration-overview.md) - 环境配置说明
+- [Environment Configuration](./configuration.md) - 环境配置说明
 - [Database Schema](../../packages/processor/docs/database-schema-methods.md) - 数据库 Schema 文档
 
 ## 总结

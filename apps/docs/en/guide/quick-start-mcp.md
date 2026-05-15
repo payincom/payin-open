@@ -15,7 +15,7 @@ PayIn MCP Server provides an AI-powered interface to PayIn's payment infrastruct
 
 To get started, you need:
 
-1. **PayIn Account** - Register at [testnet.payin.com](https://testnet.payin.com) (for testing) or [app.payin.com](https://app.payin.com) (for production)
+1. **PayIn Account** - Register at [your-payin.example.com](https://your-payin.example.com) (for testing) or [your-payin.example.com](https://your-payin.example.com) (for production)
 2. **API Key** - Generate from the Admin dashboard
 
 ::: tip Testnet vs Mainnet
@@ -26,7 +26,7 @@ We strongly recommend starting with **testnet** to familiarize yourself with Pay
 
 ### 1.1 Register Your Account
 
-Visit [testnet.payin.com](https://testnet.payin.com) and create an account:
+Visit [your-payin.example.com](https://your-payin.example.com) and create an account:
 
 - **Option 1**: Register with email and password
 - **Option 2**: Sign in with GitHub or Google
@@ -64,7 +64,7 @@ Add the following configuration:
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-payin-api-key-here",
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -78,8 +78,8 @@ Add the following configuration:
 - **transport**: Connection protocol - use `"sse"` (Server-Sent Events)
 - **X-API-Key**: Your PayIn API key from Step 1.2
 - **X-PayIn-API-URL**: PayIn API base URL
-  - Testnet: `https://testnet.payin.com`
-  - Mainnet: `https://app.payin.com`
+  - Testnet: `https://your-payin.example.com`
+  - Mainnet: `https://your-payin.example.com`
 :::
 
 ### Cline Configuration
@@ -93,7 +93,7 @@ For Cline (VS Code extension), add to your MCP settings:
     "args": ["/path/to/mcp-client.js"],
     "env": {
       "PAYIN_API_KEY": "your-payin-api-key-here",
-      "PAYIN_API_URL": "https://testnet.payin.com"
+      "PAYIN_API_URL": "https://your-payin.example.com"
     }
   }
 }
@@ -179,7 +179,7 @@ You can use the MCP Server without an API key for **read-only** access:
       "url": "https://mcp.payin.com/sse",
       "transport": "sse",
       "headers": {
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }

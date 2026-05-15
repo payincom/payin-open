@@ -38,7 +38,7 @@
 
 在创建订单之前，请确保您已：
 
-1. ✅ **PayIn 账户** - 在 [testnet.payin.com](https://testnet.payin.com) 或 [app.payin.com](https://app.payin.com) 注册
+1. ✅ **PayIn 账户** - 在 [your-payin.example.com](https://your-payin.example.com) 或 [your-payin.example.com](https://your-payin.example.com) 注册
 2. ✅ **API 密钥** - 从管理后台生成
 3. ✅ **地址池** - 至少导入几个地址（参见 [地址池设置](/zh/guide/address-pool-setup)）
 4. ✅ **支持的网络** - 从[支持的网络](/zh/guide/supported-networks)中选择
@@ -85,7 +85,7 @@ AI 助手将：
 **使用 cURL：**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -99,7 +99,7 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
 **使用 TypeScript：**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+const response = await fetch('https://your-payin.example.com/api/v1/orders', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${apiKey}`,
@@ -141,7 +141,7 @@ console.log('Order created:', result.data);
 **通过 API：**
 
 ```bash
-curl https://testnet.payin.com/api/v1/orders/550e8400-e29b-41d4-a716-446655440123 \
+curl https://your-payin.example.com/api/v1/orders/550e8400-e29b-41d4-a716-446655440123 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -366,7 +366,7 @@ pending → completed  (收到支付并确认)
 **请求示例：**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/orders?status=completed&chain=ethereum-sepolia&page=1&limit=10" \
+curl "https://your-payin.example.com/api/v1/orders?status=completed&chain=ethereum-sepolia&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -447,7 +447,7 @@ class CheckoutService {
   constructor(apiKey: string) {
     this.payin = new PayInClient({
       apiKey,
-      baseUrl: 'https://testnet.payin.com/api/v1',
+      baseUrl: 'https://your-payin.example.com/api/v1',
     });
   }
 
@@ -599,7 +599,7 @@ class InvoicePaymentService {
     dueDate: Date;
   }) {
     // 为发票创建 PayIn 订单，使用更长的支付窗口
-    const order = await fetch('https://testnet.payin.com/api/v1/orders', {
+    const order = await fetch('https://your-payin.example.com/api/v1/orders', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -918,7 +918,7 @@ Webhook 是生产系统的推荐方法。轮询应仅用作后备方案或在开
 // 在所有开发和测试中使用测试网
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_TESTNET_API_KEY,
-  baseUrl: 'https://testnet.payin.com/api/v1',
+  baseUrl: 'https://your-payin.example.com/api/v1',
 });
 
 // 从水龙头获取测试网代币
@@ -942,7 +942,7 @@ const payin = new PayInClient({
 // 仅在充分的测试网测试后切换到主网
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_MAINNET_API_KEY,
-  baseUrl: 'https://app.payin.com/api/v1', // 生产 URL
+  baseUrl: 'https://your-payin.example.com/api/v1', // 生产 URL
 });
 ```
 
@@ -959,7 +959,7 @@ const payin = new PayInClient({
 
 ```bash
 # 通过 API 检查池状态
-curl https://testnet.payin.com/api/v1/address-pool/status \
+curl https://your-payin.example.com/api/v1/address-pool/status \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

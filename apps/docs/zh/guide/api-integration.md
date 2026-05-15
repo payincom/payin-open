@@ -27,8 +27,8 @@ PayIn 为测试和生产提供独立的环境：
 
 | 环境 | 基础 URL | 用途 |
 |------|---------|------|
-| **测试网** | `https://testnet.payin.com/api/v1` | 使用测试加密货币测试（免费） |
-| **主网** | `https://app.payin.com/api/v1` | 使用真实加密货币的生产环境 |
+| **测试网** | `https://your-payin.example.com/api/v1` | 使用测试加密货币测试（免费） |
+| **主网** | `https://your-payin.example.com/api/v1` | 使用真实加密货币的生产环境 |
 
 ::: tip 始终先测试
 在处理真实交易之前，先使用测试网熟悉 PayIn。参见 [测试网 vs 主网](/zh/guide/testnet-vs-mainnet)。
@@ -40,7 +40,7 @@ PayIn 为测试和生产提供独立的环境：
 
 #### 获取 API 密钥
 
-1. 登录 [testnet.payin.com](https://testnet.payin.com)（主网使用 app.payin.com）
+1. 登录 [your-payin.example.com](https://your-payin.example.com)（主网使用 your-payin.example.com）
 2. 导航到 **设置** → **API 密钥**
 3. 点击 **创建 API 密钥**
 4. 输入描述性名称（例如 "生产服务器密钥"）
@@ -77,7 +77,7 @@ Authorization: Bearer pk_your_api_key_here
 
 ```http
 POST /api/v1/orders HTTP/1.1
-Host: testnet.payin.com
+Host: your-payin.example.com
 Authorization: Bearer pk_xxxxxxxxxxxxx
 Content-Type: application/json
 ```
@@ -118,7 +118,7 @@ Content-Type: application/json
 当用户进入结账页面时：
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+const response = await fetch('https://your-payin.example.com/api/v1/orders', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -191,7 +191,7 @@ app.post('/webhooks/payin', async (req, res) => {
 ```typescript
 const orderId = 'ord_abcdef123456';
 const response = await fetch(
-  `https://testnet.payin.com/api/v1/orders/${orderId}`,
+  `https://your-payin.example.com/api/v1/orders/${orderId}`,
   {
     headers: {
       'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
@@ -217,7 +217,7 @@ console.log('Order Status:', result.data.status); // pending, completed, expired
 当用户创建钱包时：
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+const response = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -312,7 +312,7 @@ app.post('/webhooks/payin', async (req, res) => {
 ```typescript
 const depositReference = `player_${userId}`;
 const response = await fetch(
-  `https://testnet.payin.com/api/v1/deposits?depositReference=${depositReference}`,
+  `https://your-payin.example.com/api/v1/deposits?depositReference=${depositReference}`,
   {
     headers: {
       'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
@@ -336,7 +336,7 @@ console.log('Deposits:', result.data.deposits);
 **创建支付链接：**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/payment-links', {
+const response = await fetch('https://your-payin.example.com/api/v1/payment-links', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -362,7 +362,7 @@ const result = await response.json();
 
 if (result.success) {
   // 通过电子邮件向客户发送支付链接
-  const paymentUrl = `https://testnet.payin.com/checkout/${result.data.slug}`;
+  const paymentUrl = `https://your-payin.example.com/checkout/${result.data.slug}`;
   await sendEmail({
     to: client.email,
     subject: 'Invoice #2025-001',
@@ -382,7 +382,7 @@ if (result.success) {
 检查 API 可用性：
 
 ```bash
-curl https://testnet.payin.com/health
+curl https://your-payin.example.com/health
 ```
 
 **响应：**
@@ -628,7 +628,7 @@ import crypto from 'crypto';
 class PayInClient {
   constructor(
     private apiKey: string,
-    private baseUrl: string = 'https://testnet.payin.com/api/v1'
+    private baseUrl: string = 'https://your-payin.example.com/api/v1'
   ) {}
 
   private async request<T>(
@@ -729,7 +729,7 @@ import hashlib
 from typing import Dict, Any
 
 class PayInClient:
-    def __init__(self, api_key: str, base_url: str = 'https://testnet.payin.com/api/v1'):
+    def __init__(self, api_key: str, base_url: str = 'https://your-payin.example.com/api/v1'):
         self.api_key = api_key
         self.base_url = base_url
         self.session = requests.Session()
@@ -813,7 +813,7 @@ class PayInClient {
     private $apiKey;
     private $baseUrl;
 
-    public function __construct($apiKey, $baseUrl = 'https://testnet.payin.com/api/v1') {
+    public function __construct($apiKey, $baseUrl = 'https://your-payin.example.com/api/v1') {
         $this->apiKey = $apiKey;
         $this->baseUrl = $baseUrl;
     }
@@ -883,7 +883,7 @@ echo "Payment URL: " . $order['paymentUrl'];
 
 ```bash
 # 创建订单
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Authorization: Bearer pk_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -894,11 +894,11 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
   }'
 
 # 获取订单状态
-curl -X GET https://testnet.payin.com/api/v1/orders/ord_abc123 \
+curl -X GET https://your-payin.example.com/api/v1/orders/ord_abc123 \
   -H "Authorization: Bearer pk_your_api_key"
 
 # 绑定充值地址
-curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
+curl -X POST https://your-payin.example.com/api/v1/deposits/bind \
   -H "Authorization: Bearer pk_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1254,7 +1254,7 @@ try {
 ```bash
 # .env
 PAYIN_API_KEY=pk_your_production_key
-PAYIN_BASE_URL=https://app.payin.com/api/v1
+PAYIN_BASE_URL=https://your-payin.example.com/api/v1
 PAYIN_WEBHOOK_SECRET=whsec_your_secret
 ```
 
@@ -1361,7 +1361,7 @@ PAYIN_WEBHOOK_SECRET=whsec_your_secret
 // 使用测试网基础 URL
 const testnetClient = new PayInClient(
   process.env.PAYIN_TESTNET_KEY,
-  'https://testnet.payin.com/api/v1'
+  'https://your-payin.example.com/api/v1'
 );
 
 // 测试订单创建
@@ -1447,7 +1447,7 @@ ngrok http 3000
 ---
 
 **准备好上线了吗？**在测试网上彻底测试后，通过以下步骤切换到主网：
-1. 在 [app.payin.com](https://app.payin.com) 创建账户
+1. 在 [your-payin.example.com](https://your-payin.example.com) 创建账户
 2. 向主网地址池导入地址
 3. 生成主网 API 密钥
-4. 将 `PAYIN_BASE_URL` 更新为 `https://app.payin.com/api/v1`
+4. 将 `PAYIN_BASE_URL` 更新为 `https://your-payin.example.com/api/v1`

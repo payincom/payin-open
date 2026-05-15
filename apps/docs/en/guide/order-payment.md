@@ -38,7 +38,7 @@ Understanding the difference between Order and Deposit services:
 
 Before creating orders, ensure you have:
 
-1. ✅ **PayIn Account** - Registered at [testnet.payin.com](https://testnet.payin.com) or [app.payin.com](https://app.payin.com)
+1. ✅ **PayIn Account** - Registered at [your-payin.example.com](https://your-payin.example.com) or [your-payin.example.com](https://your-payin.example.com)
 2. ✅ **API Key** - Generated from Admin dashboard
 3. ✅ **Address Pool** - At least a few addresses imported (see [Address Pool Setup](/en/guide/address-pool-setup))
 4. ✅ **Supported Network** - Choose from [supported networks](/en/guide/supported-networks)
@@ -85,7 +85,7 @@ Grace period: 5 minutes (total 15 minutes)
 **Using cURL:**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -99,7 +99,7 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
 **Using TypeScript:**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+const response = await fetch('https://your-payin.example.com/api/v1/orders', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${apiKey}`,
@@ -141,7 +141,7 @@ console.log('Order created:', result.data);
 **Via API:**
 
 ```bash
-curl https://testnet.payin.com/api/v1/orders/550e8400-e29b-41d4-a716-446655440123 \
+curl https://your-payin.example.com/api/v1/orders/550e8400-e29b-41d4-a716-446655440123 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -366,7 +366,7 @@ List all orders with filtering and pagination.
 **Example Request:**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/orders?status=completed&chain=ethereum-sepolia&page=1&limit=10" \
+curl "https://your-payin.example.com/api/v1/orders?status=completed&chain=ethereum-sepolia&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -447,7 +447,7 @@ class CheckoutService {
   constructor(apiKey: string) {
     this.payin = new PayInClient({
       apiKey,
-      baseUrl: 'https://testnet.payin.com/api/v1',
+      baseUrl: 'https://your-payin.example.com/api/v1',
     });
   }
 
@@ -599,7 +599,7 @@ class InvoicePaymentService {
     dueDate: Date;
   }) {
     // Create PayIn order with longer payment window for invoices
-    const order = await fetch('https://testnet.payin.com/api/v1/orders', {
+    const order = await fetch('https://your-payin.example.com/api/v1/orders', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -918,7 +918,7 @@ Webhooks are the recommended approach for production systems. Polling should onl
 // Use testnet for all development and testing
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_TESTNET_API_KEY,
-  baseUrl: 'https://testnet.payin.com/api/v1',
+  baseUrl: 'https://your-payin.example.com/api/v1',
 });
 
 // Get testnet tokens from faucets
@@ -942,7 +942,7 @@ const payin = new PayInClient({
 // Only switch to mainnet after thorough testnet testing
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_MAINNET_API_KEY,
-  baseUrl: 'https://app.payin.com/api/v1', // Production URL
+  baseUrl: 'https://your-payin.example.com/api/v1', // Production URL
 });
 ```
 
@@ -959,7 +959,7 @@ const payin = new PayInClient({
 
 ```bash
 # Check pool status via API
-curl https://testnet.payin.com/api/v1/address-pool/status \
+curl https://your-payin.example.com/api/v1/address-pool/status \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

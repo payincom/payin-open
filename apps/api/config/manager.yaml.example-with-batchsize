@@ -151,4 +151,4 @@ configMetadata:
 # 5. Monitor the logs to see actual batchSize being used:
 #    [INFO] 🚀 RECOVERY SCAN: polygon-amoy { from: X, to: Y, batchSize: 200 }
 #
-# For more details, see: docs/monitor-chain-specific-batchsize.md
+# For more details, see: docs/reference/rpc-configuration.en.md

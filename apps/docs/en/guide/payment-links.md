@@ -40,7 +40,7 @@ Understanding when to use Payment Links:
 
 ### Step 1: Create Your First Payment Link
 
-1. Log in to [PayIn Admin](https://testnet.payin.com)
+1. Log in to [PayIn Admin](https://your-payin.example.com)
 2. Navigate to **Payment Links** in the sidebar
 3. Click **Create Payment Link**
 4. Fill in the details:
@@ -761,7 +761,7 @@ Manage payment links programmatically:
 
 **Create via API:**
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/payment-links \
+curl -X POST https://your-payin.example.com/api/v1/payment-links \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -773,7 +773,7 @@ curl -X POST https://testnet.payin.com/api/v1/payment-links \
 
 **List all links:**
 ```bash
-curl https://testnet.payin.com/api/v1/payment-links \
+curl https://your-payin.example.com/api/v1/payment-links \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

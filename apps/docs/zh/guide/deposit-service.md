@@ -40,7 +40,7 @@
 
 创建充值引用前，请确保您已：
 
-1. ✅ **PayIn账户** - 在 [testnet.payin.com](https://testnet.payin.com) 或 [app.payin.com](https://app.payin.com) 注册
+1. ✅ **PayIn账户** - 在 [your-payin.example.com](https://your-payin.example.com) 或 [your-payin.example.com](https://your-payin.example.com) 注册
 2. ✅ **API密钥** - 从管理后台生成
 3. ✅ **地址池** - 至少导入几个地址（参见 [地址池设置](/zh/guide/address-pool-setup)）
 4. ✅ **支持的网络** - 选择协议族：EVM 或 Tron
@@ -86,7 +86,7 @@ AI助手将：
 **使用 cURL：**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
+curl -X POST https://your-payin.example.com/api/v1/deposits/bind \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -98,7 +98,7 @@ curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
 **使用 TypeScript：**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+const response = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${apiKey}`,
@@ -156,7 +156,7 @@ console.log('充值地址已绑定：', result.data);
 **通过 API：**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/deposits/references?depositReference=user_12345" \
+curl "https://your-payin.example.com/api/v1/deposits/references?depositReference=user_12345" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -405,7 +405,7 @@ const binding = await payin.deposits.bind({
 **请求示例：**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/deposits/references?protocol=evm&page=1&limit=10" \
+curl "https://your-payin.example.com/api/v1/deposits/references?protocol=evm&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -494,7 +494,7 @@ class GamingWalletService {
   constructor(apiKey: string) {
     this.payin = new PayInClient({
       apiKey,
-      baseUrl: 'https://testnet.payin.com/api/v1',
+      baseUrl: 'https://your-payin.example.com/api/v1',
     });
   }
 
@@ -684,7 +684,7 @@ class GamingWalletService {
 class SubscriptionPaymentService {
   async onSubscriptionCreated(customerId: string, plan: string) {
     // 为客户绑定充值地址
-    const binding = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+    const binding = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -1013,7 +1013,7 @@ if (recentDeposits.length > 10) {
 // 所有开发使用测试网
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_TESTNET_API_KEY,
-  baseUrl: 'https://testnet.payin.com/api/v1',
+  baseUrl: 'https://your-payin.example.com/api/v1',
 });
 
 // 测试完整流程：
@@ -1048,7 +1048,7 @@ const payin = new PayInClient({
 
 ```bash
 # 通过 API 检查池状态
-curl https://testnet.payin.com/api/v1/address-pool/status \
+curl https://your-payin.example.com/api/v1/address-pool/status \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

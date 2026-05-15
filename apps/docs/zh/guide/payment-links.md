@@ -40,7 +40,7 @@
 
 ### 步骤 1：创建您的第一个支付链接
 
-1. 登录到 [PayIn 管理后台](https://testnet.payin.com)
+1. 登录到 [PayIn 管理后台](https://your-payin.example.com)
 2. 在侧边栏导航到 **支付链接**
 3. 点击 **创建支付链接**
 4. 填写详细信息：
@@ -761,7 +761,7 @@ app.post('/webhooks/payin', async (req, res) => {
 
 **通过 API 创建：**
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/payment-links \
+curl -X POST https://your-payin.example.com/api/v1/payment-links \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -773,7 +773,7 @@ curl -X POST https://testnet.payin.com/api/v1/payment-links \
 
 **列出所有链接：**
 ```bash
-curl https://testnet.payin.com/api/v1/payment-links \
+curl https://your-payin.example.com/api/v1/payment-links \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

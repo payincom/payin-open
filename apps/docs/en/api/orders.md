@@ -76,7 +76,7 @@ POST /api/v1/orders
 **Example (cURL):**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -d '{
@@ -90,7 +90,7 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
 **Example (TypeScript):**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+const response = await fetch('https://your-payin.example.com/api/v1/orders', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ import requests
 import time
 
 response = requests.post(
-    'https://testnet.payin.com/api/v1/orders',
+    'https://your-payin.example.com/api/v1/orders',
     headers={
         'Content-Type': 'application/json',
         'X-API-Key': os.getenv('PAYIN_API_KEY')
@@ -187,7 +187,7 @@ GET /api/v1/orders/:orderId
 **Example (cURL):**
 
 ```bash
-curl https://testnet.payin.com/api/v1/orders/ord_abc123def456 \
+curl https://your-payin.example.com/api/v1/orders/ord_abc123def456 \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -195,7 +195,7 @@ curl https://testnet.payin.com/api/v1/orders/ord_abc123def456 \
 
 ```typescript
 const response = await fetch(
-  `https://testnet.payin.com/api/v1/orders/${orderId}`,
+  `https://your-payin.example.com/api/v1/orders/${orderId}`,
   {
     headers: {
       'X-API-Key': process.env.PAYIN_API_KEY!
@@ -232,7 +232,7 @@ GET /api/v1/orders/by-reference/:orderReference
 **Example:**
 
 ```bash
-curl https://testnet.payin.com/api/v1/orders/by-reference/ORDER-2025-001 \
+curl https://your-payin.example.com/api/v1/orders/by-reference/ORDER-2025-001 \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -290,11 +290,11 @@ GET /api/v1/orders
 
 ```bash
 # Get pending orders
-curl "https://testnet.payin.com/api/v1/orders?status=pending&limit=10" \
+curl "https://your-payin.example.com/api/v1/orders?status=pending&limit=10" \
   -H "X-API-Key: your-api-key"
 
 # Get USDT orders sorted by amount
-curl "https://testnet.payin.com/api/v1/orders?currency=USDT&sortBy=amount&sortOrder=desc" \
+curl "https://your-payin.example.com/api/v1/orders?currency=USDT&sortBy=amount&sortOrder=desc" \
   -H "X-API-Key: your-api-key"
 ```
 
@@ -303,7 +303,7 @@ curl "https://testnet.payin.com/api/v1/orders?currency=USDT&sortBy=amount&sortOr
 ```typescript
 // Get all pending orders
 const response = await fetch(
-  'https://testnet.payin.com/api/v1/orders?status=pending',
+  'https://your-payin.example.com/api/v1/orders?status=pending',
   {
     headers: {
       'X-API-Key': process.env.PAYIN_API_KEY!

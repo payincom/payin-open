@@ -15,7 +15,7 @@ PayIn MCP 服务器为 PayIn 的支付基础设施提供了 AI 驱动的接口�
 
 开始之前，您需要：
 
-1. **PayIn 账户** - 在 [testnet.payin.com](https://testnet.payin.com)（测试环境）或 [app.payin.com](https://app.payin.com)（生产环境）注册
+1. **PayIn 账户** - 在 [your-payin.example.com](https://your-payin.example.com)（测试环境）或 [your-payin.example.com](https://your-payin.example.com)（生产环境）注册
 2. **API 密钥** - 从管理后台生成
 
 ::: tip 测试网 vs 主网
@@ -26,7 +26,7 @@ PayIn MCP 服务器为 PayIn 的支付基础设施提供了 AI 驱动的接口�
 
 ### 1.1 注册账户
 
-访问 [testnet.payin.com](https://testnet.payin.com) 并创建账户：
+访问 [your-payin.example.com](https://your-payin.example.com) 并创建账户：
 
 - **选项 1**：使用邮箱和密码注册
 - **选项 2**：使用 GitHub 或 Google 登录
@@ -64,7 +64,7 @@ API 密钥在创建时只显示一次。请安全保存 - 配置 MCP 时需要�
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-payin-api-key-here",
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -78,8 +78,8 @@ API 密钥在创建时只显示一次。请安全保存 - 配置 MCP 时需要�
 - **transport**: 连接协议 - 使用 `"sse"`（服务器发送事件）
 - **X-API-Key**: 您在步骤 1.2 获取的 PayIn API 密钥
 - **X-PayIn-API-URL**: PayIn API 基础 URL
-  - 测试网：`https://testnet.payin.com`
-  - 主网：`https://app.payin.com`
+  - 测试网：`https://your-payin.example.com`
+  - 主网：`https://your-payin.example.com`
 :::
 
 ### Cline 配置
@@ -93,7 +93,7 @@ API 密钥在创建时只显示一次。请安全保存 - 配置 MCP 时需要�
     "args": ["/path/to/mcp-client.js"],
     "env": {
       "PAYIN_API_KEY": "your-payin-api-key-here",
-      "PAYIN_API_URL": "https://testnet.payin.com"
+      "PAYIN_API_URL": "https://your-payin.example.com"
     }
   }
 }
@@ -179,7 +179,7 @@ AI 将通过代码示例指导您完成集成过程。
       "url": "https://mcp.payin.com/sse",
       "transport": "sse",
       "headers": {
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }

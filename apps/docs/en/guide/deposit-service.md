@@ -40,7 +40,7 @@ Understanding the difference between Deposit and Order services:
 
 Before creating deposit references, ensure you have:
 
-1. ✅ **PayIn Account** - Registered at [testnet.payin.com](https://testnet.payin.com) or [app.payin.com](https://app.payin.com)
+1. ✅ **PayIn Account** - Registered at [your-payin.example.com](https://your-payin.example.com) or [your-payin.example.com](https://your-payin.example.com)
 2. ✅ **API Key** - Generated from Admin dashboard
 3. ✅ **Address Pool** - At least a few addresses imported (see [Address Pool Setup](/en/guide/address-pool-setup))
 4. ✅ **Supported Network** - Choose protocol family: EVM or Tron
@@ -86,7 +86,7 @@ The address will monitor all transactions automatically.
 **Using cURL:**
 
 ```bash
-curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
+curl -X POST https://your-payin.example.com/api/v1/deposits/bind \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -98,7 +98,7 @@ curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
 **Using TypeScript:**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+const response = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${apiKey}`,
@@ -156,7 +156,7 @@ console.log('Deposit address bound:', result.data);
 **Via API:**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/deposits/references?depositReference=user_12345" \
+curl "https://your-payin.example.com/api/v1/deposits/references?depositReference=user_12345" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -405,7 +405,7 @@ List all deposit references with statistics.
 **Example Request:**
 
 ```bash
-curl "https://testnet.payin.com/api/v1/deposits/references?protocol=evm&page=1&limit=10" \
+curl "https://your-payin.example.com/api/v1/deposits/references?protocol=evm&page=1&limit=10" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -494,7 +494,7 @@ class GamingWalletService {
   constructor(apiKey: string) {
     this.payin = new PayInClient({
       apiKey,
-      baseUrl: 'https://testnet.payin.com/api/v1',
+      baseUrl: 'https://your-payin.example.com/api/v1',
     });
   }
 
@@ -684,7 +684,7 @@ Example for subscription-based services:
 class SubscriptionPaymentService {
   async onSubscriptionCreated(customerId: string, plan: string) {
     // Bind deposit address for customer
-    const binding = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+    const binding = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -1013,7 +1013,7 @@ if (recentDeposits.length > 10) {
 // Use testnet for all development
 const payin = new PayInClient({
   apiKey: process.env.PAYIN_TESTNET_API_KEY,
-  baseUrl: 'https://testnet.payin.com/api/v1',
+  baseUrl: 'https://your-payin.example.com/api/v1',
 });
 
 // Test complete flow:
@@ -1048,7 +1048,7 @@ const payin = new PayInClient({
 
 ```bash
 # Check pool status via API
-curl https://testnet.payin.com/api/v1/address-pool/status \
+curl https://your-payin.example.com/api/v1/address-pool/status \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

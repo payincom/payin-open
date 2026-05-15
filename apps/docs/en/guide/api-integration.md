@@ -27,8 +27,8 @@ PayIn provides separate environments for testing and production:
 
 | Environment | Base URL | Purpose |
 |------------|----------|---------|
-| **Testnet** | `https://testnet.payin.com/api/v1` | Testing with test cryptocurrencies (free) |
-| **Mainnet** | `https://app.payin.com/api/v1` | Production with real cryptocurrencies |
+| **Testnet** | `https://your-payin.example.com/api/v1` | Testing with test cryptocurrencies (free) |
+| **Mainnet** | `https://your-payin.example.com/api/v1` | Production with real cryptocurrencies |
 
 ::: tip Always Test First
 Start with testnet to familiarize yourself with PayIn before handling real transactions. See [Testnet vs Mainnet](/en/guide/testnet-vs-mainnet).
@@ -40,7 +40,7 @@ All API requests require authentication using an API key obtained from the PayIn
 
 #### Getting Your API Key
 
-1. Log in to [testnet.payin.com](https://testnet.payin.com) (or app.payin.com for mainnet)
+1. Log in to [your-payin.example.com](https://your-payin.example.com) (or your-payin.example.com for mainnet)
 2. Navigate to **Settings** → **API Keys**
 3. Click **Create API Key**
 4. Enter a descriptive name (e.g., "Production Server Key")
@@ -77,7 +77,7 @@ All API requests must:
 
 ```http
 POST /api/v1/orders HTTP/1.1
-Host: testnet.payin.com
+Host: your-payin.example.com
 Authorization: Bearer pk_xxxxxxxxxxxxx
 Content-Type: application/json
 ```
@@ -118,7 +118,7 @@ Create a temporary payment address for a one-time transaction.
 When user proceeds to checkout:
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/orders', {
+const response = await fetch('https://your-payin.example.com/api/v1/orders', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -191,7 +191,7 @@ Check order status programmatically:
 ```typescript
 const orderId = 'ord_abcdef123456';
 const response = await fetch(
-  `https://testnet.payin.com/api/v1/orders/${orderId}`,
+  `https://your-payin.example.com/api/v1/orders/${orderId}`,
   {
     headers: {
       'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
@@ -217,7 +217,7 @@ Bind a permanent address to a user for recurring deposits.
 When user creates wallet:
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/deposits/bind', {
+const response = await fetch('https://your-payin.example.com/api/v1/deposits/bind', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -312,7 +312,7 @@ View all deposits for a user:
 ```typescript
 const depositReference = `player_${userId}`;
 const response = await fetch(
-  `https://testnet.payin.com/api/v1/deposits?depositReference=${depositReference}`,
+  `https://your-payin.example.com/api/v1/deposits?depositReference=${depositReference}`,
   {
     headers: {
       'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
@@ -336,7 +336,7 @@ Create shareable payment URLs for no-code payment collection.
 **Create Payment Link:**
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/payment-links', {
+const response = await fetch('https://your-payin.example.com/api/v1/payment-links', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`,
@@ -362,7 +362,7 @@ const result = await response.json();
 
 if (result.success) {
   // Send payment link to client via email
-  const paymentUrl = `https://testnet.payin.com/checkout/${result.data.slug}`;
+  const paymentUrl = `https://your-payin.example.com/checkout/${result.data.slug}`;
   await sendEmail({
     to: client.email,
     subject: 'Invoice #2025-001',
@@ -382,7 +382,7 @@ if (result.success) {
 Check API availability:
 
 ```bash
-curl https://testnet.payin.com/health
+curl https://your-payin.example.com/health
 ```
 
 **Response:**
@@ -628,7 +628,7 @@ import crypto from 'crypto';
 class PayInClient {
   constructor(
     private apiKey: string,
-    private baseUrl: string = 'https://testnet.payin.com/api/v1'
+    private baseUrl: string = 'https://your-payin.example.com/api/v1'
   ) {}
 
   private async request<T>(
@@ -729,7 +729,7 @@ import hashlib
 from typing import Dict, Any
 
 class PayInClient:
-    def __init__(self, api_key: str, base_url: str = 'https://testnet.payin.com/api/v1'):
+    def __init__(self, api_key: str, base_url: str = 'https://your-payin.example.com/api/v1'):
         self.api_key = api_key
         self.base_url = base_url
         self.session = requests.Session()
@@ -813,7 +813,7 @@ class PayInClient {
     private $apiKey;
     private $baseUrl;
 
-    public function __construct($apiKey, $baseUrl = 'https://testnet.payin.com/api/v1') {
+    public function __construct($apiKey, $baseUrl = 'https://your-payin.example.com/api/v1') {
         $this->apiKey = $apiKey;
         $this->baseUrl = $baseUrl;
     }
@@ -883,7 +883,7 @@ Quick command-line testing:
 
 ```bash
 # Create order
-curl -X POST https://testnet.payin.com/api/v1/orders \
+curl -X POST https://your-payin.example.com/api/v1/orders \
   -H "Authorization: Bearer pk_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -894,11 +894,11 @@ curl -X POST https://testnet.payin.com/api/v1/orders \
   }'
 
 # Get order status
-curl -X GET https://testnet.payin.com/api/v1/orders/ord_abc123 \
+curl -X GET https://your-payin.example.com/api/v1/orders/ord_abc123 \
   -H "Authorization: Bearer pk_your_api_key"
 
 # Bind deposit address
-curl -X POST https://testnet.payin.com/api/v1/deposits/bind \
+curl -X POST https://your-payin.example.com/api/v1/deposits/bind \
   -H "Authorization: Bearer pk_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1254,7 +1254,7 @@ Store configuration securely:
 ```bash
 # .env
 PAYIN_API_KEY=pk_your_production_key
-PAYIN_BASE_URL=https://app.payin.com/api/v1
+PAYIN_BASE_URL=https://your-payin.example.com/api/v1
 PAYIN_WEBHOOK_SECRET=whsec_your_secret
 ```
 
@@ -1361,7 +1361,7 @@ Always test thoroughly on testnet before production:
 // Use testnet base URL
 const testnetClient = new PayInClient(
   process.env.PAYIN_TESTNET_KEY,
-  'https://testnet.payin.com/api/v1'
+  'https://your-payin.example.com/api/v1'
 );
 
 // Test order creation
@@ -1447,7 +1447,7 @@ Rate limiting is not currently enforced but may be added in future versions. Fol
 ---
 
 **Ready to go live?** Once you've tested thoroughly on testnet, switch to mainnet by:
-1. Creating account at [app.payin.com](https://app.payin.com)
+1. Creating account at [your-payin.example.com](https://your-payin.example.com)
 2. Importing addresses to mainnet address pool
 3. Generating mainnet API key
-4. Updating `PAYIN_BASE_URL` to `https://app.payin.com/api/v1`
+4. Updating `PAYIN_BASE_URL` to `https://your-payin.example.com/api/v1`

@@ -102,7 +102,7 @@ app.listen(3000);
 
 ### 步骤 2：在管理后台配置
 
-1. 登录 PayIn 管理后台：[testnet.payin.com](https://testnet.payin.com)
+1. 登录 PayIn 管理后台：[your-payin.example.com](https://your-payin.example.com)
 2. 导航至 **设置** → **Webhooks**
 3. 点击 **创建 Webhook 端点**
 4. 输入您的端点 URL（例如：`https://yourapp.com/webhooks/payin`）

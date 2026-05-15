@@ -361,7 +361,7 @@ The Admin UI provides a user-friendly interface for importing addresses with val
 **Step-by-Step**:
 
 1. **Login to PayIn Admin**
-   - Navigate to [testnet.payin.com](https://testnet.payin.com) or your PayIn instance
+   - Navigate to [your-payin.example.com](https://your-payin.example.com) or your PayIn instance
    - Login with your account
 
 2. **Navigate to Address Pool**
@@ -422,7 +422,7 @@ import fs from 'fs';
 
 const csvContent = fs.readFileSync('evm-addresses-2025-01-20-full.csv', 'utf8');
 
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/import', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/import', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -484,7 +484,7 @@ with open('evm-addresses-2025-01-20-full.csv', 'r') as f:
     csv_content = f.read()
 
 response = requests.post(
-    'https://testnet.payin.com/api/v1/address-pool/import',
+    'https://your-payin.example.com/api/v1/address-pool/import',
     headers={
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {os.getenv("PAYIN_API_KEY")}'
@@ -726,7 +726,7 @@ Get real-time pool statistics:
 **Request**:
 
 ```typescript
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/status', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/status', {
   headers: {
     'Authorization': `Bearer ${process.env.PAYIN_API_KEY}`
   }
@@ -851,7 +851,7 @@ Recommended Actions:
 2. Import addresses via Admin UI
 3. Review allocation patterns
 
-View Details: https://testnet.payin.com/address-pool
+View Details: https://your-payin.example.com/address-pool
 
 —
 PayIn Alert System
@@ -891,7 +891,7 @@ import { PayInClient } from '@payin/sdk';
 
 const client = new PayInClient({
   apiKey: process.env.PAYIN_API_KEY,
-  baseUrl: 'https://testnet.payin.com'
+  baseUrl: 'https://your-payin.example.com'
 });
 
 async function checkPoolHealth() {
@@ -1029,7 +1029,7 @@ if (errors === 0) {
 ```typescript
 const csvContent = fs.readFileSync('self-managed-addresses.csv', 'utf8');
 
-const response = await fetch('https://testnet.payin.com/api/v1/address-pool/import', {
+const response = await fetch('https://your-payin.example.com/api/v1/address-pool/import', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

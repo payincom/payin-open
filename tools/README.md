@@ -116,8 +116,8 @@ vim .env.production  # 填入生产环境值
 ## 📚 相关文档
 
 完整的部署文档请参考：
-- [docs/deployment/DEPLOYMENT.md](../docs/deployment/DEPLOYMENT.md) - 部署总览
-- [docs/deployment/DATABASE_CONNECTION_OPTIMIZATION.md](../docs/deployment/DATABASE_CONNECTION_OPTIMIZATION.md) - 数据库优化
+- [docs/self-hosting/DEPLOYMENT.md](../docs/self-hosting/DEPLOYMENT.md) - 部署总览
+- [docs/self-hosting/DATABASE_CONNECTION_OPTIMIZATION.md](../docs/self-hosting/DATABASE_CONNECTION_OPTIMIZATION.md) - 数据库优化
 
 ---
 

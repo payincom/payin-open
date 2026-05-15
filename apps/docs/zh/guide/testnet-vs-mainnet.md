@@ -6,7 +6,7 @@ PayIn 提供两个独立的环境来支持你的开发和生产需求：**测试
 
 | 方面 | 测试网 | 主网 |
 |------|--------|------|
-| **URL** | [testnet.payin.com](https://testnet.payin.com) | [app.payin.com](https://app.payin.com) |
+| **URL** | [your-payin.example.com](https://your-payin.example.com) | [your-payin.example.com](https://your-payin.example.com) |
 | **用途** | 开发与测试 | 生产运营 |
 | **代币** | 测试代币（无价值） | 真实加密货币 |
 | **区块链** | 测试网络（Sepolia、Amoy、Shasta） | 主网络（Ethereum、Polygon、Tron） |
@@ -162,7 +162,7 @@ solana airdrop 2 <YOUR_ADDRESS> --url devnet
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-testnet-api-key",
-        "X-PayIn-API-URL": "https://testnet.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -178,7 +178,7 @@ solana airdrop 2 <YOUR_ADDRESS> --url devnet
       "transport": "sse",
       "headers": {
         "X-API-Key": "your-mainnet-api-key",
-        "X-PayIn-API-URL": "https://app.payin.com"
+        "X-PayIn-API-URL": "https://your-payin.example.com"
       }
     }
   }
@@ -192,11 +192,11 @@ solana airdrop 2 <YOUR_ADDRESS> --url devnet
 **TypeScript 示例：**
 ```typescript
 // 测试网
-const PAYIN_API_URL = 'https://testnet.payin.com/api/v1';
+const PAYIN_API_URL = 'https://your-payin.example.com/api/v1';
 const API_KEY = process.env.PAYIN_TESTNET_API_KEY;
 
 // 主网
-const PAYIN_API_URL = 'https://app.payin.com/api/v1';
+const PAYIN_API_URL = 'https://your-payin.example.com/api/v1';
 const API_KEY = process.env.PAYIN_MAINNET_API_KEY;
 ```
 
@@ -244,8 +244,8 @@ const API_KEY = process.env.PAYIN_MAINNET_API_KEY;
 // 良好实践
 const config = {
   apiUrl: process.env.NODE_ENV === 'production'
-    ? 'https://app.payin.com/api/v1'
-    : 'https://testnet.payin.com/api/v1',
+    ? 'https://your-payin.example.com/api/v1'
+    : 'https://your-payin.example.com/api/v1',
   apiKey: process.env.NODE_ENV === 'production'
     ? process.env.PAYIN_MAINNET_API_KEY
     : process.env.PAYIN_TESTNET_API_KEY
@@ -256,11 +256,11 @@ const config = {
 
 ```bash
 # .env.development
-PAYIN_API_URL=https://testnet.payin.com/api/v1
+PAYIN_API_URL=https://your-payin.example.com/api/v1
 PAYIN_API_KEY=your-testnet-api-key
 
 # .env.production
-PAYIN_API_URL=https://app.payin.com/api/v1
+PAYIN_API_URL=https://your-payin.example.com/api/v1
 PAYIN_API_KEY=your-mainnet-api-key
 ```
 

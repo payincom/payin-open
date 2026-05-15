@@ -7,7 +7,7 @@ description: Deploy, integrate, operate, and troubleshoot PayIn Open, the open-s
 
 Use this skill when helping a merchant deploy, integrate, operate, or troubleshoot PayIn Open.
 
-PayIn Open is the open-source payment gateway in the PayIn product family. PayInGo is a separate private face-to-face payment product for small merchants, powered by X402.
+PayIn Open is the self-hosted open-source payment gateway in the PayIn product family. PayIn Cloud is the hosted online service. PayIn Go is a separate face-to-face payment product for in-person merchants.
 
 ## Core Principle
 
@@ -65,7 +65,7 @@ Explain each step in business language.
 
 ## Sandbox Deployment Checklist
 
-1. Confirm hosting target, for example Railway or Docker.
+1. Confirm hosting target, for example Docker, a VPS, Kubernetes, or a cloud app platform.
 2. Confirm sandbox/testnet environment.
 3. Prepare required services:
    - PostgreSQL database
@@ -116,9 +116,9 @@ Use these repository paths as source material:
 
 - `README.md`
 - `apps/docs/`
-- `docs/deployment/`
-- `docs/monitor/`
-- `docs/processor/`
-- `docs/troubleshooting.md`
+- `docs/self-hosting/`
+- `docs/reference/`
+- `docs/reference/`
+- `docs/self-hosting/troubleshooting.md`
 
 Prefer public docs and this skill for merchant-facing explanations. Use internal/development docs only when the task requires implementation detail.

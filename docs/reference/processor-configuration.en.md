@@ -725,9 +725,9 @@ services:
 
 ## Related Documentation
 
-- [Processor Main Documentation](../processor.md)
-- [Monitor RPC Configuration](../monitor/rpc-configuration.en.md)
-- [Configuration File Example](../../packages/processor/config/config.example.yaml)
+- [Processor Main Documentation](./processor-configuration.en.md)
+- [Monitor RPC Configuration](./rpc-configuration.en.md)
+- [Configuration File Example](../../packages/processor/config/default.yaml)
 - [Environment Variables Example](../../packages/processor/.env.example)
 
 ---

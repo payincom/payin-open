@@ -9,7 +9,7 @@ Give your agent these sources:
 1. The PayIn Open repository: `https://github.com/payincom/payin-open`
 2. The public docs in `apps/docs/`
 3. The PayIn Open skill: `skills/payin-open/SKILL.md`
-4. The deployment docs in `docs/deployment/`
+4. The deployment docs in `docs/self-hosting/`
 
 ## Recommended Prompt
 
