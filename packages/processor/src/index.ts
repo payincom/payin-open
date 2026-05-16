@@ -3,6 +3,16 @@
 // 🚀 统一支付系统入口
 export { Processor, ProcessorEventName } from './processor.js';
 export type { ProcessorConfig, SystemStatus, EventHandler } from './processor.js';
+export { OpenProcessor, DEFAULT_OPEN_ORGANIZATION_ID } from './open/open-processor.js';
+export type {
+  OpenProcessorOptions,
+  OpenProtocol,
+  OpenCreateOrderRequest,
+  OpenBindAddressRequest,
+  OpenUnbindAddressRequest,
+} from './open/open-processor.js';
+export type { PaymentScope } from './context/payment-scope.js';
+export { singleMerchantScope, tenantPaymentScope } from './context/payment-scope.js';
 
 // Defaults for Manager initialization
 export { getDefaults } from './defaults.js';

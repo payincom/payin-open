@@ -89,6 +89,37 @@ export class RPCConfigBuilder {
       this.config.rpc = this.config.rpc || {}
       this.config.rpc.apiKeys = { ...this.config.rpc.apiKeys, ...this.options.apiKeys }
     }
+
+    if (this.config.rpc?.apiKeys) {
+      this.config.rpc.apiKeys = this.sanitizeApiKeys(this.config.rpc.apiKeys)
+    }
+  }
+
+  private sanitizeApiKeys(apiKeys: Record<string, string>): Record<string, string> {
+    const sanitized: Record<string, string> = {}
+
+    for (const [provider, rawKey] of Object.entries(apiKeys)) {
+      if (this.isUsableApiKey(rawKey)) {
+        sanitized[provider] = rawKey.trim()
+      }
+    }
+
+    return sanitized
+  }
+
+  private isUsableApiKey(value: unknown): value is string {
+    if (typeof value !== 'string') return false
+
+    const trimmed = value.trim()
+    if (!trimmed) return false
+
+    // Env interpolation placeholders and redacted/template examples must not
+    // make key-based providers look usable in self-hosted Open/testnet mode.
+    if (trimmed.includes('${') || trimmed.includes('{apiKey}') || trimmed.includes('***')) return false
+    if (/^(your[_-]?|replace[_-]?me|changeme|placeholder)/i.test(trimmed)) return false
+    if (/^(undefined|null)$/i.test(trimmed)) return false
+
+    return true
   }
 
   private async buildChainConfig(chain: string, options: BuildOptions): Promise<RPCChainConfig> {

@@ -16,16 +16,21 @@
 ### 开发环境
 
 ```bash
-# 1. 初始化数据库（仅创建表结构）
-npm run db:init
+# 0. PayIn Open 安全预检查（不改数据库）
+npm run open:init -- --check
+
+# 1. PayIn Open 初始化数据库（推荐入口）
+npm run open:init
 
 # 2. 初始化数据库 + 生成演示数据
+npm run open:init -- --demo-data
+
+# 3. 底层初始化脚本仍然可用
+npm run db:init
 npm run db:init:demo
 
-# 3. 强制重置数据库（删除所有数据）
+# 4. 强制重置数据库（删除所有数据；生产环境必须谨慎）
 npm run db:init:force
-
-# 4. 完整重置 + 演示数据
 npm run db:init:full
 ```
 
@@ -37,7 +42,7 @@ export DB_CONNECTION_STRING="postgresql://user:pass@host:5432/payin"
 export NODE_ENV="production"
 
 # 初始化数据库（仅创建表结构，无演示数据）
-npm run db:init
+npm run open:init
 
 # 或使用 tsx 直接运行
 tsx scripts/init-database.ts

@@ -60,6 +60,16 @@ PayIn 各子服务（Monitor → Processor → Manager → API）保持 **单向
    - Processor 只负责 orchestrate，不直接硬编码 key。
 3. 调试时使用 `LOG_LEVEL=4` 启动，以便观察 `request-failure`, `Adapters creation completed` 等关键日志。
 
+## RPC 默认策略
+
+- PayIn Open 的 testnet/demo 默认优先使用无需 key 的 public RPC（例如 `publicnode`），保证新用户和 Agent 可以开箱即用完成演示。
+- Public RPC 适合 demo、sandbox、低频自测；不要把它当成有 SLA 的生产依赖。
+- 商户可以在 Manager/Processor 配置中添加 Alchemy、Infura、Ankr、QuickNode 或自定义 RPC provider 的 key，并通过 `preferredProviders` 调整优先级：
+  - 想让第三方 provider 做主力：把它放在数组第一位，例如 `[alchemy, publicnode]`。
+  - 想让 public RPC 做主力、第三方 provider 做 fallback：使用 `[publicnode, alchemy]`。
+  - 想禁用某 provider：使用 `excludeProviders` 或从 `preferredProviders` 移除。
+- 空 key、`${...}` 占位符、`***` 脱敏值、`your_*` 示例值不会被视为有效 key；对应 provider 会被跳过，避免错误地向占位符 endpoint 发请求。
+
 ## 部署注意事项
 
 - 打包前运行：

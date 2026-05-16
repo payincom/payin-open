@@ -37,6 +37,13 @@ const rules = [
     message: 'Open runtime/docs should not depend on the private PayIn Cloud repository.',
     allow: [/^docs\/architecture\/open-vs-cloud\.md$/],
   },
+  {
+    id: 'no-cloud-layer-implementation-in-open',
+    pattern: /\bCloudProcessor\b|\bCloudManager\b|src\/cloud\//g,
+    message: 'Cloud overlay implementations belong in payin-cloud-layer, not PayIn Open.',
+    allow: [/^docs\//],
+    include: [/^(apps|packages|skills)\//],
+  },
 ];
 
 function shouldSkipDir(name) {
@@ -63,11 +70,41 @@ function walk(dir, out = []) {
 }
 
 const findings = [];
+const forbiddenPaths = [
+  {
+    rel: 'apps/admin',
+    message: 'PayIn Open is headless/Agent-operated and must not ship the inherited admin UI.',
+  },
+  {
+    rel: 'Dockerfile.admin',
+    message: 'PayIn Open must not ship admin UI deployment artifacts.',
+  },
+  {
+    rel: 'railway.production.admin.toml',
+    message: 'PayIn Open must not ship admin UI deployment artifacts.',
+  },
+  {
+    rel: 'railway.test.admin.toml',
+    message: 'PayIn Open must not ship admin UI deployment artifacts.',
+  },
+  {
+    rel: 'scripts/deployment/deploy-admin-to-railway.sh',
+    message: 'PayIn Open must not ship admin UI deployment artifacts.',
+  },
+];
+
+for (const item of forbiddenPaths) {
+  if (fs.existsSync(path.join(root, item.rel))) {
+    findings.push({ rule: 'no-open-admin-ui', file: item.rel, line: 1, value: item.rel, message: item.message });
+  }
+}
+
 for (const file of walk(root)) {
   const rel = path.relative(root, file).replaceAll(path.sep, '/');
   const text = fs.readFileSync(file, 'utf8');
   if (rel === 'scripts/quality/check-open-boundary.cjs') continue;
   for (const rule of rules) {
+    if (rule.include && !rule.include.some((rx) => rx.test(rel))) continue;
     if (rule.allow?.some((rx) => rx.test(rel))) continue;
     const matches = [...text.matchAll(rule.pattern)];
     for (const match of matches) {

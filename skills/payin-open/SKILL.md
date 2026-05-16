@@ -69,19 +69,54 @@ Explain each step in business language.
 2. Confirm sandbox/testnet environment.
 3. Prepare required services:
    - PostgreSQL database
-   - API service
-   - Admin service
-   - RPC providers if required
+   - API service with hosted payment pages
+   - RPC providers only if the target chain requires keys or production-grade capacity
    - Webhook endpoint for merchant system
-4. Configure environment variables with secret values redacted in chat/log output.
-5. Deploy services.
-6. Run migrations or initialization only against the confirmed sandbox database.
-7. Verify `/health`.
-8. Create a test order.
-9. Open the payment page.
-10. Verify blockchain monitoring status.
-11. Verify webhook delivery.
-12. Summarize what is ready and what remains before production.
+4. Configure environment variables with secret values redacted in chat/log output. For Open testnet demos, Ethereum Sepolia defaults to publicnode and does not require Alchemy/Infura keys.
+5. Run repository-local Open preflight checks before mutating anything:
+   - `npm run open:doctor`
+   - `npm run open:init -- --check`
+   - `npm run open:smoke` for dry-run smoke expectations
+6. Deploy services.
+7. Run initialization only against the confirmed sandbox database with `npm run open:init`.
+8. Verify `/health` and public config with `npm run open:smoke -- --url <sandbox-api-url>`.
+9. Register the first local Open operator, then create an API key. Public registration is locked after the first operator. JWT operator requests must include `X-Organization-Id` with the Open merchant id; API-key requests carry scope automatically.
+10. Import or generate EVM address-pool addresses for the sandbox merchant.
+11. Run full live sandbox smoke with redacted credentials: `npm run open:smoke -- --url <sandbox-api-url> --api-key <redacted> --create-order --chain-id ethereum-sepolia --currency USDC --webhook-id <sandbox-webhook-id>`.
+12. Confirm the smoke order was created.
+13. Confirm the public payment page rendered.
+14. Confirm public order status is reachable.
+15. Confirm blockchain monitoring status was checked through `/api/v1/chains` and logs show the intended RPC provider (publicnode by default, or the configured keyed provider).
+16. Confirm webhook test delivery was accepted.
+17. Summarize what is ready and what remains before production.
+
+## Quick Local Sandbox
+
+Use this minimal path for first-run Open demos:
+
+```bash
+git clone https://github.com/payincom/payin-open.git
+cd payin-open
+npm install
+cp .env.example .env.local
+# edit .env.local: DB_CONNECTION_STRING, JWT_SECRET, WEBHOOK_SECRET, PAYIN_RUNTIME=open, NODE_ENV=sandbox
+npm run open:doctor
+npm run open:init -- --check
+npm run open:init
+npm run open:init -- --check --strict
+npm run dev:api
+npm run open:smoke -- --url http://localhost:3000
+```
+
+For live order smoke, register the first local Open operator, create an API key, add address-pool addresses, then run `open:smoke -- --url ... --api-key ... --create-order`. Public registration is locked after the first operator; use controlled local/admin workflows for additional operators.
+
+## RPC Provider Guidance
+
+- Open testnet/demo defaults use public RPC first for out-of-the-box operation.
+- Public RPC is for demos and low-volume testing; production should use dedicated RPC providers and monitoring.
+- Users can make a third-party provider primary by moving it first in `preferredProviders`, e.g. `[alchemy, publicnode]`.
+- Users can keep public RPC primary with keyed fallback, e.g. `[publicnode, alchemy]`.
+- Empty, redacted, or placeholder keys such as `${ALCHEMY_API_KEY}`, `***`, and `your_*` are ignored and must not be treated as working endpoints.
 
 ## Production Launch Checklist
 
@@ -117,7 +152,22 @@ Use these repository paths as source material:
 - `README.md`
 - Public docs hub: `https://payincom.github.io/payin-com/docs/`
 - `docs/self-hosting/`
+- `docs/self-hosting/agent-operations.md`
 - `docs/reference/`
 - `docs/self-hosting/troubleshooting.md`
 
 Prefer public docs and this skill for merchant-facing explanations. Use internal/development docs only when the task requires implementation detail.
+
+## Agent Operations Gate
+
+Use `docs/self-hosting/agent-operations.md` as the operational source of truth for `open:doctor`, `open:init`, and `open:smoke`.
+
+For merchant launch preparation, treat this as the minimum sandbox gate before recommending production/mainnet:
+
+```bash
+npm run open:doctor -- --strict --json --url <sandbox-api-url> --api-key <redacted>
+npm run open:init -- --check --strict --json
+npm run open:smoke -- --url <sandbox-api-url> --api-key <redacted> --create-order --order-reference <unique-smoke-id> --webhook-id <sandbox-webhook-id> --require-live --json
+```
+
+Do not proceed to production/mainnet unless the sandbox gate passes and the human explicitly approves production writes.

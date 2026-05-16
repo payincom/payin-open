@@ -177,7 +177,7 @@ async function initializeManagerSchema(connectionString: string, force: boolean)
 async function initializeProcessorSchema(connectionString: string, force: boolean): Promise<void> {
   console.log('⚙️  Initializing Processor schema...');
 
-  const { PostgreSQLDatabase } = await import('@payin/processor');
+  const { PostgreSQLDatabase, DEFAULT_OPEN_ORGANIZATION_ID } = await import('@payin/processor');
 
   const database = new PostgreSQLDatabase(connectionString);
   await database.initialize();
@@ -188,7 +188,18 @@ async function initializeProcessorSchema(connectionString: string, force: boolea
       onlyMissing: !force,
     });
 
+    await database.query(
+      `INSERT INTO organizations (id, name, slug)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         slug = EXCLUDED.slug,
+         updated_at = NOW()`,
+      [DEFAULT_OPEN_ORGANIZATION_ID, 'PayIn Open Merchant', 'payin-open-merchant']
+    );
+
     console.log('   ✅ Processor schema initialized');
+    console.log('   ✅ PayIn Open default merchant scope ensured');
   } finally {
     await database.close();
   }

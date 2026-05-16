@@ -35,7 +35,9 @@ monitor:
     - tron-nile              # or tron for mainnet
 
   # RPC Provider API Keys (from environment variables)
-  # Get your keys from respective provider websites
+  # Public RPC providers work without keys for demos. Add provider keys for
+  # higher rate limits/reliability, then move that provider earlier in
+  # preferredProviders when you want it to be primary.
   rpcKeys:
     alchemy: ${ALCHEMY_API_KEY}          # https://www.alchemy.com/
     infura: ${INFURA_API_KEY}            # https://infura.io/
@@ -70,9 +72,9 @@ monitor:
   rpc:
     chains:
       ethereum-sepolia:      # or ethereum for mainnet
-        preferredProviders: [alchemy, infura, publicnode]    # prod: add quicknode first
+        preferredProviders: [publicnode, alchemy, infura]    # demo default; put keyed provider first for production/reliability
       polygon-amoy:          # or polygon for mainnet
-        preferredProviders: [alchemy, publicnode]            # prod: add quicknode first
+        preferredProviders: [publicnode, alchemy]            # demo default; put keyed provider first for production/reliability
       tron-nile:             # or tron for mainnet
         preferredProviders: [trongrid, publicnode]
 

@@ -10,6 +10,7 @@ import { getAuth } from '../auth-instance.js';
 import { getManager } from '../manager-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
 import { buildPaymentLinkCheckoutUrl, getBaseUrl } from '../utils/url-builder.js';
+import { resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const paymentLinks = new Hono();
 
@@ -81,7 +82,7 @@ paymentLinks.post(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       const userId = c.get('userId') ?? null;
 
       if (!organizationId) {
@@ -250,7 +251,7 @@ paymentLinks.put(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       const userId = c.get('userId') ?? null;
 
       if (!organizationId) {
@@ -378,7 +379,7 @@ paymentLinks.put(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -473,7 +474,7 @@ paymentLinks.post(
     try {
       const manager = getManager();
       const authManager = getAuth();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -533,7 +534,7 @@ paymentLinks.post(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -592,7 +593,7 @@ paymentLinks.post(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -634,7 +635,7 @@ paymentLinks.post(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -676,7 +677,7 @@ paymentLinks.post(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -720,7 +721,7 @@ paymentLinks.get(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -818,7 +819,7 @@ paymentLinks.get(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -937,7 +938,7 @@ paymentLinks.get(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({
@@ -989,7 +990,7 @@ paymentLinks.get(
   async (c) => {
     try {
       const manager = getManager();
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
       if (!organizationId) {
         return c.json({

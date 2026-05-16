@@ -249,7 +249,7 @@ export class Processor {
   /**
    * Get transfers for order or deposit reference
    */
-  async getTransfers(reference: { orderId?: string; depositReference?: string }): Promise<any[]> {
+  async getTransfers(reference: { orderId?: string; depositReference?: string }, organizationId?: string): Promise<any[]> {
     this.validateProcessorCore();
 
     const repository = this.processorCore!.getTransferRepository();
@@ -260,7 +260,7 @@ export class Processor {
         throw new ValidationError(`Invalid order ID: ${validation.errors.join(', ')}`);
       }
 
-      return await repository.findByOrderId(reference.orderId);
+      return await repository.findByOrderId(reference.orderId, organizationId);
     }
 
     if (reference.depositReference) {
@@ -269,7 +269,7 @@ export class Processor {
         throw new ValidationError(`Invalid deposit reference: ${validation.errors.join(', ')}`);
       }
 
-      return await repository.findByDepositReference(reference.depositReference);
+      return await repository.findByDepositReference(reference.depositReference, organizationId);
     }
 
     return [];
@@ -278,7 +278,7 @@ export class Processor {
   /**
    * Get transfer by transaction hash
    */
-  async getTransferByTxHash(txHash: string): Promise<any | null> {
+  async getTransferByTxHash(txHash: string, organizationId?: string): Promise<any | null> {
     this.validateProcessorCore();
 
     const validation = ValidationUtils.validateRequired(txHash, 'transactionHash');
@@ -287,7 +287,7 @@ export class Processor {
     }
 
     const repository = this.processorCore!.getTransferRepository();
-    const transfers = await repository.findByTransactionHash(txHash);
+    const transfers = await repository.findByTransactionHash(txHash, organizationId);
 
     // Return the first transfer (usually there's only one per tx hash)
     return transfers.length > 0 ? transfers[0] : null;
@@ -553,6 +553,7 @@ export class Processor {
    * List orders with filtering, pagination and sorting
    */
   async listOrders(filters: {
+    organizationId?: string; // Multi-tenant filtering
     status?: string | string[];
     chain?: string;
     token?: string;

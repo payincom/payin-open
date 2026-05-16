@@ -188,13 +188,15 @@ rpc:
       preferredProviders: [alchemy, infura, publicnode]
       timeout: 5000
     ethereum-sepolia:
-      preferredProviders: [alchemy, infura, publicnode]
+      # Testnet/Open demo defaults prioritize public RPC for out-of-the-box operation.
+      # Operators can override preferredProviders to put Alchemy/Infura/etc. first.
+      preferredProviders: [publicnode, alchemy, infura]
       timeout: 5000
     polygon-mainnet:
       preferredProviders: [alchemy, ankr, publicnode]
       timeout: 6000
     polygon-amoy:
-      preferredProviders: [alchemy, ankr, publicnode]
+      preferredProviders: [publicnode, alchemy, ankr]
       timeout: 6000
     tron-mainnet:
       preferredProviders: [trongrid]
@@ -212,7 +214,7 @@ rpc:
       preferredProviders: [alchemy, publicnode]
       timeout: 6000
     arbitrum-sepolia:
-      preferredProviders: [alchemy, publicnode]
+      preferredProviders: [publicnode, alchemy]
       timeout: 6000
 
   # Custom RPC providers (optional)

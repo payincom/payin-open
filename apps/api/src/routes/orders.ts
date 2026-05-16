@@ -9,6 +9,7 @@ import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
 import { buildOrderPaymentUrl, getBaseUrl } from '../utils/url-builder.js';
+import { organizationContextRequiredMessage, resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLOWED_SORT_FIELDS = new Set(['createdAt', 'updatedAt', 'amount']);
@@ -89,23 +90,22 @@ orders.post(
       }, 400);
     }
 
-    // Get organizationId from auth context
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
         error: 'Authorization failed',
         code: 'ORGANIZATION_CONTEXT_REQUIRED',
-        message: 'Organization context is required to create orders',
+        message: organizationContextRequiredMessage(),
         suggestions: [
-          'When using JWT tokens, include the X-Organization-Id header',
-          'Prefer API key authentication (Authorization: Bearer pk_...) to auto-set organization context'
+          'In PayIn Open, verify the default merchant bootstrap completed successfully',
+          'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
         ]
       }, 401);
     }
 
     const order = await manager.createOrder({
-      organizationId, // Pass organizationId for multi-tenant isolation
+      organizationId,
       orderReference: body.orderReference,
       amount: body.amount,
       currency: body.currency,
@@ -189,24 +189,23 @@ orders.get(
   try {
     const manager = getManager();
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
         error: 'Authorization failed',
         code: 'ORGANIZATION_CONTEXT_REQUIRED',
-        message: 'Organization context is required to view order statistics',
+        message: organizationContextRequiredMessage(),
         suggestions: [
-          'When using JWT tokens, include the X-Organization-Id header',
-          'Prefer API key authentication (Authorization: Bearer pk_...) to auto-set organization context'
+          'In PayIn Open, verify the default merchant bootstrap completed successfully',
+          'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
         ]
       }, 401);
     }
 
     // Parse query parameters
     const filters: any = {
-      organizationId // Multi-tenant isolation - only show orders from user's organization
+      organizationId
     };
 
     const status = c.req.query('status');
@@ -378,23 +377,22 @@ orders.get(
   try {
     const manager = getManager();
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
         error: 'Authorization failed',
         code: 'ORGANIZATION_CONTEXT_REQUIRED',
-        message: 'Organization context is required to list orders',
+        message: organizationContextRequiredMessage(),
         suggestions: [
-          'When using JWT tokens, include the X-Organization-Id header',
-          'Prefer API key authentication (Authorization: Bearer pk_...) to auto-set organization context'
+          'In PayIn Open, verify the default merchant bootstrap completed successfully',
+          'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
         ]
       }, 401);
     }
 
     const filters: any = {
-      organizationId // Multi-tenant isolation - only show stats from user's organization
+      organizationId
     };
 
     const chain = c.req.query('chain');
@@ -487,17 +485,16 @@ orders.get(
       }, 400);
     }
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
         error: 'Authorization failed',
         code: 'ORGANIZATION_CONTEXT_REQUIRED',
-        message: 'Organization context is required to retrieve orders',
+        message: organizationContextRequiredMessage(),
         suggestions: [
-          'When using JWT tokens, include the X-Organization-Id header',
-          'Prefer API key authentication (Authorization: Bearer pk_...) to auto-set organization context'
+          'In PayIn Open, verify the default merchant bootstrap completed successfully',
+          'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
         ]
       }, 401);
     }

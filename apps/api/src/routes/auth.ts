@@ -9,6 +9,7 @@ import { getAuth } from '../auth-instance.js';
 import { getSocialAuth } from '../social-auth-instance.js';
 import { getDirectOAuth } from '../direct-oauth-instance.js';
 import { createAuthMiddleware } from '@payin/auth';
+import { getOpenRuntimeOrganizationId, isOpenRuntime } from '../open-runtime.js';
 
 const auth = new Hono();
 
@@ -295,6 +296,25 @@ auth.post('/register', async (c) => {
       }, 400);
     }
 
+    const openRuntime = isOpenRuntime();
+
+    if (openRuntime) {
+      const existingUsers = await authManager.listUsers();
+      if (existingUsers.length > 0) {
+        return c.json({
+          success: false,
+          error: 'Registration disabled',
+          code: 'OPEN_REGISTRATION_LOCKED',
+          message: 'PayIn Open registration is locked after the first operator is created.',
+          suggestions: [
+            'Use the existing Open operator account to create API keys.',
+            'For additional operators, add them through a controlled local/admin workflow instead of public registration.',
+            'If this is a fresh install, use a new empty database and run npm run open:init before first registration.'
+          ]
+        }, 403);
+      }
+    }
+
     // Step 1: Create user (validation happens in createUser)
     const user = await authManager.createUser({
       username,
@@ -302,7 +322,25 @@ auth.post('/register', async (c) => {
       password
     });
 
-    // Step 2: Automatically create personal organization
+    if (openRuntime) {
+      const organizationId = getOpenRuntimeOrganizationId();
+      await authManager.ensureDefaultOrganizationMembership(user.id, organizationId);
+
+      return c.json({
+        success: true,
+        data: {
+          user,
+          organization: {
+            id: organizationId,
+            name: 'PayIn Open Merchant',
+            role: 'owner'
+          }
+        },
+        message: 'First PayIn Open operator registered and bound to the default merchant scope. Use X-Organization-Id with JWT operator requests.'
+      }, 201);
+    }
+
+    // Step 2: Automatically create personal organization in hosted/Cloud runtime
     const organization = await authManager.organizations.createOrganization(user.id, {
       name: `${username}'s Organization`,
       slug: `${username}-org-${Date.now()}`

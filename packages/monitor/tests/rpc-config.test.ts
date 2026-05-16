@@ -11,10 +11,38 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { RPCConfigLoader } from '../src/rpc/config/config-loader.js'
+import { RPCConfigBuilder } from '../src/rpc/config/rpc-config-builder.js'
 import { BUILTIN_PROVIDERS } from '../src/rpc/config/provider-templates.js'
 import type { ConfigFormat, RPCProviderKeys } from '../src/rpc/types/rpc-config.js'
 
 describe('Monitor RPC Configuration Tests', () => {
+  describe('0. API key sanitization', () => {
+    it('skips placeholder and redacted provider keys so public RPC remains usable', async () => {
+      const builder = new RPCConfigBuilder({
+        apiKeys: {
+          alchemy: '${ALCHEMY_API_KEY}',
+          infura: '${INFURA_API_KEY}',
+          ankr: '***',
+          trongrid: '',
+        }
+      })
+
+      const config = await builder.buildForChains(['ethereum-sepolia'])
+      const endpoints = config.chains['ethereum-sepolia'].endpoints
+
+      expect(endpoints.map(endpoint => endpoint.provider)).toEqual(['publicnode'])
+      expect(endpoints[0].url).toBe('https://ethereum-sepolia-rpc.publicnode.com')
+      expect(endpoints[0].url).not.toContain('${')
+      expect(builder.getSkippedProviders()['ethereum-sepolia']).toEqual(
+        expect.arrayContaining([
+          { name: 'alchemy', reason: 'missing_api_key' },
+          { name: 'infura', reason: 'missing_api_key' },
+          { name: 'ankr', reason: 'missing_api_key' },
+        ])
+      )
+    })
+  })
+
   describe('1. Built-in Providers', () => {
     it('should load all built-in providers', () => {
       const builtinNames = Object.keys(BUILTIN_PROVIDERS)

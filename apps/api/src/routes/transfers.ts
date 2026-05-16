@@ -8,6 +8,7 @@ import type { Context, Next } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware } from '@payin/auth';
+import { resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const transfers = new Hono();
 
@@ -42,7 +43,7 @@ transfers.get(
     const manager = getManager();
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
