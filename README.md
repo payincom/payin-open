@@ -111,13 +111,22 @@ npm run open:smoke -- \
   --currency USDC
 ```
 
-PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, scripts, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
+PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, the PayIn operator CLI, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
+
+The PayIn CLI is an operations client, not an installer. Use docs/templates/infra tools to deploy Open or Cloud, then use `payin` for diagnostics, smoke checks, API keys, address pools, webhooks, and runtime operations:
+
+```bash
+npm run open:cli -- profile add local http://localhost:3000
+npm run open:cli -- doctor --profile local
+npm run open:cli -- smoke --profile local
+```
 
 Useful commands:
 
 ```bash
 npm run boundary:check # Check Open / Cloud repository boundaries
 npm run open:verify    # Run the full Open independence verification suite
+npm run open:cli -- --help # Run the PayIn operator CLI locally
 npm run build          # Build packages and apps
 npm run test           # Run tests
 npm run lint:check     # Check linting

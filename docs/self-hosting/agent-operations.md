@@ -6,6 +6,8 @@ PayIn Open is headless by default. It intentionally does not include a bundled a
 
 The commands below are designed to keep PayIn Open merchant-first: operators should not need to understand Cloud tenants or organizations. Internal compatibility concepts such as the default Open merchant scope are checked automatically.
 
+PayIn also includes an operator CLI (`payin`, available in this repository through `npm run open:cli -- ...`). The CLI is an operations client for already-running PayIn Open or PayIn Cloud runtimes; it is not an installer or infrastructure deployment tool. Use deployment docs/templates for installation, then use the CLI for diagnostics, smoke checks, API keys, address pools, webhooks, and troubleshooting.
+
 In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations` and `/api/v1/config-management` are intentionally hidden. Use the Open single-merchant API plus the Agent/operator commands below instead.
 
 API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open default merchant. Operators should not pass or choose an organization id.
@@ -23,6 +25,21 @@ API keys remain available for merchant integrations in Open runtime, but they ar
 | `npm run open:smoke -- --require-live ...` | Full live readiness gate | Creates test order | Yes | Sandbox/release gate |
 
 Never print secrets. Use placeholders such as `<redacted>` in chat, logs, and summaries.
+
+## 0. Operator CLI
+
+Use the CLI when a runtime URL exists:
+
+```bash
+npm run open:cli -- profile add sandbox <sandbox-api-url>
+npm run open:cli -- doctor --profile sandbox --json
+npm run open:cli -- smoke --profile sandbox --api-key *** --create-order --webhook-id <sandbox-webhook-id> --require-live --json
+npm run open:cli -- api-key create --profile sandbox --name backend-orders-service --json
+npm run open:cli -- address-pool status --profile sandbox --json
+npm run open:cli -- webhooks test --profile sandbox <webhook-id> --json
+```
+
+The CLI stores local profiles under the user config directory and redacts credentials in normal output. It can target Open or Cloud; Cloud operations may require organization context.
 
 ## 1. Readiness: `open:doctor`
 
