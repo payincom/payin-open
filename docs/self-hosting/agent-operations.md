@@ -6,7 +6,7 @@ PayIn Open is headless by default. It intentionally does not include a bundled a
 
 The commands below are designed to keep PayIn Open merchant-first: operators should not need to understand Cloud tenants or organizations. Internal compatibility concepts such as the default Open merchant scope are checked automatically.
 
-PayIn also includes an operator CLI (`payin`, available in this repository through `npm run open:cli -- ...`). The CLI is an operations client for already-running PayIn Open or PayIn Cloud runtimes; it is not an installer or infrastructure deployment tool. Use deployment docs/templates for installation, then use the CLI for diagnostics, smoke checks, API keys, address pools, webhooks, and troubleshooting.
+PayIn also has an external operator CLI (`payin`) maintained at https://github.com/payincom/payin-cli. The CLI is an operations client for already-running PayIn Open or PayIn Cloud runtimes; it is not an installer or infrastructure deployment tool. Use deployment docs/templates for installation, then use the CLI for diagnostics, smoke checks, API keys, address pools, webhooks, and troubleshooting. Until npm publication, run it from GitHub with `npm exec --yes --package github:payincom/payin-cli -- payin ...`.
 
 In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations` and `/api/v1/config-management` are intentionally hidden. Use the Open single-merchant API plus the Agent/operator commands below instead.
 
@@ -31,12 +31,12 @@ Never print secrets. Use placeholders such as `<redacted>` in chat, logs, and su
 Use the CLI when a runtime URL exists:
 
 ```bash
-npm run open:cli -- profile add sandbox <sandbox-api-url>
-npm run open:cli -- doctor --profile sandbox --json
-npm run open:cli -- smoke --profile sandbox --api-key *** --create-order --webhook-id <sandbox-webhook-id> --require-live --json
-npm run open:cli -- api-key create --profile sandbox --name backend-orders-service --json
-npm run open:cli -- address-pool status --profile sandbox --json
-npm run open:cli -- webhooks test --profile sandbox <webhook-id> --json
+npm exec --yes --package github:payincom/payin-cli -- payin profile add sandbox <sandbox-api-url>
+npm exec --yes --package github:payincom/payin-cli -- payin doctor --profile sandbox --json
+npm exec --yes --package github:payincom/payin-cli -- payin smoke --profile sandbox --api-key *** --create-order --webhook-id <sandbox-webhook-id> --require-live --json
+npm exec --yes --package github:payincom/payin-cli -- payin api-key create --profile sandbox --name backend-orders-service --json
+npm exec --yes --package github:payincom/payin-cli -- payin address-pool status --profile sandbox --json
+npm exec --yes --package github:payincom/payin-cli -- payin webhooks test --profile sandbox <webhook-id> --json
 ```
 
 The CLI stores local profiles under the user config directory and redacts credentials in normal output. It can target Open or Cloud; Cloud operations may require organization context.

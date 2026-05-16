@@ -113,12 +113,12 @@ npm run open:smoke -- \
 
 PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, the PayIn operator CLI, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
 
-The PayIn CLI is an operations client, not an installer. Use docs/templates/infra tools to deploy Open or Cloud, then use `payin` for diagnostics, smoke checks, API keys, address pools, webhooks, and runtime operations:
+The PayIn CLI is maintained separately at https://github.com/payincom/payin-cli. It is an operations client, not an installer. Use docs/templates/infra tools to deploy Open or Cloud, then use `payin` for diagnostics, smoke checks, API keys, address pools, webhooks, and runtime operations. Until the npm package is published, run it from GitHub:
 
 ```bash
-npm run open:cli -- profile add local http://localhost:3000
-npm run open:cli -- doctor --profile local
-npm run open:cli -- smoke --profile local
+npm exec --yes --package github:payincom/payin-cli -- payin profile add local http://localhost:3000
+npm exec --yes --package github:payincom/payin-cli -- payin doctor --profile local
+npm exec --yes --package github:payincom/payin-cli -- payin smoke --profile local
 ```
 
 Useful commands:
@@ -126,7 +126,7 @@ Useful commands:
 ```bash
 npm run boundary:check # Check Open / Cloud repository boundaries
 npm run open:verify    # Run the full Open independence verification suite
-npm run open:cli -- --help # Run the PayIn operator CLI locally
+npm exec --yes --package github:payincom/payin-cli -- payin --help # Run the PayIn operator CLI
 npm run build          # Build packages and apps
 npm run test           # Run tests
 npm run lint:check     # Check linting
