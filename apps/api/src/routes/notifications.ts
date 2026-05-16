@@ -8,6 +8,7 @@ import type { Context, Next } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, requirePermission } from '@payin/auth';
+import { resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const app = new Hono();
 
@@ -53,7 +54,7 @@ app.post('/endpoints', authMiddleware(), requirePermission('webhooks:write'), as
 
   try {
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -94,7 +95,7 @@ app.get('/endpoints', authMiddleware(), requirePermission('webhooks:read'), asyn
 
   try {
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -134,7 +135,7 @@ app.get('/endpoints/:id', authMiddleware(), requirePermission('webhooks:read'), 
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -178,7 +179,7 @@ app.put('/endpoints/:id', authMiddleware(), requirePermission('webhooks:write'),
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -218,7 +219,7 @@ app.delete('/endpoints/:id', authMiddleware(), requirePermission('webhooks:write
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -257,7 +258,7 @@ app.post('/endpoints/:id/test', authMiddleware(), requirePermission('webhooks:wr
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -307,7 +308,7 @@ app.get('/logs', authMiddleware(), requirePermission('webhooks:read'), async (c)
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -349,7 +350,7 @@ app.get('/logs/:id', authMiddleware(), requirePermission('webhooks:read'), async
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -391,7 +392,7 @@ app.post('/logs/:id/retry', authMiddleware(), requirePermission('webhooks:write'
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -437,7 +438,7 @@ app.post('/retry-failed', authMiddleware(), requirePermission('webhooks:write'),
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -485,7 +486,7 @@ app.get('/statistics', authMiddleware(), requirePermission('webhooks:read'), asy
   }
 
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -532,7 +533,7 @@ app.get('/queue/status', authMiddleware(), requirePermission('webhooks:read'), a
 
   try {
     // Queue status is a system-wide metric, but still require authentication
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         error: 'Authorization failed',
@@ -563,7 +564,7 @@ app.post('/webhooks', authMiddleware(), requirePermission('webhooks:write'), asy
   }
   try {
     const body = await c.req.json();
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     const endpoint = await notification.createEndpoint({
       ...body,
       organizationId,
@@ -581,7 +582,7 @@ app.get('/webhooks', authMiddleware(), requirePermission('webhooks:read'), async
     return c.json({ error: 'Notification service not initialized' }, 503);
   }
   try {
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     const endpoints = await notification.listEndpoints({ organizationId });
     return c.json({ success: true, data: endpoints });
   } catch (error) {

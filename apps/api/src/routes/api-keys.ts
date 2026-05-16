@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
+import { organizationContextRequiredMessage, resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const apiKeys = new Hono();
 
@@ -41,15 +42,20 @@ apiKeys.post(
     try {
       const authManager = getAuth();
       const userId = c.get('userId');
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       const body = await c.req.json();
 
-      // Validate organizationId
+      // Validate Open business scope / Cloud organization context
       if (typeof organizationId !== 'string' || organizationId.trim() === '') {
         return c.json({
           success: false,
           error: 'Authorization failed',
-          message: 'Organization context is required'
+          code: 'ORGANIZATION_CONTEXT_REQUIRED',
+          message: organizationContextRequiredMessage(),
+          suggestions: [
+            'In PayIn Open, verify the default merchant bootstrap completed successfully',
+            'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
+          ]
         }, 401);
       }
 
@@ -128,14 +134,19 @@ apiKeys.get(
     try {
       const authManager = getAuth();
       const userId = c.get('userId');
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
 
-      // Validate organizationId
+      // Validate Open business scope / Cloud organization context
       if (typeof organizationId !== 'string' || organizationId.trim() === '') {
         return c.json({
           success: false,
           error: 'Authorization failed',
-          message: 'Organization context is required'
+          code: 'ORGANIZATION_CONTEXT_REQUIRED',
+          message: organizationContextRequiredMessage(),
+          suggestions: [
+            'In PayIn Open, verify the default merchant bootstrap completed successfully',
+            'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key'
+          ]
         }, 401);
       }
 

@@ -42,6 +42,7 @@ import apiDepositsRoutes from './routes/api-deposits.js';
 import apiPaymentLinksRoutes from './routes/api-payment-links.js';
 import orderStatusRoutes from './routes/order-status.js';
 import transferStatusRoutes from './routes/transfer-status.js';
+import { cloudOnlyRouteGuard } from './open-runtime.js';
 
 /**
  * Create and configure Hono application
@@ -138,11 +139,16 @@ export function createApp() {
   api.route('/audit', auditRoutes);
   api.route('/api-keys', apiKeysRoutes);
 
-  // Multi-tenancy API ✅
+  // Multi-tenancy API (Cloud-only in hosted runtime; hidden in PayIn Open)
+  api.use('/organizations/*', cloudOnlyRouteGuard('Organizations API'));
+  api.use('/organizations', cloudOnlyRouteGuard('Organizations API'));
   api.route('/organizations', organizationsRoutes);
 
-  // Configuration Management API (Phase 2) ✅
+  // Configuration Management API (Phase 2)
   api.route('/config', configRoutes);  // Legacy config API (backward compatibility)
+  // Multi-tenant configuration management is Cloud-only; Open uses local/self-hosted config flows.
+  api.use('/config-management/*', cloudOnlyRouteGuard('Config Management API'));
+  api.use('/config-management', cloudOnlyRouteGuard('Config Management API'));
   api.route('/config-management', configManagementRoutes);  // New config API with multi-tenant support
   api.route('/config/diagnostics', configDiagnosticsRoutes);
   api.route('/chains', chainsRoutes);

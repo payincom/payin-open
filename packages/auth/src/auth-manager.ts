@@ -252,28 +252,38 @@ export class AuthManager {
   /**
    * Ensure the default organization exists and the given user is a member
    */
-  private async ensureDefaultOrganizationMembership(userId: string): Promise<void> {
+  async ensureDefaultOrganizationMembership(
+    userId: string,
+    organizationId = DEFAULT_ORGANIZATION_ID
+  ): Promise<void> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
+      const organizationName = organizationId === DEFAULT_ORGANIZATION_ID
+        ? DEFAULT_ORGANIZATION_NAME
+        : 'PayIn Open Merchant';
+      const organizationSlug = organizationId === DEFAULT_ORGANIZATION_ID
+        ? DEFAULT_ORGANIZATION_SLUG
+        : `payin-open-${organizationId.slice(0, 8)}`;
+
       const orgResult = await client.query(
         'SELECT id FROM organizations WHERE id = $1',
-        [DEFAULT_ORGANIZATION_ID]
+        [organizationId]
       );
 
       if (orgResult.rows.length === 0) {
         await client.query(
           `INSERT INTO organizations (id, name, slug, plan_type)
            VALUES ($1, $2, $3, $4)`,
-          [DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_NAME, DEFAULT_ORGANIZATION_SLUG, OrganizationPlan.ENTERPRISE]
+          [organizationId, organizationName, organizationSlug, OrganizationPlan.ENTERPRISE]
         );
       }
 
       const membershipResult = await client.query(
         `SELECT id FROM organization_members
          WHERE organization_id = $1 AND user_id = $2`,
-        [DEFAULT_ORGANIZATION_ID, userId]
+        [organizationId, userId]
       );
 
       if (membershipResult.rows.length === 0) {
@@ -281,7 +291,7 @@ export class AuthManager {
           `INSERT INTO organization_members (
             id, organization_id, user_id, role, status
           ) VALUES ($1, $2, $3, $4, $5)`,
-          [randomUUID(), DEFAULT_ORGANIZATION_ID, userId, OrganizationRole.OWNER, 'active']
+          [randomUUID(), organizationId, userId, OrganizationRole.OWNER, 'active']
         );
       }
 

@@ -8,6 +8,7 @@ import type { Context, Next } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
+import { resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const addressPool = new Hono();
 
@@ -43,7 +44,7 @@ addressPool.get(
     const protocol = (c.req.query('protocol') || 'evm') as 'evm' | 'tron' | 'solana';
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -87,7 +88,7 @@ addressPool.get(
     const manager = getManager();
 
     // Enforce organization scope
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -178,7 +179,7 @@ addressPool.get(
     const pageSize = parseInt(c.req.query('pageSize') || '20');
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -225,7 +226,7 @@ addressPool.post(
     const body = await c.req.json();
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -301,7 +302,7 @@ addressPool.patch(
       const address = c.req.param('address');
 
       // Get organizationId from auth context
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       if (!organizationId) {
         return c.json({
           success: false,
@@ -343,7 +344,7 @@ addressPool.patch(
       const address = c.req.param('address');
 
       // Get organizationId from auth context
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       if (!organizationId) {
         return c.json({
           success: false,

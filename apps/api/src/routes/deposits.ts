@@ -9,6 +9,7 @@ import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
 import { buildDepositPageUrl, getBaseUrl } from '../utils/url-builder.js';
+import { resolveBusinessOrganizationId } from '../open-runtime.js';
 
 const ALLOWED_PROTOCOLS = ['evm', 'tron'] as const;
 const MAX_PAGE_SIZE = 100;
@@ -46,7 +47,7 @@ deposits.post(
   try {
     const manager = getManager();
     const body = await c.req.json();
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
 
     if (typeof organizationId !== 'string' || organizationId.trim() === '') {
       return c.json({
@@ -139,7 +140,7 @@ deposits.post(
   try {
     const manager = getManager();
     const body = await c.req.json();
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
 
     if (typeof organizationId !== 'string' || organizationId.trim() === '') {
       return c.json({
@@ -239,7 +240,7 @@ deposits.get(
     const manager = getManager();
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -355,7 +356,7 @@ deposits.get(
     const protocol = protocolParam as 'evm' | 'tron';
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -426,7 +427,7 @@ deposits.get(
     const manager = getManager();
 
     // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = c.get('organizationId');
+    const organizationId = resolveBusinessOrganizationId(c);
     if (!organizationId) {
       return c.json({
         success: false,
@@ -550,7 +551,7 @@ deposits.get(
       const manager = getManager();
 
       // Get organizationId from auth context for multi-tenant isolation
-      const organizationId = c.get('organizationId');
+      const organizationId = resolveBusinessOrganizationId(c);
       if (!organizationId) {
         return c.json({
           success: false,

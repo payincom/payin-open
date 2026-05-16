@@ -50,16 +50,23 @@ export class TransferRepository {
     return this.mapRowToTransfer(rows[0]);
   }
 
-  public async findByTransactionHash(txHash: string): Promise<TransferDbObject[]> {
-    const rows = await this.db.query(
-      `SELECT * FROM transfers WHERE transaction_hash = $1 ORDER BY event_index ASC`,
-      [txHash]
-    );
+  public async findByTransactionHash(txHash: string, organizationId?: string): Promise<TransferDbObject[]> {
+    const rows = organizationId
+      ? await this.db.query(
+        `SELECT * FROM transfers WHERE transaction_hash = $1 AND organization_id = $2 ORDER BY event_index ASC`,
+        [txHash, organizationId]
+      )
+      : await this.db.query(
+        `SELECT * FROM transfers WHERE transaction_hash = $1 ORDER BY event_index ASC`,
+        [txHash]
+      );
     return rows.map(row => this.mapRowToTransfer(row)!).filter(Boolean);
   }
 
-  public async findByOrderId(orderId: string): Promise<TransferDbObject[]> {
-    const rows = await this.db.query(`SELECT * FROM transfers WHERE order_id = $1 ORDER BY detected_at ASC`, [orderId]);
+  public async findByOrderId(orderId: string, organizationId?: string): Promise<TransferDbObject[]> {
+    const rows = organizationId
+      ? await this.db.query(`SELECT * FROM transfers WHERE order_id = $1 AND organization_id = $2 ORDER BY detected_at ASC`, [orderId, organizationId])
+      : await this.db.query(`SELECT * FROM transfers WHERE order_id = $1 ORDER BY detected_at ASC`, [orderId]);
     return rows.map(row => this.mapRowToTransfer(row)!).filter(Boolean);
   }
   
@@ -68,8 +75,10 @@ export class TransferRepository {
     return rows.map(row => this.mapRowToTransfer(row)!).filter(Boolean);
   }
 
-  public async findByDepositReference(depositReference: string): Promise<TransferDbObject[]> {
-    const rows = await this.db.query(`SELECT * FROM transfers WHERE deposit_reference = $1 ORDER BY detected_at ASC`, [depositReference]);
+  public async findByDepositReference(depositReference: string, organizationId?: string): Promise<TransferDbObject[]> {
+    const rows = organizationId
+      ? await this.db.query(`SELECT * FROM transfers WHERE deposit_reference = $1 AND organization_id = $2 ORDER BY detected_at ASC`, [depositReference, organizationId])
+      : await this.db.query(`SELECT * FROM transfers WHERE deposit_reference = $1 ORDER BY detected_at ASC`, [depositReference]);
     return rows.map(row => this.mapRowToTransfer(row)!).filter(Boolean);
   }
 

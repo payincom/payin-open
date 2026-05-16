@@ -16,7 +16,6 @@
     "build",
     "tmp",
     "apps/api/public/dist",
-    "coverage",
-    "apps/admin/dist"
+    "coverage"
   ]
 }

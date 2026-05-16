@@ -38,17 +38,18 @@ Typical use cases:
 ```text
 payin-open/
 ├── apps/
-│   ├── api/              # Payment API and payment pages
-│   ├── admin/            # Admin dashboard
+│   ├── api/              # Open API service and hosted payment pages
 │   ├── docs/             # Repository-local docs preview/source
-│   └── mcp-server/       # MCP server for AI-assisted workflows
+│   ├── mcp-server/       # MCP server for AI-assisted workflows
+│   ├── address-tool/     # Address/wallet operational helper app
+│   └── wallet-tools/     # Wallet operational helper app
 ├── packages/             # Shared libraries, monitor, processor, auth, manager
 ├── docs/
 │   ├── self-hosting/     # Public self-hosting notes
 │   ├── reference/        # Technical configuration references
 │   └── dev/              # Developer-facing design notes and examples
-├── skills/payin-open/    # Agent-facing playbook
-├── scripts/              # Maintenance and deployment helpers
+├── skills/payin-open/    # Agent-facing deployment and operations playbook
+├── scripts/              # Open init/doctor/smoke and maintenance helpers
 └── tools/                # Operational tools
 ```
 
@@ -62,15 +63,55 @@ Use this rule when adding features:
 - Keep PayIn-hosted multi-tenant SaaS concerns in PayIn Cloud.
 - Hide organization/tenant complexity from the Open self-hosted public surface whenever possible.
 
-## Local Development
+## Quick Start: Local Open Sandbox
+
+This path starts PayIn Open in sandbox/testnet mode. The default Open demo monitors Ethereum Sepolia through publicnode, so no RPC provider signup is required for the first smoke test. Add Alchemy/Infura/Ankr/etc. keys later when you want dedicated RPC capacity.
 
 ```bash
 git clone https://github.com/payincom/payin-open.git
 cd payin-open
 npm install
-cp .env.example .env
-npm run dev
+cp .env.example .env.local
 ```
+
+Edit `.env.local` and set at least:
+
+```bash
+DB_CONNECTION_STRING="postgresql://USER:PASSWORD@HOST:5432/DB_NAME"
+JWT_SECRET="$(openssl rand -base64 32)"
+WEBHOOK_SECRET="$(openssl rand -base64 32)"
+PAYIN_RUNTIME=open
+NODE_ENV=sandbox
+```
+
+Then run the Open operator gate:
+
+```bash
+npm run open:doctor
+npm run open:init -- --check
+npm run open:init
+npm run open:init -- --check --strict
+npm run dev:api
+```
+
+In another terminal, verify the live API:
+
+```bash
+npm run open:smoke -- --url http://localhost:3000
+```
+
+For a live order smoke test, register the first local Open operator, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator; JWT operator requests should include `X-Organization-Id: 00000000-0000-0000-0000-000000000001` (or your `PAYIN_OPEN_ORGANIZATION_ID`) until you switch to API-key auth:
+
+```bash
+npm run open:smoke -- \
+  --url http://localhost:3000 \
+  --api-key <redacted> \
+  --create-order \
+  --chain-id ethereum-sepolia \
+  --currency USDC
+```
+
+PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, scripts, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
 
 Useful commands:
 
@@ -82,6 +123,21 @@ npm run test           # Run tests
 npm run lint:check     # Check linting
 npm run db:migrate:up  # Run database migrations
 ```
+
+## RPC Defaults
+
+- Open sandbox/testnet defaults use public RPC first for out-of-the-box demos.
+- Public RPC is suitable for demos and low-volume testing, not production SLA.
+- Add provider keys and change `preferredProviders` when you want a dedicated provider to be primary:
+
+```yaml
+rpc:
+  chains:
+    ethereum-sepolia:
+      preferredProviders: [alchemy, publicnode] # Alchemy primary, public fallback
+```
+
+Placeholder or redacted values such as `${ALCHEMY_API_KEY}`, `***`, `your_*`, and empty strings are ignored so they do not create broken RPC endpoints.
 
 ## Public Docs and Self-hosting Documentation
 

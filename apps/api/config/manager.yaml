@@ -11,12 +11,10 @@ processor:
 
 # Monitor RPC Configuration
 monitor:
-  # Only monitor testnet chains (subset of chains defined in Processor default.yaml)
+  # Open demo default: monitor one public-RPC testnet out of the box.
+  # Add more chains after configuring their RPC providers/keys as needed.
   chains:
     - ethereum-sepolia
-    - polygon-amoy
-    - tron-nile
-    - solana-devnet
 
   # RPC Provider API Keys
   rpcKeys:
@@ -73,10 +71,12 @@ monitor:
     chains:
       ethereum-sepolia:
         preferredProviders:
+        - publicnode
         - alchemy
         - infura
       polygon-amoy:
         preferredProviders:
+        - publicnode
         - alchemy
       tron-nile:
         preferredProviders:

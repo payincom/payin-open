@@ -15,7 +15,7 @@ PayIn Open should be operated with clearly separated environments. At minimum, u
 Use separate resources for each environment:
 
 - PostgreSQL database
-- API/admin deployment
+- API deployment and Agent/Skill operation environment
 - RPC provider keys and rate limits
 - JWT/API secrets
 - Webhook endpoints
@@ -34,7 +34,6 @@ APP_ENV=production
 DB_CONNECTION_STRING=postgresql://USER:PASSWORD@HOST:5432/DB_NAME
 JWT_SECRET=<generate-a-long-random-secret>
 API_BASE_URL=https://your-payin.example.com
-ADMIN_BASE_URL=https://admin.your-payin.example.com
 WEBHOOK_BASE_URL=https://merchant.example.com/webhooks/payin
 
 # RPC provider keys, as needed

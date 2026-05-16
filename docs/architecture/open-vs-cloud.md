@@ -38,7 +38,7 @@ Target properties:
 | Deployment model | Merchant self-hosted | PayIn hosted |
 | Tenancy model | Single merchant by default | Multi-tenant organizations |
 | Operations | Merchant / AI Agent operated | PayIn operated |
-| UI | Optional lightweight console | Full merchant/admin dashboard |
+| UI | No bundled admin UI by default; headless Agent/API operation | Full merchant/admin dashboard |
 | Configuration | Local env/file/db config with placeholders | PayIn sandbox/production config |
 | Domains | `your-payin.example.com` placeholders | `payin.com` hosted domains |
 | Secrets | Never committed; merchant-owned | Never committed; stored in hosted envs |
@@ -206,6 +206,12 @@ Before deeper Processor refactoring, add tests that describe the desired behavio
 - Ensure API/Skill flows use self-hosting language and do not require tenant management.
 - Add smoke tests for the self-hosted lifecycle.
 
+Initial implementation note:
+
+- `OpenProcessor` is now the PayIn Open-facing processor facade. It wraps the existing lower-level `Processor`, injects a default single-merchant organization id for organization-scoped operations, and keeps the public Open method signatures free of tenancy concepts.
+- Cloud can continue using the lower-level `Processor` with explicit `organizationId` until deeper tenancy adapters are extracted.
+- `packages/processor/tests/unit/open-processor-facade.test.ts` protects this boundary.
+
 ### Phase 3 — Processor tenancy decoupling
 
 - Separate processor domain logic from tenant persistence/adapters.
@@ -213,11 +219,11 @@ Before deeper Processor refactoring, add tests that describe the desired behavio
 - Keep PayIn Cloud multi-tenant behavior intact.
 - Use tests to prove Open and Cloud both pass their respective flows.
 
-### Phase 4 — Optional Open Console decision
+### Phase 4 — Open Headless Runtime
 
-- Audit `apps/admin` coupling.
-- Either create a lightweight Open Console or keep Open headless-first.
-- Do not let Cloud Admin become required for Open operation.
+- Remove the inherited `apps/admin` surface from PayIn Open.
+- Keep Open operation headless-first through Agent commands, Skills, APIs, and configuration files.
+- If a UI is needed later, add a new optional Open-specific lightweight console rather than reusing Cloud's multi-tenant admin dashboard.
 
 ## Stop Condition for This Development Phase
 
@@ -229,3 +235,23 @@ This phase is complete when:
 - Cloud-only operations no longer leak into Open;
 - boundary checks and CI protect the split going forward;
 - Processor tenancy coupling is either removed or wrapped behind a documented single-merchant facade with tests.
+
+## Implemented Adapter Boundary
+
+The current implementation uses explicit adapters to protect the desired product
+boundary while the historical processor persistence layer is being decoupled:
+
+- `OpenProcessor` / `OpenManager`: PayIn Open public boundary. These APIs omit
+  `organizationId` and inject `DEFAULT_OPEN_ORGANIZATION_ID` internally.
+- Cloud adapter implementations belong outside this Open repository, initially in
+  the separate `payin-cloud-layer` repository, where they can depend on Open's
+  shared payment core without making Open aware of Cloud.
+- `PaymentScope`: shared terminology for the internal payment isolation key.
+  The current database still stores `PaymentScope.id` in `organization_id`
+  columns for compatibility, but Open-facing APIs must not expose that storage
+  detail.
+
+This is the required direction for future refactoring: move domain logic behind
+`PaymentScope`, keep Open single-merchant by default, and let external Cloud
+layer repositories add tenant, billing, hosted operations, SLA, and other SaaS
+concerns through Cloud adapters and extensions.

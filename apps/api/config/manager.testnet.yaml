@@ -3,13 +3,10 @@ database:
 processor:
   configFile: testnet.yaml
 monitor:
+  # Open demo default: monitor one public-RPC testnet out of the box.
+  # Add more chains after configuring their RPC providers/keys as needed.
   chains:
   - ethereum-sepolia
-  - polygon-amoy
-  - tron-nile
-  - solana-devnet
-  - arbitrum-sepolia
-  - xlayer-testnet
   rpcKeys:
     alchemy: ${ALCHEMY_API_KEY}
     infura: ${INFURA_API_KEY}
@@ -37,11 +34,14 @@ monitor:
   rpc:
     chains:
       ethereum-sepolia:
+        # Demo/Open default: public RPC first; put keyed providers first when desired.
         preferredProviders:
+        - publicnode
         - alchemy
         - infura
       polygon-amoy:
         preferredProviders:
+        - publicnode
         - alchemy
       tron-nile:
         preferredProviders:
@@ -52,8 +52,8 @@ monitor:
         - tatum
       arbitrum-sepolia:
         preferredProviders:
-        - alchemy
         - publicnode
+        - alchemy
 configMetadata:
 - key: orders.payment_window_seconds
   category: business_rules

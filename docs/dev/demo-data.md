@@ -2,7 +2,7 @@
 
 This guide explains how to seed demo data for local or sandbox development.
 
-Demo data is useful for trying the admin UI, API examples, payment links, and webhook flows without touching production data.
+Demo data is useful for trying API examples, payment links, Agent-operated setup flows, and webhook delivery without touching production data.
 
 ## Safety Rules
 
@@ -39,11 +39,11 @@ Example checklist:
 ## Suggested Demo Flow
 
 1. Initialize schema and demo data.
-2. Start API and admin services.
-3. Log in to the admin UI.
-4. Confirm demo organization and API key exist.
+2. Start the PayIn Open API service.
+3. Run `npm run open:doctor` and `npm run open:smoke -- --url <api-url>`.
+4. Confirm the default Open merchant scope and API key exist.
 5. Import a small test address pool.
-6. Create a test order or payment link.
+6. Create a test order or payment link through the API or Agent workflow.
 7. Verify the payment page renders.
 8. Verify webhook test delivery using a local or sandbox endpoint.
 
