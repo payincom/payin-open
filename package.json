@@ -14,7 +14,7 @@
     "watch:monitor": "npm run dev -w packages/monitor",
     "watch:processor": "npm run dev -w packages/processor",
     "build": "npm run build:packages && npm run build:apps",
-    "build:packages": "npm run build:shared && npm run build:monitor && npm run build:processor && npm run build:email && npm run build:notification && npm run build:test-utils && npm run build:auth && npm run build:manager",
+    "build:packages": "npm run build:shared && npm run build:monitor && npm run build:processor && npm run build:email && npm run build:notification && npm run build:test-utils && npm run build:auth && npm run build:manager && npm run build:cli",
     "build:apps": "npm run build -w apps/api",
     "build:shared": "npm run build -w packages/shared",
     "build:monitor": "npm run build -w packages/monitor",
@@ -31,7 +31,7 @@
     "lint:check": "eslint . --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "type-check": "tsc --build --pretty false packages/shared packages/monitor packages/processor packages/notification packages/email packages/manager packages/auth packages/test-utils apps/api",
+    "type-check": "tsc --build --pretty false packages/shared packages/monitor packages/processor packages/notification packages/email packages/manager packages/auth packages/test-utils packages/cli apps/api",
     "clean": "rm -rf dist node_modules/.cache",
     "postinstall": "[ -z \"$CI\" ] && [ -z \"$RAILWAY_ENVIRONMENT\" ] && husky install || true",
     "db:init": "tsx scripts/init-database.ts",
@@ -52,9 +52,11 @@
     "deploy:build": "./scripts/deployment/build-for-railway.sh",
     "deploy:railway:test": "./scripts/deployment/deploy-to-railway.sh test",
     "deploy:railway:prod": "./scripts/deployment/deploy-to-railway.sh production",
-    "test:unit": "vitest run packages/notification/tests packages/email/tests packages/monitor/tests/rpc-config.test.ts packages/processor/tests/unit/open-processor-facade.test.ts packages/processor/tests/unit/transfer-repository-scope.test.ts packages/manager/tests/unit/open-manager.test.ts apps/api/tests/url-generation.test.ts apps/api/tests/api-url-fields.test.ts apps/api/tests/open-runtime.test.ts tests/open-ops.test.ts tests/open-smoke-live.test.ts",
+    "test:unit": "vitest run packages/notification/tests packages/email/tests packages/monitor/tests/rpc-config.test.ts packages/processor/tests/unit/open-processor-facade.test.ts packages/processor/tests/unit/transfer-repository-scope.test.ts packages/manager/tests/unit/open-manager.test.ts packages/cli/tests apps/api/tests/url-generation.test.ts apps/api/tests/api-url-fields.test.ts apps/api/tests/open-runtime.test.ts tests/open-ops.test.ts tests/open-smoke-live.test.ts",
     "boundary:check": "node scripts/quality/check-open-boundary.cjs",
-    "open:verify": "npm run boundary:check && npm run open:doctor && npm run open:init -- --check && npm run open:smoke && npm run type-check && npm run build && npm run test:unit && npm run build -w apps/docs"
+    "open:verify": "npm run boundary:check && npm run open:doctor && npm run open:init -- --check && npm run open:smoke && npm run type-check && npm run build && npm run test:unit && npm run build -w apps/docs",
+    "build:cli": "npm run build -w packages/cli",
+    "open:cli": "tsx packages/cli/src/index.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.6",
