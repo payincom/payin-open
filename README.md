@@ -52,6 +52,16 @@ payin-open/
 └── tools/                # Operational tools
 ```
 
+## Operating Model
+
+PayIn Open is **headless-first**. Merchants can operate it through APIs, scripts, and the PayIn Open Agent Skill. A lightweight management UI may exist for local visibility, but Open should not depend on PayIn Cloud's multi-tenant admin model.
+
+Use this rule when adding features:
+
+- Put reusable payment, monitoring, processing, and webhook logic in PayIn Open first.
+- Keep PayIn-hosted multi-tenant SaaS concerns in PayIn Cloud.
+- Hide organization/tenant complexity from the Open self-hosted public surface whenever possible.
+
 ## Local Development
 
 ```bash
@@ -65,6 +75,8 @@ npm run dev
 Useful commands:
 
 ```bash
+npm run boundary:check # Check Open / Cloud repository boundaries
+npm run open:verify    # Run the full Open independence verification suite
 npm run build          # Build packages and apps
 npm run test           # Run tests
 npm run lint:check     # Check linting
@@ -91,6 +103,7 @@ This repository keeps the AI-agent skill and self-hosting reference material use
 | [`docs/reference/processor-configuration.en.md`](docs/reference/processor-configuration.en.md) | Processor configuration reference |
 | [`docs/reference/rpc-configuration.en.md`](docs/reference/rpc-configuration.en.md) | RPC provider configuration reference |
 | [`docs/self-hosting/troubleshooting.md`](docs/self-hosting/troubleshooting.md) | Common problems and fixes |
+| [`docs/architecture/open-vs-cloud.md`](docs/architecture/open-vs-cloud.md) | Open / Cloud boundary and decoupling plan |
 | [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md) | AI agent deployment and operations skill |
 
 ## Documentation Rules

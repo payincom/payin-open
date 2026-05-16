@@ -50,7 +50,9 @@
     "deploy:build": "./scripts/deployment/build-for-railway.sh",
     "deploy:railway:test": "./scripts/deployment/deploy-to-railway.sh test",
     "deploy:railway:prod": "./scripts/deployment/deploy-to-railway.sh production",
-    "test:unit": "vitest run packages/notification/tests packages/email/tests packages/monitor/tests/rpc-config.test.ts apps/api/tests/url-generation.test.ts apps/api/tests/api-url-fields.test.ts"
+    "test:unit": "vitest run packages/notification/tests packages/email/tests packages/monitor/tests/rpc-config.test.ts apps/api/tests/url-generation.test.ts apps/api/tests/api-url-fields.test.ts",
+    "boundary:check": "node scripts/quality/check-open-boundary.cjs",
+    "open:verify": "npm run boundary:check && npm run type-check && npm run build && npm run test:unit && npm run build -w apps/docs"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.6",

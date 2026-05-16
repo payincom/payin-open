@@ -237,7 +237,7 @@ wrangler deploy --env production
       "transport": "streamable-http",
       "headers": {
         "X-API-Key": "your-payin-api-key",
-        "X-PayIn-API-URL": "https://api.payin.com"
+        "X-PayIn-API-URL": "https://api.your-payin.example.com"
       }
     }
   }

@@ -63,7 +63,7 @@ LOG_LEVEL=debug
 ```bash
 # Non-sensitive variables (wrangler.toml)
 [vars]
-DEFAULT_PAYIN_API_URL = "https://api.payin.com"
+DEFAULT_PAYIN_API_URL = "https://api.your-payin.example.com"
 LOG_LEVEL = "info"
 
 # Sensitive variables (Cloudflare secrets)
@@ -149,7 +149,7 @@ LOG_LEVEL=debug
 [env.production]
 name = "payin-mcp-server-prod"
 vars = {
-  DEFAULT_PAYIN_API_URL = "https://api.payin.com",
+  DEFAULT_PAYIN_API_URL = "https://api.your-payin.example.com",
   LOG_LEVEL = "info",
   REQUIRE_API_KEY_HEADER = "true"
 }
@@ -191,7 +191,7 @@ vars = {
 ```toml
 [env.production]
 vars = {
-  DEFAULT_PAYIN_API_URL = "https://api.payin.com",
+  DEFAULT_PAYIN_API_URL = "https://api.your-payin.example.com",
   REQUIRE_API_KEY_HEADER = "true",
   LOG_LEVEL = "info"
 }

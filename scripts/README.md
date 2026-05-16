@@ -94,7 +94,7 @@ Automates Railway project creation with PostgreSQL database.
 **Example Output**:
 ```
 📦 Step 1/4: Creating Railway project...
-✅ Project created: payin-api-test
+✅ Project created: your-payin-api
 
 🗄️  Step 2/4: Adding PostgreSQL database...
 ✅ PostgreSQL database added

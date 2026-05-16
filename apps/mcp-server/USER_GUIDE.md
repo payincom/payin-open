@@ -71,7 +71,7 @@ https://payin-mcp-server-prod.your-subdomain.workers.dev
       "transport": "streamable-http",
       "headers": {
         "X-API-Key": "你的PayIn API Key",
-        "X-PayIn-API-URL": "https://api.payin.com"
+        "X-PayIn-API-URL": "https://api.your-payin.example.com"
       }
     }
   }
@@ -181,7 +181,7 @@ PayIn 是一个多链稳定币支付系统，提供两种服务：
 ```typescript
 // 1. 创建订单
 async function createPaymentOrder(orderData) {
-  const response = await fetch('https://api.payin.com/api/v1/orders', {
+  const response = await fetch('https://api.your-payin.example.com/api/v1/orders', {
     method: 'POST',
     headers: {
       'X-API-Key': process.env.PAYIN_API_KEY,
@@ -577,7 +577,7 @@ Tron 地址池只剩 8 个可用地址，建议尽快补充至少 20-50 个地�
 ```javascript
 // 方式 1: 使用 fetch（推荐）
 async function createOrder(orderData) {
-  const response = await fetch('https://api.payin.com/api/v1/orders', {
+  const response = await fetch('https://api.your-payin.example.com/api/v1/orders', {
     method: 'POST',
     headers: {
       'X-API-Key': process.env.PAYIN_API_KEY,

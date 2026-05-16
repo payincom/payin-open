@@ -14,54 +14,54 @@ import {
 describe('URL Builder Utilities', () => {
   describe('buildPaymentLinkCheckoutUrl', () => {
     it('should build checkout URL with slug', () => {
-      const url = buildPaymentLinkCheckoutUrl('https://api.payin.com', 'coffee-5usd');
-      expect(url).toBe('https://api.payin.com/checkout/coffee-5usd');
+      const url = buildPaymentLinkCheckoutUrl('https://api.your-payin.example.com', 'coffee-5usd');
+      expect(url).toBe('https://api.your-payin.example.com/checkout/coffee-5usd');
     });
 
     it('should handle trailing slash in base URL', () => {
-      const url = buildPaymentLinkCheckoutUrl('https://api.payin.com/', 'coffee-5usd');
-      expect(url).toBe('https://api.payin.com/checkout/coffee-5usd');
+      const url = buildPaymentLinkCheckoutUrl('https://api.your-payin.example.com/', 'coffee-5usd');
+      expect(url).toBe('https://api.your-payin.example.com/checkout/coffee-5usd');
     });
 
     it('should encode special characters in slug', () => {
-      const url = buildPaymentLinkCheckoutUrl('https://api.payin.com', 'test product');
-      expect(url).toBe('https://api.payin.com/checkout/test%20product');
+      const url = buildPaymentLinkCheckoutUrl('https://api.your-payin.example.com', 'test product');
+      expect(url).toBe('https://api.your-payin.example.com/checkout/test%20product');
     });
   });
 
   describe('buildOrderPaymentUrl', () => {
     it('should build order payment URL with UUID', () => {
       const orderId = '123e4567-e89b-12d3-a456-426614174000';
-      const url = buildOrderPaymentUrl('https://api.payin.com', orderId);
-      expect(url).toBe('https://api.payin.com/pay/order/123e4567-e89b-12d3-a456-426614174000');
+      const url = buildOrderPaymentUrl('https://api.your-payin.example.com', orderId);
+      expect(url).toBe('https://api.your-payin.example.com/pay/order/123e4567-e89b-12d3-a456-426614174000');
     });
 
     it('should handle trailing slash in base URL', () => {
       const orderId = '123e4567-e89b-12d3-a456-426614174000';
-      const url = buildOrderPaymentUrl('https://api.payin.com/', orderId);
-      expect(url).toBe('https://api.payin.com/pay/order/123e4567-e89b-12d3-a456-426614174000');
+      const url = buildOrderPaymentUrl('https://api.your-payin.example.com/', orderId);
+      expect(url).toBe('https://api.your-payin.example.com/pay/order/123e4567-e89b-12d3-a456-426614174000');
     });
   });
 
   describe('buildDepositPageUrl', () => {
     it('should build deposit page URL for EVM protocol', () => {
-      const url = buildDepositPageUrl('https://api.payin.com', 'user_12345', 'evm');
-      expect(url).toBe('https://api.payin.com/pay/deposit/user_12345?protocol=evm');
+      const url = buildDepositPageUrl('https://api.your-payin.example.com', 'user_12345', 'evm');
+      expect(url).toBe('https://api.your-payin.example.com/pay/deposit/user_12345?protocol=evm');
     });
 
     it('should build deposit page URL for Tron protocol', () => {
-      const url = buildDepositPageUrl('https://api.payin.com', 'user_12345', 'tron');
-      expect(url).toBe('https://api.payin.com/pay/deposit/user_12345?protocol=tron');
+      const url = buildDepositPageUrl('https://api.your-payin.example.com', 'user_12345', 'tron');
+      expect(url).toBe('https://api.your-payin.example.com/pay/deposit/user_12345?protocol=tron');
     });
 
     it('should encode special characters in deposit reference', () => {
-      const url = buildDepositPageUrl('https://api.payin.com', 'user name@123', 'evm');
-      expect(url).toBe('https://api.payin.com/pay/deposit/user%20name%40123?protocol=evm');
+      const url = buildDepositPageUrl('https://api.your-payin.example.com', 'user name@123', 'evm');
+      expect(url).toBe('https://api.your-payin.example.com/pay/deposit/user%20name%40123?protocol=evm');
     });
 
     it('should handle trailing slash in base URL', () => {
-      const url = buildDepositPageUrl('https://api.payin.com/', 'user_12345', 'evm');
-      expect(url).toBe('https://api.payin.com/pay/deposit/user_12345?protocol=evm');
+      const url = buildDepositPageUrl('https://api.your-payin.example.com/', 'user_12345', 'evm');
+      expect(url).toBe('https://api.your-payin.example.com/pay/deposit/user_12345?protocol=evm');
     });
   });
 

@@ -5,7 +5,7 @@
 
 /**
  * Build checkout URL for a published payment link
- * @param baseUrl - Base URL of the API server (e.g., https://api.payin.com)
+ * @param baseUrl - Base URL of the API server (e.g., https://api.your-payin.example.com)
  * @param slug - Payment link slug
  * @returns Full checkout URL
  */
@@ -16,7 +16,7 @@ export function buildPaymentLinkCheckoutUrl(baseUrl: string, slug: string): stri
 
 /**
  * Build order payment page URL
- * @param baseUrl - Base URL of the API server (e.g., https://api.payin.com)
+ * @param baseUrl - Base URL of the API server (e.g., https://api.your-payin.example.com)
  * @param orderId - Order UUID
  * @returns Full order payment page URL
  */
@@ -27,7 +27,7 @@ export function buildOrderPaymentUrl(baseUrl: string, orderId: string): string {
 
 /**
  * Build deposit page URL
- * @param baseUrl - Base URL of the API server (e.g., https://api.payin.com)
+ * @param baseUrl - Base URL of the API server (e.g., https://api.your-payin.example.com)
  * @param depositReference - Deposit reference (external user ID)
  * @param protocol - Protocol (evm/tron)
  * @returns Full deposit page URL

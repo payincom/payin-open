@@ -51,7 +51,7 @@ export interface AuthManagerOptions {
   tokenExpiration?: string;
   /** Email service instance (optional) */
   emailService?: EmailService;
-  /** Base URL for email links (e.g., https://payin.com) */
+  /** Base URL for email links (e.g., https://your-payin.example.com) */
   baseUrl?: string;
 }
 

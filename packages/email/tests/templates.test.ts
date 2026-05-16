@@ -44,10 +44,10 @@ describe('Email Templates', () => {
       const html = welcomeTemplate.html({
         username: 'bob',
         email: 'bob@example.com',
-        loginUrl: 'https://payin.com/login',
+        loginUrl: 'https://your-payin.example.com/login',
       });
 
-      expect(html).toContain('https://payin.com/login');
+      expect(html).toContain('https://your-payin.example.com/login');
       expect(html).toContain('Get Started');
     });
   });
@@ -61,7 +61,7 @@ describe('Email Templates', () => {
       const subject = verifyEmailTemplate.subject({
         username: 'john',
         email: 'john@example.com',
-        verificationUrl: 'https://payin.com/verify/abc123',
+        verificationUrl: 'https://your-payin.example.com/verify/abc123',
       });
 
       expect(subject).toBe('Verify Your Email Address - PayIn');
@@ -71,22 +71,22 @@ describe('Email Templates', () => {
       const text = verifyEmailTemplate.text({
         username: 'john',
         email: 'john@example.com',
-        verificationUrl: 'https://payin.com/verify/abc123',
+        verificationUrl: 'https://your-payin.example.com/verify/abc123',
       });
 
       expect(text).toContain('Hello john');
-      expect(text).toContain('https://payin.com/verify/abc123');
+      expect(text).toContain('https://your-payin.example.com/verify/abc123');
     });
 
     it('should render html content with verification URL', () => {
       const html = verifyEmailTemplate.html({
         username: 'alice',
         email: 'alice@example.com',
-        verificationUrl: 'https://payin.com/verify/def456',
+        verificationUrl: 'https://your-payin.example.com/verify/def456',
       });
 
       expect(html).toContain('Hello alice');
-      expect(html).toContain('https://payin.com/verify/def456');
+      expect(html).toContain('https://your-payin.example.com/verify/def456');
       expect(html).toContain('Verify Email Address');
     });
 
@@ -94,7 +94,7 @@ describe('Email Templates', () => {
       const html = verifyEmailTemplate.html({
         username: 'bob',
         email: 'bob@example.com',
-        verificationUrl: 'https://payin.com/verify/xyz',
+        verificationUrl: 'https://your-payin.example.com/verify/xyz',
         expiresIn: '24 hours',
       });
 
@@ -112,7 +112,7 @@ describe('Email Templates', () => {
       const subject = passwordResetTemplate.subject({
         username: 'john',
         email: 'john@example.com',
-        resetUrl: 'https://payin.com/reset/abc123',
+        resetUrl: 'https://your-payin.example.com/reset/abc123',
       });
 
       expect(subject).toBe('Reset Your Password - PayIn');
@@ -122,11 +122,11 @@ describe('Email Templates', () => {
       const text = passwordResetTemplate.text({
         username: 'john',
         email: 'john@example.com',
-        resetUrl: 'https://payin.com/reset/abc123',
+        resetUrl: 'https://your-payin.example.com/reset/abc123',
       });
 
       expect(text).toContain('Hello john');
-      expect(text).toContain('https://payin.com/reset/abc123');
+      expect(text).toContain('https://your-payin.example.com/reset/abc123');
       expect(text).toContain('password reset');
     });
 
@@ -134,11 +134,11 @@ describe('Email Templates', () => {
       const html = passwordResetTemplate.html({
         username: 'alice',
         email: 'alice@example.com',
-        resetUrl: 'https://payin.com/reset/def456',
+        resetUrl: 'https://your-payin.example.com/reset/def456',
       });
 
       expect(html).toContain('Hello alice');
-      expect(html).toContain('https://payin.com/reset/def456');
+      expect(html).toContain('https://your-payin.example.com/reset/def456');
       expect(html).toContain('Reset Password');
     });
 
@@ -146,7 +146,7 @@ describe('Email Templates', () => {
       const html = passwordResetTemplate.html({
         username: 'bob',
         email: 'bob@example.com',
-        resetUrl: 'https://payin.com/reset/xyz',
+        resetUrl: 'https://your-payin.example.com/reset/xyz',
         expiresIn: '1 hour',
       });
 
@@ -158,7 +158,7 @@ describe('Email Templates', () => {
       const html = passwordResetTemplate.html({
         username: 'charlie',
         email: 'charlie@example.com',
-        resetUrl: 'https://payin.com/reset/xyz',
+        resetUrl: 'https://your-payin.example.com/reset/xyz',
       });
 
       expect(html).toContain('Security tip');

@@ -28,7 +28,7 @@ async function main() {
   const preview = emailService.previewTemplate('welcome', {
     username: 'john_doe',
     email: 'john@example.com',
-    loginUrl: 'https://payin.com/login',
+    loginUrl: 'https://your-payin.example.com/login',
   });
 
   console.log('Subject:', preview.subject);
@@ -45,7 +45,7 @@ async function main() {
       data: {
         username: 'john_doe',
         email: 'developer@example.com',
-        loginUrl: 'https://payin.com/login',
+        loginUrl: 'https://your-payin.example.com/login',
       },
     });
 

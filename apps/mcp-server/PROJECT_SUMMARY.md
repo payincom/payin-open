@@ -205,7 +205,7 @@ apps/mcp-server/
          "url": "https://your-mcp-server.workers.dev/mcp",
          "headers": {
            "X-API-Key": "your-api-key",
-           "X-PayIn-API-URL": "https://api.payin.com"
+           "X-PayIn-API-URL": "https://api.your-payin.example.com"
          }
        }
      }

@@ -5,8 +5,8 @@
 #
 # Environment: Production
 # Railway Project: https://railway.com/project/<RAILWAY_PROJECT_ID>?environmentId=<RAILWAY_PRODUCTION_ENVIRONMENT_ID>
-# API Domain: api.payin.com
-# Admin Domain: app.payin.com
+# API Domain: api.your-payin.example.com
+# Admin Domain: admin.your-payin.example.com
 #
 # Deployment: Git push triggers automatic build and deploy on Railway
 # ============================================================

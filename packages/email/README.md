@@ -61,7 +61,7 @@ await emailService.sendTemplate('welcome', {
   data: {
     username: 'john_doe',
     email: 'user@example.com',
-    loginUrl: 'https://payin.com/login',
+    loginUrl: 'https://your-payin.example.com/login',
   },
 });
 ```
@@ -73,7 +73,7 @@ await emailService.sendTemplate('welcome', {
 const preview = emailService.previewTemplate('welcome', {
   username: 'john_doe',
   email: 'user@example.com',
-  loginUrl: 'https://payin.com/login',
+  loginUrl: 'https://your-payin.example.com/login',
 });
 
 console.log('Subject:', preview.subject);
@@ -97,7 +97,7 @@ await emailService.sendTemplate('welcome', {
   data: {
     username: 'john_doe',
     email: 'user@example.com',
-    loginUrl: 'https://payin.com/login', // optional
+    loginUrl: 'https://your-payin.example.com/login', // optional
   },
 });
 ```
@@ -116,7 +116,7 @@ await emailService.sendTemplate('verify-email', {
   data: {
     username: 'john_doe',
     email: 'user@example.com',
-    verificationUrl: 'https://payin.com/verify/abc123',
+    verificationUrl: 'https://your-payin.example.com/verify/abc123',
     expiresIn: '24 hours', // optional
   },
 });
@@ -136,7 +136,7 @@ await emailService.sendTemplate('password-reset', {
   data: {
     username: 'john_doe',
     email: 'user@example.com',
-    resetUrl: 'https://payin.com/reset/abc123',
+    resetUrl: 'https://your-payin.example.com/reset/abc123',
     expiresIn: '1 hour', // optional
   },
 });

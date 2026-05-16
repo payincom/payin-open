@@ -127,7 +127,7 @@ await emailService.sendTemplate('welcome', {
   data: {
     username: 'john_doe',
     email: 'user@example.com',
-    loginUrl: 'https://payin.com/login',
+    loginUrl: 'https://your-payin.example.com/login',
   },
 });
 ```

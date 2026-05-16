@@ -90,7 +90,7 @@ BREVO_SMTP_PASSWORD=your-smtp-password
 BREVO_FROM_EMAIL=noreply@payin.com
 
 # Application Base URL (for email links)
-BASE_URL=https://payin.com
+BASE_URL=https://your-payin.example.com
 # Or for development:
 # BASE_URL=http://localhost:3000
 ```
@@ -153,7 +153,7 @@ const authManager = new AuthManager({
   connectionString: process.env.DATABASE_URL!,
   jwtSecret: process.env.JWT_SECRET!,
   emailService,
-  baseUrl: 'https://payin.com',
+  baseUrl: 'https://your-payin.example.com',
 });
 
 // Register a user (emails sent automatically)

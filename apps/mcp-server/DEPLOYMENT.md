@@ -147,7 +147,7 @@ https://payin-mcp-server.your-subdomain.workers.dev
       "transport": "streamable-http",
       "headers": {
         "X-API-Key": "your-production-api-key",
-        "X-PayIn-API-URL": "https://api.payin.com"
+        "X-PayIn-API-URL": "https://api.your-payin.example.com"
       }
     }
   }

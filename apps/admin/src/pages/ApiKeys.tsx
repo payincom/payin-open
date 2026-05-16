@@ -297,7 +297,7 @@ export default function ApiKeys() {
               <label className="text-sm font-medium text-foreground">Usage Example</label>
               <div className="p-3 bg-slate-950 dark:bg-slate-900 text-slate-100 rounded-lg font-mono text-sm overflow-x-auto border border-slate-800">
                 <pre className="text-slate-100">
-{`curl https://api.payin.com/api/v1/orders \\
+{`curl https://api.your-payin.example.com/api/v1/orders \\
   -H "Authorization: Bearer ${createdKey?.apiKey || 'pk_test_...'}" \\
   -H "Content-Type: application/json"`}
                 </pre>

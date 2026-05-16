@@ -13,7 +13,7 @@ import crypto from 'crypto';
 const app = new Hono();
 
 const PORT = parseInt(process.env.PORT || '3001');
-const PAYIN_API_URL = process.env.PAYIN_API_URL || 'https://api.sandbox.payin.com';
+const PAYIN_API_URL = process.env.PAYIN_API_URL || 'https://api.sandbox.your-payin.example.com';
 const PAYIN_API_KEY = process.env.PAYIN_API_KEY || '';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'demo-webhook-secret';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
@@ -116,7 +116,7 @@ function layout(title, body) {
     </div>
   </header>
   <div class="container">${body}</div>
-  <footer>PayIn Demo Shop — Powered by <a href="https://payin.com" style="color:#6c5ce7">PayIn</a> Stablecoin Payment Gateway</footer>
+  <footer>PayIn Demo Shop — Powered by <a href="https://your-payin.example.com" style="color:#6c5ce7">PayIn</a> Stablecoin Payment Gateway</footer>
 </body>
 </html>`;
 }

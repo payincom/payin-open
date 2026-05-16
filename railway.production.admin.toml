@@ -5,8 +5,8 @@
 #
 # Environment: Production
 # Railway Project: https://railway.com/project/<RAILWAY_PROJECT_ID>?environmentId=<RAILWAY_PRODUCTION_ENVIRONMENT_ID>
-# Admin Domain: app.payin.com
-# API Domain: api.payin.com
+# Admin Domain: admin.your-payin.example.com
+# API Domain: api.your-payin.example.com
 #
 # Deployment: Git push triggers automatic build and deploy on Railway
 # ============================================================
@@ -26,7 +26,7 @@ watchPaths = [
 # Build arguments (environment variables for Vite build)
 # These are injected at build time and baked into the static files
 [build.buildArgs]
-VITE_API_URL = "https://api.payin.com/api/v1"
+VITE_API_URL = "https://api.your-payin.example.com/api/v1"
 # VITE_PAYMENT_LINK_PUBLIC_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 # should be set in Railway Dashboard
 

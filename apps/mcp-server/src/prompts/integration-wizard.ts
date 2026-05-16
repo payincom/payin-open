@@ -74,7 +74,7 @@ export const integrationWizardPrompt = {
         case 'typescript':
         case 'javascript':
           promptText += `\`\`\`typescript\n`;
-          promptText += `const response = await fetch('https://api.payin.com/api/v1/orders', {\n`;
+          promptText += `const response = await fetch('https://api.your-payin.example.com/api/v1/orders', {\n`;
           promptText += `  method: 'POST',\n`;
           promptText += `  headers: {\n`;
           promptText += `    'X-API-Key': 'your-api-key',\n`;
@@ -94,7 +94,7 @@ export const integrationWizardPrompt = {
           promptText += `\`\`\`python\n`;
           promptText += `import requests\n\n`;
           promptText += `response = requests.post(\n`;
-          promptText += `    'https://api.payin.com/api/v1/orders',\n`;
+          promptText += `    'https://api.your-payin.example.com/api/v1/orders',\n`;
           promptText += `    headers={'X-API-Key': 'your-api-key'},\n`;
           promptText += `    json={\n`;
           promptText += `        'orderReference': 'order_001',\n`;
