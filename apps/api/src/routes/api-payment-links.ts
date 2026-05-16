@@ -22,7 +22,7 @@ type HttpErrorStatus = 400 | 401 | 403 | 404 | 409 | 410 | 500;
 publicPaymentLinks.get('/:slug', async (c) => {
   try {
     const manager = getManager();
-    const slug = c.req.param('slug');
+    const slug = c.req.param('slug')!;
 
     // Get checkout data with currency options
     const checkoutData = await manager.getPaymentLinkCheckoutData(slug);
@@ -67,7 +67,7 @@ publicPaymentLinks.get('/:slug', async (c) => {
 publicPaymentLinks.post('/:slug/orders', async (c) => {
   try {
     const manager = getManager();
-    const slug = c.req.param('slug');
+    const slug = c.req.param('slug')!;
     const body = await c.req.json<CreatePublicPaymentLinkOrderRequest>();
 
     // Validate required fields

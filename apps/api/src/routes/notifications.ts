@@ -143,7 +143,7 @@ app.get('/endpoints/:id', authMiddleware(), requirePermission('webhooks:read'), 
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const endpoint = await notification.getEndpoint(id);
 
     if (!endpoint) {
@@ -187,7 +187,7 @@ app.put('/endpoints/:id', authMiddleware(), requirePermission('webhooks:write'),
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
 
     // Verify endpoint belongs to user's organization
     const existing = await notification.getEndpoint(id);
@@ -227,7 +227,7 @@ app.delete('/endpoints/:id', authMiddleware(), requirePermission('webhooks:write
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
 
     // Verify endpoint belongs to user's organization
     const existing = await notification.getEndpoint(id);
@@ -266,7 +266,7 @@ app.post('/endpoints/:id/test', authMiddleware(), requirePermission('webhooks:wr
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
 
     // Verify endpoint belongs to user's organization
     const existing = await notification.getEndpoint(id);
@@ -358,7 +358,7 @@ app.get('/logs/:id', authMiddleware(), requirePermission('webhooks:read'), async
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const log = await notification.getNotificationLog(id);
 
     if (!log) {
@@ -400,7 +400,7 @@ app.post('/logs/:id/retry', authMiddleware(), requirePermission('webhooks:write'
       }, 401);
     }
 
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
 
     // Verify log belongs to user's organization
     const log = await notification.getNotificationLog(id);
@@ -597,7 +597,7 @@ app.get('/webhooks/:id', authMiddleware(), requirePermission('webhooks:read'), a
     return c.json({ error: 'Notification service not initialized' }, 503);
   }
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const endpoint = await notification.getEndpoint(id);
     if (!endpoint) {
       return c.json({ error: 'Webhook not found' }, 404);
@@ -615,7 +615,7 @@ app.put('/webhooks/:id', authMiddleware(), requirePermission('webhooks:write'), 
     return c.json({ error: 'Notification service not initialized' }, 503);
   }
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const body = await c.req.json();
     const endpoint = await notification.updateEndpoint(id, body);
     return c.json({ success: true, data: endpoint });
@@ -631,7 +631,7 @@ app.delete('/webhooks/:id', authMiddleware(), requirePermission('webhooks:write'
     return c.json({ error: 'Notification service not initialized' }, 503);
   }
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     await notification.deleteEndpoint(id);
     return c.json({ success: true, message: 'Webhook deleted' });
   } catch (error) {

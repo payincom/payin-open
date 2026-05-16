@@ -46,7 +46,7 @@ const renderUnavailable = (title: string, message: string, icon: string = '❌',
 };
 
 checkout.get('/:slug', async (c) => {
-  const rawSlug = c.req.param('slug');
+  const rawSlug = c.req.param('slug')!;
   const slug = rawSlug?.trim();
   if (!slug) {
     return c.html(renderUnavailable('Invalid Payment Link', 'Provide a valid payment link slug to open checkout.', '⚠️', 400));

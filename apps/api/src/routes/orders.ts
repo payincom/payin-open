@@ -470,7 +470,7 @@ orders.get(
   async (c) => {
   try {
     const manager = getManager();
-    const orderId = c.req.param('id');
+    const orderId = c.req.param('id')!;
 
     if (!UUID_REGEX.test(orderId)) {
       return c.json({
@@ -526,7 +526,7 @@ orders.get(
       data: enrichedOrder
     });
   } catch (error) {
-    console.error(`Failed to get order ${c.req.param('id')}:`, error);
+    console.error(`Failed to get order ${c.req.param('id')!}:`, error);
     return c.json({
       success: false,
       error: 'Failed to get order',

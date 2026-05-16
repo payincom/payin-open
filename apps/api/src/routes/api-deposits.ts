@@ -17,7 +17,7 @@ const apiDeposits = new Hono();
 apiDeposits.get('/:address', async (c) => {
   try {
     const manager = getManager();
-    const address = c.req.param('address');
+    const address = c.req.param('address')!;
 
     // Fetch deposit by address (public endpoint)
     const depositAddress = await manager.getDepositByAddress(address);
@@ -58,7 +58,7 @@ apiDeposits.get('/:address', async (c) => {
       qrCodeDataUrl
     });
   } catch (error) {
-    console.error(`Failed to fetch deposit address for ${c.req.param('address')}:`, error);
+    console.error(`Failed to fetch deposit address for ${c.req.param('address')!}:`, error);
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

@@ -299,7 +299,7 @@ addressPool.patch(
   async (c) => {
     try {
       const manager = getManager();
-      const address = c.req.param('address');
+      const address = c.req.param('address')!;
 
       // Get organizationId from auth context
       const organizationId = resolveBusinessOrganizationId(c);
@@ -341,7 +341,7 @@ addressPool.patch(
   async (c) => {
     try {
       const manager = getManager();
-      const address = c.req.param('address');
+      const address = c.req.param('address')!;
 
       // Get organizationId from auth context
       const organizationId = resolveBusinessOrganizationId(c);

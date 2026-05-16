@@ -22,7 +22,7 @@ const orderStatus = new Hono();
 orderStatus.get('/:orderId', async (c) => {
   try {
     const manager = getManager();
-    const orderId = c.req.param('orderId');
+    const orderId = c.req.param('orderId')!;
 
     // Get order details
     const order = await manager.getOrder(orderId);
@@ -108,7 +108,7 @@ orderStatus.get('/:orderId', async (c) => {
       }
     });
   } catch (error) {
-    console.error(`Failed to get order status for ${c.req.param('orderId')}:`, error);
+    console.error(`Failed to get order status for ${c.req.param('orderId')!}:`, error);
     return c.json({
       success: false,
       error: 'Failed to get order status',

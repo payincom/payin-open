@@ -16,7 +16,7 @@ const transferStatus = new Hono();
 transferStatus.get('/:txHash', async (c) => {
   try {
     const manager = getManager();
-    const txHash = c.req.param('txHash');
+    const txHash = c.req.param('txHash')!;
 
     console.log('[TransferStatus] Querying transfer for txHash:', txHash);
 

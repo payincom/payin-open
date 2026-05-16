@@ -337,7 +337,7 @@ deposits.get(
   async (c) => {
   try {
     const manager = getManager();
-    const depositReference = c.req.param('depositReference');
+    const depositReference = c.req.param('depositReference')!;
     const protocolParam = (c.req.query('protocol') || 'evm').toString().toLowerCase();
 
     if (!ALLOWED_PROTOCOLS.includes(protocolParam as typeof ALLOWED_PROTOCOLS[number])) {
@@ -398,7 +398,7 @@ deposits.get(
       data: enrichedAddress
     });
   } catch (error) {
-    console.error(`Failed to get deposit address for ${c.req.param('depositReference')}:`, error);
+    console.error(`Failed to get deposit address for ${c.req.param('depositReference')!}:`, error);
     return c.json({
       success: false,
       error: 'Failed to get deposit address',

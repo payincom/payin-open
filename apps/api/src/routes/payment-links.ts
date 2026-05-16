@@ -263,7 +263,7 @@ paymentLinks.put(
       }
 
       const body = await c.req.json<UpdatePaymentLinkRequest>();
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
 
       if (body.metadata !== undefined && body.metadata !== null && typeof body.metadata !== 'object') {
         return c.json({
@@ -389,7 +389,7 @@ paymentLinks.put(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const body = await c.req.json<UpdatePaymentLinkCurrenciesRequest>();
 
       // Validate currencies array
@@ -484,7 +484,7 @@ paymentLinks.post(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const link = await manager.getPaymentLink(paymentLinkId, organizationId);
 
       if (!link) {
@@ -544,7 +544,7 @@ paymentLinks.post(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       let body: PublishPaymentLinkRequest = {};
       try {
         body = await c.req.json<PublishPaymentLinkRequest>();
@@ -603,7 +603,7 @@ paymentLinks.post(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const result = await manager.unpublishPaymentLink(paymentLinkId, organizationId);
 
       // Unpublished links don't have accessible URLs
@@ -645,7 +645,7 @@ paymentLinks.post(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const result = await manager.archivePaymentLink(paymentLinkId, organizationId);
 
       // Archived links don't have accessible URLs
@@ -687,7 +687,7 @@ paymentLinks.post(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const result = await manager.restorePaymentLink(paymentLinkId, organizationId);
 
       // Add URL if restored link is published and has a slug
@@ -948,7 +948,7 @@ paymentLinks.get(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const result = await manager.getPaymentLink(paymentLinkId, organizationId);
 
       if (!result) {
@@ -1000,7 +1000,7 @@ paymentLinks.get(
         }, 401);
       }
 
-      const paymentLinkId = c.req.param('id');
+      const paymentLinkId = c.req.param('id')!;
       const result = await manager.listPaymentLinkOrders(paymentLinkId, organizationId);
 
       return c.json({
