@@ -74,9 +74,9 @@ Explain each step in business language.
    - Webhook endpoint for merchant system
 4. Configure environment variables with secret values redacted in chat/log output. For Open testnet demos, Ethereum Sepolia defaults to publicnode and does not require Alchemy/Infura keys.
 5. Run repository-local Open preflight checks before mutating anything. Prefer the PayIn operator CLI for deployed runtime operations; use npm scripts while working inside the source tree:
-   - `npm run open:cli -- doctor --url <api-url>` or `npm run open:doctor`
+   - `npm exec --yes --package github:payincom/payin-cli -- payin doctor --url <api-url>` or `npm run open:doctor`
    - `npm run open:init -- --check`
-   - `npm run open:cli -- smoke --url <api-url>` or `npm run open:smoke` for dry-run smoke expectations
+   - `npm exec --yes --package github:payincom/payin-cli -- payin smoke --url <api-url>` or `npm run open:smoke` for dry-run smoke expectations
 6. Deploy services.
 7. Run initialization only against the confirmed sandbox database with `npm run open:init`.
 8. Verify `/health` and public config with `npm run open:smoke -- --url <sandbox-api-url>`.
@@ -108,19 +108,19 @@ npm run dev:api
 npm run open:smoke -- --url http://localhost:3000
 ```
 
-For live order smoke, register the first local Open operator, create an API key, add address-pool addresses, then run `open:smoke -- --url ... --api-key ... --create-order` or `npm run open:cli -- smoke --url ... --api-key ... --create-order`. Public registration is locked after the first operator; use controlled local/admin workflows for additional operators.
+For live order smoke, register the first local Open operator, create an API key, add address-pool addresses, then run `open:smoke -- --url ... --api-key ... --create-order` or `npm exec --yes --package github:payincom/payin-cli -- payin smoke --url ... --api-key ... --create-order`. Public registration is locked after the first operator; use controlled local/admin workflows for additional operators.
 
 ## PayIn Operator CLI
 
-The `payin` CLI supports both Open and Cloud runtime operations. It is not an installer/deployer. Use it after a PayIn runtime is reachable:
+The external `payin` CLI (https://github.com/payincom/payin-cli) supports both Open and Cloud runtime operations. It is not an installer/deployer. Use it after a PayIn runtime is reachable. Until npm publication, invoke it from GitHub:
 
 ```bash
-npm run open:cli -- profile add sandbox <sandbox-api-url>
-npm run open:cli -- doctor --profile sandbox
-npm run open:cli -- smoke --profile sandbox --api-key *** --create-order --webhook-id <sandbox-webhook-id> --require-live
-npm run open:cli -- api-key create --profile sandbox --name backend-orders-service
-npm run open:cli -- address-pool status --profile sandbox
-npm run open:cli -- webhooks test --profile sandbox <webhook-id>
+npm exec --yes --package github:payincom/payin-cli -- payin profile add sandbox <sandbox-api-url>
+npm exec --yes --package github:payincom/payin-cli -- payin doctor --profile sandbox
+npm exec --yes --package github:payincom/payin-cli -- payin smoke --profile sandbox --api-key *** --create-order --webhook-id <sandbox-webhook-id> --require-live
+npm exec --yes --package github:payincom/payin-cli -- payin api-key create --profile sandbox --name backend-orders-service
+npm exec --yes --package github:payincom/payin-cli -- payin address-pool status --profile sandbox
+npm exec --yes --package github:payincom/payin-cli -- payin webhooks test --profile sandbox <webhook-id>
 ```
 
 All CLI commands should support `--json`; secrets must stay redacted in summaries.
