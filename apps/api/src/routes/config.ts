@@ -77,7 +77,7 @@ config.get(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
 
       const metadata = await configHelpers.getConfigMetadata(manager, key);
 
@@ -94,7 +94,7 @@ config.get(
         data: metadata
       });
     } catch (error) {
-      console.error(`Failed to get metadata for ${c.req.param('key')}:`, error);
+      console.error(`Failed to get metadata for ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to get configuration metadata',
@@ -264,7 +264,7 @@ config.get(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
 
       // Get configuration value
       const setting = await manager.getSystemSetting(key);
@@ -287,7 +287,7 @@ config.get(
         }
       });
     } catch (error) {
-      console.error(`Failed to get configuration ${c.req.param('key')}:`, error);
+      console.error(`Failed to get configuration ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to get configuration',
@@ -309,7 +309,7 @@ config.put(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
       const body = await c.req.json();
 
       if (!body || body.value === undefined) {
@@ -396,7 +396,7 @@ config.put(
         message: 'Configuration updated successfully'
       });
     } catch (error) {
-      console.error(`Failed to update configuration ${c.req.param('key')}:`, error);
+      console.error(`Failed to update configuration ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to update configuration',
@@ -417,7 +417,7 @@ config.delete(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
 
       // Delete configuration
       await manager.deleteSystemSetting(key);
@@ -427,7 +427,7 @@ config.delete(
         message: 'Configuration deleted and reverted to default'
       });
     } catch (error) {
-      console.error(`Failed to delete configuration ${c.req.param('key')}:`, error);
+      console.error(`Failed to delete configuration ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to delete configuration',

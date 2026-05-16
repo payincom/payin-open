@@ -75,7 +75,7 @@ chains.get('/', authMiddleware(), async (c) => {
 chains.get('/:chainId', authMiddleware(), async (c) => {
   try {
     const manager = getManager();
-    const chainId = c.req.param('chainId');
+    const chainId = c.req.param('chainId')!;
 
     // Get chain configuration from Manager (proxies to Processor)
     const chainConfig = await manager.getChainConfig(chainId);
@@ -106,7 +106,7 @@ chains.get('/:chainId', authMiddleware(), async (c) => {
       }
     });
   } catch (error) {
-    console.error(`Failed to get chain ${c.req.param('chainId')}:`, error);
+    console.error(`Failed to get chain ${c.req.param('chainId')!}:`, error);
     return c.json({
       success: false,
       error: 'Failed to get chain configuration',

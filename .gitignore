@@ -77,8 +77,10 @@ coverage/
 .nyc_output/
 
 # Package manager files
-# package-lock.json - Now tracked for CI/CD consistency
+# PayIn Open intentionally does not track generated package-manager lockfiles.
+package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # Cloudflare Wrangler
 .wrangler/
@@ -92,3 +94,17 @@ app/tests/*.js
 app/tests/*.d.ts
 !app/tests/*.config.js
 
+# AI assistant / local agent configuration (do not publish)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.gemini/
+.claude/
+.cursor/
+.codex/
+.openclaw/
+
+# Local sync/one-off scripts
+sync.sh
+test-*.sh
+.rcloneignore

@@ -60,7 +60,7 @@ users.get(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.req.param('userId');
+      const userId = c.req.param('userId')!;
 
       const user = await authManager.getUserById(userId);
 
@@ -152,7 +152,7 @@ users.put(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.req.param('userId');
+      const userId = c.req.param('userId')!;
       const updates = await c.req.json();
 
       // Validate role if provided
@@ -195,8 +195,8 @@ users.delete(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.req.param('userId');
-      const currentUserId = c.get('userId');
+      const userId = c.req.param('userId')!;
+      const currentUserId = c.get('userId') as string;
 
       // Prevent self-deletion
       if (userId === currentUserId) {

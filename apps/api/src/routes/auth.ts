@@ -415,8 +415,8 @@ auth.post('/logout', authMiddleware(), async (c) => {
 auth.get('/me', authMiddleware(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
-    const organizationId = c.get('organizationId');
+    const userId = c.get('userId') as string;
+    const organizationId = c.get('organizationId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({
@@ -489,7 +489,7 @@ auth.get('/me', authMiddleware(), async (c) => {
 auth.post('/set-password', authMiddleware(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
     const { password } = await c.req.json();
 
     if (!password) {
@@ -552,7 +552,7 @@ auth.post('/set-password', authMiddleware(), async (c) => {
 auth.put('/password', authMiddleware(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
     const username = c.get('username');
     const { oldPassword, newPassword } = await c.req.json();
 
@@ -616,7 +616,7 @@ auth.put('/password', authMiddleware(), async (c) => {
 auth.get('/verify-email/:token', async (c) => {
   try {
     const authManager = getAuth();
-    const token = c.req.param('token');
+    const token = c.req.param('token')!;
 
     if (!token) {
       return c.json({
@@ -659,7 +659,7 @@ auth.get('/verify-email/:token', async (c) => {
 auth.post('/resend-verification', authMiddleware(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({
@@ -701,7 +701,7 @@ auth.post('/resend-verification', authMiddleware(), async (c) => {
 auth.get('/email-verification-status', authMiddleware(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({

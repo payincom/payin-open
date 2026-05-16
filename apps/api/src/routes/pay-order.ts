@@ -24,7 +24,7 @@ function getProtocolFromChain(chain: string): 'evm' | 'tron' | 'solana' {
 payOrderNew.get('/:orderId', async (c) => {
   try {
     const manager = getManager();
-    const orderId = c.req.param('orderId');
+    const orderId = c.req.param('orderId')!;
 
     // Fetch order details
     const order = await manager.getOrder(orderId);
@@ -190,7 +190,7 @@ payOrderNew.get('/:orderId', async (c) => {
         </body>
       </html>`);
   } catch (error) {
-    console.error(`Failed to load order payment page for ${c.req.param('orderId')}:`, error);
+    console.error(`Failed to load order payment page for ${c.req.param('orderId')!}:`, error);
     return c.html(
       html`<!DOCTYPE html>
         <html lang="en" class="dark">

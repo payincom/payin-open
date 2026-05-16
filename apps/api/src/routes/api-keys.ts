@@ -41,7 +41,7 @@ apiKeys.post(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.get('userId');
+      const userId = c.get('userId') as string;
       const organizationId = resolveBusinessOrganizationId(c);
       const body = await c.req.json();
 
@@ -133,7 +133,7 @@ apiKeys.get(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.get('userId');
+      const userId = c.get('userId') as string;
       const organizationId = resolveBusinessOrganizationId(c);
 
       // Validate Open business scope / Cloud organization context
@@ -187,8 +187,8 @@ apiKeys.get(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.get('userId');
-      const keyId = c.req.param('id');
+      const userId = c.get('userId') as string;
+      const keyId = c.req.param('id')!;
 
       if (typeof userId !== 'string' || userId.trim() === '') {
         return c.json({
@@ -246,8 +246,8 @@ apiKeys.patch(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.get('userId');
-      const keyId = c.req.param('id');
+      const userId = c.get('userId') as string;
+      const keyId = c.req.param('id')!;
       const body = await c.req.json();
 
       if (typeof userId !== 'string' || userId.trim() === '') {
@@ -328,8 +328,8 @@ apiKeys.delete(
   async (c) => {
     try {
       const authManager = getAuth();
-      const userId = c.get('userId');
-      const keyId = c.req.param('id');
+      const userId = c.get('userId') as string;
+      const keyId = c.req.param('id')!;
 
       // Check ownership
       const existingKey = await authManager.getApiKeyById(keyId);

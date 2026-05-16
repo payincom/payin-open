@@ -19,7 +19,7 @@ const payDepositNew = new Hono();
 payDepositNew.get('/:address', async (c) => {
   try {
     const manager = getManager();
-    const address = c.req.param('address');
+    const address = c.req.param('address')!;
 
     // Fetch deposit by address (public endpoint)
     const depositAddress = await manager.getDepositByAddress(address);
@@ -98,7 +98,7 @@ payDepositNew.get('/:address', async (c) => {
         </body>
       </html>`);
   } catch (error) {
-    console.error(`Failed to load deposit payment page for ${c.req.param('depositReference')}:`, error);
+    console.error(`Failed to load deposit payment page for ${c.req.param('depositReference')!}:`, error);
     const stylesheetUrl = getStylesheetUrl();
     const viteClient = getViteClientScript();
 

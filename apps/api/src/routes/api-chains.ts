@@ -65,7 +65,7 @@ apiChains.get('/', async (c) => {
 apiChains.get('/:chainId', async (c) => {
   try {
     const manager = getManager();
-    const chainId = c.req.param('chainId');
+    const chainId = c.req.param('chainId')!;
 
     const config = await manager.getChainConfig(chainId);
 
@@ -88,7 +88,7 @@ apiChains.get('/:chainId', async (c) => {
       }
     });
   } catch (error) {
-    console.error(`Failed to fetch chain ${c.req.param('chainId')}:`, error);
+    console.error(`Failed to fetch chain ${c.req.param('chainId')!}:`, error);
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

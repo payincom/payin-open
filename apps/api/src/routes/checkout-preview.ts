@@ -26,7 +26,7 @@ checkoutPreview.get(
       }
 
       const { linkId, organizationId } = verification.payload;
-      const requestedId = c.req.param('id');
+      const requestedId = c.req.param('id')!;
       if (!linkId || !organizationId || linkId !== requestedId) {
         return c.json({ success: false, error: 'Unauthorized', message: 'Invalid preview token context' }, 401);
       }

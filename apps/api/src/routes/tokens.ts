@@ -89,7 +89,7 @@ tokens.get('/', async (c) => {
  */
 tokens.get('/deposit/:address/available', async (c) => {
   try {
-    const address = c.req.param('address');
+    const address = c.req.param('address')!;
     const manager = getManager();
 
     // Fetch deposit by address (public endpoint)
@@ -152,7 +152,7 @@ tokens.get('/deposit/:address/available', async (c) => {
       total: tokens.length,
     });
   } catch (error) {
-    console.error(`Failed to get available tokens for ${c.req.param('address')}:`, error);
+    console.error(`Failed to get available tokens for ${c.req.param('address')!}:`, error);
     return c.json({
       success: false,
       error: 'Failed to get available tokens',

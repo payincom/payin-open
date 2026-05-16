@@ -166,7 +166,7 @@ configManagement.get(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
       const organizationId = c.req.query('organization_id');
       const showInheritance = c.req.query('show_inheritance') !== 'false';
 
@@ -245,7 +245,7 @@ configManagement.get(
         });
       }
     } catch (error) {
-      console.error(`Failed to get configuration ${c.req.param('key')}:`, error);
+      console.error(`Failed to get configuration ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to get configuration',
@@ -276,7 +276,7 @@ configManagement.post(
       const auth = getAuth();
 
       // Get user from userId set by auth middleware
-      const userId = c.get('userId');
+      const userId = c.get('userId') as string;
       if (!userId) {
         return c.json({ error: 'Unauthorized', message: 'User not authenticated' }, 401);
       }
@@ -453,7 +453,7 @@ configManagement.delete(
       const auth = getAuth();
 
       // Get user from userId set by auth middleware
-      const userId = c.get('userId');
+      const userId = c.get('userId') as string;
       if (!userId) {
         return c.json({ error: 'Unauthorized', message: 'User not authenticated' }, 401);
       }
@@ -462,7 +462,7 @@ configManagement.delete(
       if (!user) {
         return c.json({ error: 'Unauthorized', message: 'User not found' }, 401);
       }
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
       const organization_id = c.req.query('organization_id');
 
       // Check permissions
@@ -509,7 +509,7 @@ configManagement.delete(
         message: 'Configuration deleted successfully'
       });
     } catch (error) {
-      console.error(`Failed to delete configuration ${c.req.param('key')}:`, error);
+      console.error(`Failed to delete configuration ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to delete configuration',
@@ -566,7 +566,7 @@ configManagement.get(
   async (c) => {
     try {
       const manager = getManager();
-      const key = c.req.param('key');
+      const key = c.req.param('key')!;
 
       const result = await manager['db'].query(
         'SELECT * FROM config_metadata WHERE key = $1',
@@ -586,7 +586,7 @@ configManagement.get(
         data: result.rows[0]
       });
     } catch (error) {
-      console.error(`Failed to get metadata for ${c.req.param('key')}:`, error);
+      console.error(`Failed to get metadata for ${c.req.param('key')!}:`, error);
       return c.json({
         success: false,
         error: 'Failed to get configuration metadata',

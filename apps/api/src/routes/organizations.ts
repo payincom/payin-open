@@ -52,7 +52,7 @@ const requireBasicAuth = () => {
 app.get('/', requireBasicAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({ error: 'Authentication required' }, 401);
@@ -73,7 +73,7 @@ app.get('/:orgId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
     // Use organizationId from auth context (already verified by middleware)
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
     const organizationRole = c.get('organizationRole');
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
@@ -98,7 +98,7 @@ app.get('/:orgId', requireAuth(), async (c) => {
 app.post('/', requireBasicAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const userId = c.get('userId');
+    const userId = c.get('userId') as string;
     const body = await c.req.json();
     const { name, slug, website, description } = body;
 
@@ -130,7 +130,7 @@ app.post('/', requireBasicAuth(), async (c) => {
 app.patch('/:orgId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
     const organizationRole = c.get('organizationRole');
     const body = await c.req.json();
 
@@ -156,7 +156,7 @@ app.patch('/:orgId', requireAuth(), async (c) => {
 app.delete('/:orgId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
     const organizationRole = c.get('organizationRole');
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
@@ -183,7 +183,7 @@ app.delete('/:orgId', requireAuth(), async (c) => {
 app.get('/:orgId/members', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
       return c.json({ error: 'Organization context not found' }, 400);
@@ -203,8 +203,8 @@ app.get('/:orgId/members', requireAuth(), async (c) => {
 app.post('/:orgId/members', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
-    const userId = c.get('userId');
+    const orgId = c.get('organizationId') as string;
+    const userId = c.get('userId') as string;
     const organizationRole = c.get('organizationRole');
     const body = await c.req.json();
     const { targetUserId, role } = body;
@@ -242,8 +242,8 @@ app.post('/:orgId/members', requireAuth(), async (c) => {
 app.patch('/:orgId/members/:targetUserId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
-    const targetUserId = c.req.param('targetUserId');
+    const orgId = c.get('organizationId') as string;
+    const targetUserId = c.req.param('targetUserId')!;
     const organizationRole = c.get('organizationRole');
     const body = await c.req.json();
     const { role, status } = body;
@@ -270,9 +270,9 @@ app.patch('/:orgId/members/:targetUserId', requireAuth(), async (c) => {
 app.delete('/:orgId/members/:targetUserId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
-    const targetUserId = c.req.param('targetUserId');
-    const userId = c.get('userId');
+    const orgId = c.get('organizationId') as string;
+    const targetUserId = c.req.param('targetUserId')!;
+    const userId = c.get('userId') as string;
     const organizationRole = c.get('organizationRole');
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
@@ -303,7 +303,7 @@ app.get('/:orgId/api-keys', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
     // Use organizationId from auth context
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
       return c.json({ error: 'Organization context not found' }, 400);
@@ -324,8 +324,8 @@ app.post('/:orgId/api-keys', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
     // Use organizationId from auth context instead of param
-    const orgId = c.get('organizationId');
-    const userId = c.get('userId');
+    const orgId = c.get('organizationId') as string;
+    const userId = c.get('userId') as string;
     const body = await c.req.json();
     const { name, expiresAt } = body;
 
@@ -362,8 +362,8 @@ app.post('/:orgId/api-keys', requireAuth(), async (c) => {
 app.delete('/:orgId/api-keys/:keyId', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
-    const keyId = c.req.param('keyId');
+    const orgId = c.get('organizationId') as string;
+    const keyId = c.req.param('keyId')!;
     const organizationRole = c.get('organizationRole');
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
@@ -395,8 +395,8 @@ app.delete('/:orgId/api-keys/:keyId', requireAuth(), async (c) => {
 app.post('/:orgId/transfer', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
-    const userId = c.get('userId');
+    const orgId = c.get('organizationId') as string;
+    const userId = c.get('userId') as string;
     const organizationRole = c.get('organizationRole');
     const body = await c.req.json();
     const { toUserId, message, expiresInDays } = body;
@@ -436,8 +436,8 @@ app.post('/:orgId/transfer', requireAuth(), async (c) => {
 app.post('/:orgId/transfer/:transferId/accept', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const transferId = c.req.param('transferId');
-    const userId = c.get('userId');
+    const transferId = c.req.param('transferId')!;
+    const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({ error: 'Authentication required' }, 401);
@@ -457,8 +457,8 @@ app.post('/:orgId/transfer/:transferId/accept', requireAuth(), async (c) => {
 app.post('/:orgId/transfer/:transferId/reject', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const transferId = c.req.param('transferId');
-   const userId = c.get('userId');
+    const transferId = c.req.param('transferId')!;
+   const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({ error: 'Authentication required' }, 401);
@@ -478,8 +478,8 @@ app.post('/:orgId/transfer/:transferId/reject', requireAuth(), async (c) => {
 app.post('/:orgId/transfer/:transferId/cancel', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const transferId = c.req.param('transferId');
-    const userId = c.get('userId');
+    const transferId = c.req.param('transferId')!;
+    const userId = c.get('userId') as string;
 
     if (typeof userId !== 'string' || userId.trim() === '') {
       return c.json({ error: 'Authentication required' }, 401);
@@ -499,7 +499,7 @@ app.post('/:orgId/transfer/:transferId/cancel', requireAuth(), async (c) => {
 app.get('/:orgId/transfer/pending', requireAuth(), async (c) => {
   try {
     const authManager = getAuth();
-    const orgId = c.get('organizationId');
+    const orgId = c.get('organizationId') as string;
 
     if (typeof orgId !== 'string' || orgId.trim() === '') {
       return c.json({ error: 'Organization context not found' }, 400);
