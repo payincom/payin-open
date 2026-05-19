@@ -1,5 +1,12 @@
 import type { Context, Next } from 'hono';
-import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
+import {
+  DEFAULT_OPEN_ORGANIZATION_ID,
+  SingleTenantContextProvider,
+  tenantPaymentScope,
+  paymentScopeToOrganizationId,
+  type PaymentScope,
+  type RuntimeContext,
+} from '@payin/processor';
 
 export const PAYIN_RUNTIME_OPEN = 'open';
 
@@ -12,6 +19,67 @@ export function getOpenRuntimeOrganizationId(env: NodeJS.ProcessEnv = process.en
   return env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID;
 }
 
+export function createOpenRuntimeContextProvider(
+  env: NodeJS.ProcessEnv = process.env
+): SingleTenantContextProvider {
+  return new SingleTenantContextProvider({
+    scopeId: getOpenRuntimeOrganizationId(env),
+  });
+}
+
+export function resolveBusinessPaymentScope(
+  c: Context,
+  env: NodeJS.ProcessEnv = process.env
+): PaymentScope | undefined {
+  const authenticatedOrganizationId = c.get('organizationId');
+  if (
+    typeof authenticatedOrganizationId === 'string' &&
+    authenticatedOrganizationId.trim() !== ''
+  ) {
+    return tenantPaymentScope(authenticatedOrganizationId);
+  }
+
+  if (isOpenRuntime(env)) {
+    return createOpenRuntimeContextProvider(env).getPaymentScope();
+  }
+
+  return undefined;
+}
+
+export function resolveRuntimeContext(
+  c: Context,
+  env: NodeJS.ProcessEnv = process.env
+): RuntimeContext | undefined {
+  const paymentScope = resolveBusinessPaymentScope(c, env);
+  if (!paymentScope) return undefined;
+
+  return {
+    runtimeKind: paymentScope.kind === 'single-merchant' ? 'single-tenant' : 'multi-tenant',
+    paymentScope,
+    actor: {
+      type: c.get('authType') === 'apikey' ? 'api-key' : c.get('userId') ? 'operator' : 'anonymous',
+      id: c.get('apiKeyId') ?? c.get('userId'),
+    },
+    requestId: c.req.header('x-request-id') ?? undefined,
+    source: 'apps/api',
+  };
+}
+
+/**
+ * Compatibility extractor for legacy service/repository calls.
+ *
+ * Route handlers should resolve a neutral RuntimeContext/PaymentScope at the
+ * request boundary and only call this helper at the final boundary where the
+ * current Open storage/service APIs still require organizationId.
+ */
+export function paymentScopeToLegacyOrganizationId(scope: PaymentScope): string {
+  return paymentScopeToOrganizationId(scope);
+}
+
+export function runtimeContextToLegacyOrganizationId(context: RuntimeContext): string {
+  return paymentScopeToLegacyOrganizationId(context.paymentScope);
+}
+
 /**
  * Resolve the business payment scope for API routes.
  *
@@ -19,17 +87,11 @@ export function getOpenRuntimeOrganizationId(env: NodeJS.ProcessEnv = process.en
  * should not require callers to choose or understand an organization. In Cloud
  * mode, routes must keep using the authenticated tenant context.
  */
-export function resolveBusinessOrganizationId(c: Context, env: NodeJS.ProcessEnv = process.env): string | undefined {
-  const authenticatedOrganizationId = c.get('organizationId');
-  if (typeof authenticatedOrganizationId === 'string' && authenticatedOrganizationId.trim() !== '') {
-    return authenticatedOrganizationId;
-  }
-
-  if (isOpenRuntime(env)) {
-    return getOpenRuntimeOrganizationId(env);
-  }
-
-  return undefined;
+export function resolveBusinessOrganizationId(
+  c: Context,
+  env: NodeJS.ProcessEnv = process.env
+): string | undefined {
+  return resolveBusinessPaymentScope(c, env)?.id;
 }
 
 /**
@@ -45,9 +107,15 @@ export function resolveBusinessOrganizationId(c: Context, env: NodeJS.ProcessEnv
  * calls should pass X-Organization-Id with the Open merchant id returned by
  * open:init/registration.
  */
-export function injectOpenRuntimeAuthContext(c: Context, env: NodeJS.ProcessEnv = process.env): void {
+export function injectOpenRuntimeAuthContext(
+  c: Context,
+  env: NodeJS.ProcessEnv = process.env
+): void {
   const authenticatedOrganizationId = c.get('organizationId');
-  if (typeof authenticatedOrganizationId === 'string' && authenticatedOrganizationId.trim() !== '') {
+  if (
+    typeof authenticatedOrganizationId === 'string' &&
+    authenticatedOrganizationId.trim() !== ''
+  ) {
     return;
   }
 

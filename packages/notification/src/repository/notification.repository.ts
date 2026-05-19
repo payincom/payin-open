@@ -4,11 +4,7 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import type {
-  Endpoint,
-  CreateEndpointRequest,
-  UpdateEndpointRequest,
-} from '../types/endpoint.js';
+import type { Endpoint, CreateEndpointRequest, UpdateEndpointRequest } from '../types/endpoint.js';
 import type {
   NotificationLog,
   NotificationEvent,
@@ -64,9 +60,12 @@ export class NotificationRepository {
   /**
    * Get endpoint by ID
    */
-  async getEndpoint(id: string): Promise<Endpoint | null> {
-    const query = 'SELECT * FROM notification_endpoints WHERE id = $1';
-    const result = await this.db.query(query, [id]);
+  async getEndpoint(id: string, organizationId?: string): Promise<Endpoint | null> {
+    const query = organizationId
+      ? 'SELECT * FROM notification_endpoints WHERE id = $1 AND organization_id = $2'
+      : 'SELECT * FROM notification_endpoints WHERE id = $1';
+    const values = organizationId ? [id, organizationId] : [id];
+    const result = await this.db.query(query, values);
 
     if (result.rows.length === 0) {
       return null;
@@ -140,7 +139,11 @@ export class NotificationRepository {
   /**
    * Update endpoint
    */
-  async updateEndpoint(id: string, updates: UpdateEndpointRequest): Promise<Endpoint> {
+  async updateEndpoint(
+    id: string,
+    updates: UpdateEndpointRequest,
+    organizationId?: string
+  ): Promise<Endpoint> {
     const setClauses: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -188,11 +191,18 @@ export class NotificationRepository {
     setClauses.push(`updated_at = NOW()`);
 
     values.push(id);
+    const idParamIndex = paramIndex++;
+
+    let scopeClause = '';
+    if (organizationId) {
+      values.push(organizationId);
+      scopeClause = ` AND organization_id = $${paramIndex++}`;
+    }
 
     const query = `
       UPDATE notification_endpoints
       SET ${setClauses.join(', ')}
-      WHERE id = $${paramIndex}
+      WHERE id = $${idParamIndex}${scopeClause}
       RETURNING *
     `;
 
@@ -208,9 +218,12 @@ export class NotificationRepository {
   /**
    * Delete endpoint
    */
-  async deleteEndpoint(id: string): Promise<void> {
-    const query = 'DELETE FROM notification_endpoints WHERE id = $1';
-    await this.db.query(query, [id]);
+  async deleteEndpoint(id: string, organizationId?: string): Promise<void> {
+    const query = organizationId
+      ? 'DELETE FROM notification_endpoints WHERE id = $1 AND organization_id = $2'
+      : 'DELETE FROM notification_endpoints WHERE id = $1';
+    const values = organizationId ? [id, organizationId] : [id];
+    await this.db.query(query, values);
   }
 
   // ==================== Notification Logs ====================
@@ -484,13 +497,18 @@ export class NotificationRepository {
       endpoint_type: row.endpoint_type,
       is_enabled: row.is_enabled,
       config: typeof row.config === 'string' ? JSON.parse(row.config) : row.config,
-      subscribed_events: typeof row.subscribed_events === 'string'
-        ? JSON.parse(row.subscribed_events)
-        : row.subscribed_events,
+      subscribed_events:
+        typeof row.subscribed_events === 'string'
+          ? JSON.parse(row.subscribed_events)
+          : row.subscribed_events,
       max_retries: row.max_retries,
       timeout_ms: row.timeout_ms,
       description: row.description,
-      metadata: row.metadata ? (typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata) : undefined,
+      metadata: row.metadata
+        ? typeof row.metadata === 'string'
+          ? JSON.parse(row.metadata)
+          : row.metadata
+        : undefined,
       created_at: row.created_at,
       updated_at: row.updated_at,
       created_by: row.created_by,

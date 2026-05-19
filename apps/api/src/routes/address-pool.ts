@@ -8,9 +8,24 @@ import type { Context, Next } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
-import { resolveBusinessOrganizationId } from '../open-runtime.js';
+import { organizationContextRequiredMessage, resolveRuntimeContext } from '../open-runtime.js';
 
 const addressPool = new Hono();
+
+const organizationContextRequiredResponse = (c: Context) =>
+  c.json(
+    {
+      success: false,
+      error: 'Authorization failed',
+      code: 'ORGANIZATION_CONTEXT_REQUIRED',
+      message: organizationContextRequiredMessage(),
+      suggestions: [
+        'In PayIn Open, verify the default merchant bootstrap completed successfully',
+        'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key',
+      ],
+    },
+    401
+  );
 
 // Lazy middleware factories - only get Auth instance when request comes in
 const authMiddleware = () => {
@@ -19,7 +34,6 @@ const authMiddleware = () => {
     return await middleware(c, next);
   };
 };
-
 
 const auditMiddleware = (resource: string, action: string) => {
   return async (c: Context, next: Next) => {
@@ -38,39 +52,41 @@ addressPool.get(
   '/availability',
   authMiddleware(),
   requirePermission('address-pool:read'),
-  async (c) => {
-  try {
-    const manager = getManager();
-    const protocol = (c.req.query('protocol') || 'evm') as 'evm' | 'tron' | 'solana';
+  async c => {
+    try {
+      const manager = getManager();
+      const protocol = (c.req.query('protocol') || 'evm') as 'evm' | 'tron' | 'solana';
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = resolveBusinessOrganizationId(c);
-    if (!organizationId) {
-      return c.json({
-        success: false,
-        error: 'Authorization failed',
-        message: 'Organization context is required'
-      }, 401);
-    }
-
-    const availability = await manager.getAddressPoolAvailability(organizationId, protocol);
-
-    return c.json({
-      success: true,
-      data: {
-        protocol,
-        ...availability
+      const runtimeContext = resolveRuntimeContext(c);
+      if (!runtimeContext) {
+        return organizationContextRequiredResponse(c);
       }
-    });
-  } catch (error) {
-    console.error('Failed to get address pool availability:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to get address pool availability',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+
+      const availability = await manager.getAddressPoolAvailabilityForRuntimeScope(
+        runtimeContext,
+        protocol
+      );
+
+      return c.json({
+        success: true,
+        data: {
+          protocol,
+          ...availability,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to get address pool availability:', error);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to get address pool availability',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
+    }
   }
-});
+);
 
 const SUPPORTED_PROTOCOLS: Array<'evm' | 'tron' | 'solana'> = ['evm', 'tron', 'solana'];
 
@@ -79,85 +95,34 @@ const SUPPORTED_PROTOCOLS: Array<'evm' | 'tron' | 'solana'> = ['evm', 'tron', 's
  * GET /address-pool/summary
  * Required permission: address-pool:read
  */
-addressPool.get(
-  '/summary',
-  authMiddleware(),
-  requirePermission('address-pool:read'),
-  async (c) => {
+addressPool.get('/summary', authMiddleware(), requirePermission('address-pool:read'), async c => {
   try {
     const manager = getManager();
 
-    // Enforce organization scope
-    const organizationId = resolveBusinessOrganizationId(c);
-    if (!organizationId) {
-      return c.json({
-        success: false,
-        error: 'Authorization failed',
-        message: 'Organization context is required'
-      }, 401);
+    const runtimeContext = resolveRuntimeContext(c);
+    if (!runtimeContext) {
+      return organizationContextRequiredResponse(c);
     }
 
-    const protocolSummaries: Array<{
-      protocol: 'evm' | 'tron' | 'solana';
-      total: number;
-      available: number;
-      allocated: number;
-      bound: number;
-      coolingDown: number;
-      archived: number;
-      error?: string;
-    }> = [];
-
-    for (const protocol of SUPPORTED_PROTOCOLS) {
-      try {
-        const stats = await manager.getAddressPoolAvailability(organizationId, protocol);
-        protocolSummaries.push({
-          protocol,
-          total: stats.total,
-          available: stats.available,
-          allocated: stats.allocated,
-          bound: stats.bound,
-          coolingDown: stats.coolingDown,
-          archived: stats.archived ?? 0,
-        });
-      } catch (error) {
-        console.warn(
-          `Failed to fetch address pool summary for protocol ${protocol}:`,
-          error instanceof Error ? error.message : error
-        );
-        protocolSummaries.push({
-          protocol,
-          total: 0,
-          available: 0,
-          allocated: 0,
-          bound: 0,
-          coolingDown: 0,
-          archived: 0,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-    }
-
-    const totalAddresses = protocolSummaries.reduce((acc, item) => acc + (item.total || 0), 0);
-    const totalAvailable = protocolSummaries.reduce((acc, item) => acc + (item.available || 0), 0);
+    const summary = await manager.getAddressPoolSummaryForRuntimeScope(
+      runtimeContext,
+      SUPPORTED_PROTOCOLS
+    );
 
     return c.json({
       success: true,
-      data: {
-        protocols: protocolSummaries,
-        totalAddresses,
-        totalAvailable,
-        hasAddresses: totalAddresses > 0,
-        hasAvailableAddresses: totalAvailable > 0,
-      },
+      data: summary,
     });
   } catch (error) {
     console.error('Failed to get address pool summary:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to get address pool summary',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to get address pool summary',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -167,29 +132,19 @@ addressPool.get(
  * Query params: protocol (optional), page (default: 1), pageSize (default: 20)
  * Required permission: address-pool:read
  */
-addressPool.get(
-  '/addresses',
-  authMiddleware(),
-  requirePermission('address-pool:read'),
-  async (c) => {
+addressPool.get('/addresses', authMiddleware(), requirePermission('address-pool:read'), async c => {
   try {
     const manager = getManager();
     const protocol = c.req.query('protocol') as 'evm' | 'tron' | 'solana' | undefined;
     const page = parseInt(c.req.query('page') || '1');
     const pageSize = parseInt(c.req.query('pageSize') || '20');
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = resolveBusinessOrganizationId(c);
-    if (!organizationId) {
-      return c.json({
-        success: false,
-        error: 'Authorization failed',
-        message: 'Organization context is required'
-      }, 401);
+    const runtimeContext = resolveRuntimeContext(c);
+    if (!runtimeContext) {
+      return organizationContextRequiredResponse(c);
     }
 
-    const result = await manager.listAddresses({
-      organizationId, // Multi-tenant isolation - only show addresses from user's organization
+    const result = await manager.listAddressesForRuntimeScope(runtimeContext, {
       protocol,
       page,
       pageSize,
@@ -201,11 +156,14 @@ addressPool.get(
     });
   } catch (error) {
     console.error('Failed to list addresses:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to list addresses',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to list addresses',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -220,71 +178,78 @@ addressPool.post(
   authMiddleware(),
   requirePermission('address-pool:write'),
   auditMiddleware('address-pool', 'add-addresses'),
-  async (c) => {
-  try {
-    const manager = getManager();
-    const body = await c.req.json();
+  async c => {
+    try {
+      const manager = getManager();
+      const body = await c.req.json();
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = resolveBusinessOrganizationId(c);
-    if (!organizationId) {
-      return c.json({
-        success: false,
-        error: 'Authorization failed',
-        message: 'Organization context is required'
-      }, 401);
-    }
-
-    // Validate request body
-    if (!body.addresses || !Array.isArray(body.addresses) || body.addresses.length === 0) {
-      return c.json({
-        success: false,
-        error: 'Validation failed',
-        message: 'Request body must include non-empty "addresses" array'
-      }, 400);
-    }
-
-    // Validate each address entry and add organizationId
-    const addressesWithOrg = [];
-    for (const addr of body.addresses) {
-      if (!addr.address || !addr.protocol || addr.derivationIndex === undefined) {
-        return c.json({
-          success: false,
-          error: 'Validation failed',
-          message: 'Each address entry must include: address, protocol, derivationIndex'
-        }, 400);
+      const runtimeContext = resolveRuntimeContext(c);
+      if (!runtimeContext) {
+        return organizationContextRequiredResponse(c);
       }
 
-      if (!['evm', 'tron', 'solana'].includes(addr.protocol)) {
-        return c.json({
-          success: false,
-          error: 'Validation failed',
-          message: 'Protocol must be either "evm", "tron", or "solana"'
-        }, 400);
+      // Validate request body
+      if (!body.addresses || !Array.isArray(body.addresses) || body.addresses.length === 0) {
+        return c.json(
+          {
+            success: false,
+            error: 'Validation failed',
+            message: 'Request body must include non-empty "addresses" array',
+          },
+          400
+        );
       }
 
-      // Add organizationId to each address entry for multi-tenant isolation
-      addressesWithOrg.push({
-        ...addr,
-        organizationId
-      });
+      // Validate each address entry before passing runtime scope to the manager seam.
+      const addresses = [];
+      for (const addr of body.addresses) {
+        if (!addr.address || !addr.protocol || addr.derivationIndex === undefined) {
+          return c.json(
+            {
+              success: false,
+              error: 'Validation failed',
+              message: 'Each address entry must include: address, protocol, derivationIndex',
+            },
+            400
+          );
+        }
+
+        if (!['evm', 'tron', 'solana'].includes(addr.protocol)) {
+          return c.json(
+            {
+              success: false,
+              error: 'Validation failed',
+              message: 'Protocol must be either "evm", "tron", or "solana"',
+            },
+            400
+          );
+        }
+
+        addresses.push(addr);
+      }
+
+      await manager.addAddressesToPoolForRuntimeScope(runtimeContext, addresses);
+
+      return c.json(
+        {
+          success: true,
+          message: `Successfully added ${body.addresses.length} addresses to pool`,
+        },
+        201
+      );
+    } catch (error) {
+      console.error('Failed to add addresses to pool:', error);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to add addresses to pool',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
-
-    await manager.addAddressesToPool(addressesWithOrg);
-
-    return c.json({
-      success: true,
-      message: `Successfully added ${body.addresses.length} addresses to pool`
-    }, 201);
-  } catch (error) {
-    console.error('Failed to add addresses to pool:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to add addresses to pool',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
   }
-});
+);
 
 /**
  * Archive an address (soft delete)
@@ -296,34 +261,32 @@ addressPool.patch(
   authMiddleware(),
   requirePermission('address-pool:write'),
   auditMiddleware('address-pool', 'archive-address'),
-  async (c) => {
+  async c => {
     try {
       const manager = getManager();
       const address = c.req.param('address')!;
 
-      // Get organizationId from auth context
-      const organizationId = resolveBusinessOrganizationId(c);
-      if (!organizationId) {
-        return c.json({
-          success: false,
-          error: 'Authorization failed',
-          message: 'Organization context is required'
-        }, 401);
+      const runtimeContext = resolveRuntimeContext(c);
+      if (!runtimeContext) {
+        return organizationContextRequiredResponse(c);
       }
 
-      await manager.archiveAddress(organizationId, address);
+      await manager.archiveAddressForRuntimeScope(runtimeContext, address);
 
       return c.json({
         success: true,
-        message: `Address ${address} has been archived`
+        message: `Address ${address} has been archived`,
       });
     } catch (error) {
       console.error('Failed to archive address:', error);
-      return c.json({
-        success: false,
-        error: 'Failed to archive address',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }, 500);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to archive address',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
   }
 );
@@ -338,34 +301,32 @@ addressPool.patch(
   authMiddleware(),
   requirePermission('address-pool:write'),
   auditMiddleware('address-pool', 'unarchive-address'),
-  async (c) => {
+  async c => {
     try {
       const manager = getManager();
       const address = c.req.param('address')!;
 
-      // Get organizationId from auth context
-      const organizationId = resolveBusinessOrganizationId(c);
-      if (!organizationId) {
-        return c.json({
-          success: false,
-          error: 'Authorization failed',
-          message: 'Organization context is required'
-        }, 401);
+      const runtimeContext = resolveRuntimeContext(c);
+      if (!runtimeContext) {
+        return organizationContextRequiredResponse(c);
       }
 
-      await manager.unarchiveAddress(organizationId, address);
+      await manager.unarchiveAddressForRuntimeScope(runtimeContext, address);
 
       return c.json({
         success: true,
-        message: `Address ${address} has been restored`
+        message: `Address ${address} has been restored`,
       });
     } catch (error) {
       console.error('Failed to unarchive address:', error);
-      return c.json({
-        success: false,
-        error: 'Failed to unarchive address',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }, 500);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to unarchive address',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
   }
 );

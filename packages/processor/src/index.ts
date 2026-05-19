@@ -12,7 +12,25 @@ export type {
   OpenUnbindAddressRequest,
 } from './open/open-processor.js';
 export type { PaymentScope } from './context/payment-scope.js';
-export { singleMerchantScope, tenantPaymentScope } from './context/payment-scope.js';
+export {
+  DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_ID,
+  DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_LABEL,
+  paymentScopeToOrganizationId,
+  singleMerchantScope,
+  tenantPaymentScope,
+} from './context/payment-scope.js';
+export type {
+  RuntimeActor,
+  RuntimeContext,
+  RuntimeContextInput,
+  RuntimeContextProvider,
+  RuntimeKind,
+  SingleTenantContextProviderOptions,
+} from './context/runtime-context.js';
+export {
+  SingleTenantContextProvider,
+  createSingleTenantRuntimeContextProvider,
+} from './context/runtime-context.js';
 
 // Defaults for Manager initialization
 export { getDefaults } from './defaults.js';
@@ -21,26 +39,25 @@ export type {
   ChainDefault,
   TokenDefault,
   TokenChainDefault,
-  OperationalConfigDefault
+  OperationalConfigDefault,
 } from './defaults.js';
 
 // Configuration loader (used by Manager/API for diagnostics)
 export { loadConfig } from './core/config-loader.js';
-
 
 // 业务接口类型 - 常用接口统一导出
 export type {
   CreateOrderRequest,
   CreateOrderResponse,
   OrderStatusEvent,
-  OrderStatus
+  OrderStatus,
 } from './services/order-service.js';
 
 export type {
   BindAddressRequest,
   BindAddressResponse,
   DepositEvent,
-  UnbindAddressRequest
+  UnbindAddressRequest,
 } from './services/deposit-service.js';
 
 // 事件系统类型
@@ -49,7 +66,7 @@ export type {
   ErrorEvent,
   TransferDetectedEvent,
   TransferConfirmedEvent,
-  EventSubscription
+  EventSubscription,
 } from './core/processor-event-bus.js';
 
 // 核心组件
@@ -59,7 +76,14 @@ export type { MonitoringTarget, TransferEvent, MonitorConfig } from '@payin/moni
 
 // Chain configuration
 export type { Protocol, ChainId } from './config/chain-config.js';
-export { getProtocol, isSupportedChain, getAllSupportedChains, getChainsByProtocol, isEVMChain, isTronChain } from './config/chain-config.js';
+export {
+  getProtocol,
+  isSupportedChain,
+  getAllSupportedChains,
+  getChainsByProtocol,
+  isEVMChain,
+  isTronChain,
+} from './config/chain-config.js';
 
 // 数据库相关导出
 export { PostgreSQLDatabase } from './database/database.js';
@@ -83,5 +107,5 @@ export {
   ServiceUnavailableError,
   ResourceNotFoundError,
   ErrorCategory,
-  ErrorSeverity
+  ErrorSeverity,
 } from './shared/index.js';

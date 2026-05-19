@@ -7,8 +7,19 @@
 export * from './types/index.js';
 
 // Utils
-export { generateSignature, verifySignature, generateEventId, generateDeliveryId } from './utils/signature.js';
-export { calculateRetryDelay, calculateNextRetryAt, shouldRetry, hasRetriesLeft, shouldScheduleRetry } from './utils/retry-strategy.js';
+export {
+  generateSignature,
+  verifySignature,
+  generateEventId,
+  generateDeliveryId,
+} from './utils/signature.js';
+export {
+  calculateRetryDelay,
+  calculateNextRetryAt,
+  shouldRetry,
+  hasRetriesLeft,
+  shouldScheduleRetry,
+} from './utils/retry-strategy.js';
 export { mapOrderStatusEvent, mapDepositEvent } from './utils/event-mapper.js';
 
 // Database
@@ -19,8 +30,14 @@ export { BaseNotifier } from './notifiers/base-notifier.js';
 export { WebhookNotifier } from './notifiers/webhook-notifier.js';
 
 // Main service
-export { NotificationService } from './notification-service.js';
-export type { NotificationServiceConfig } from './notification-service.js';
+export {
+  NotificationService,
+  notificationRuntimeScopeToOrganizationId,
+} from './notification-service.js';
+export type {
+  NotificationServiceConfig,
+  NotificationRuntimeScope,
+} from './notification-service.js';
 
 // Repository
 export { NotificationRepository } from './repository/notification.repository.js';

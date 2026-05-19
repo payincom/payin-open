@@ -7,8 +7,8 @@ import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
-import { createAuthMiddleware, createAuditMiddleware } from '@payin/auth';
-import { resolveBusinessOrganizationId } from '../open-runtime.js';
+import { createAuthMiddleware } from '@payin/auth';
+import { organizationContextRequiredMessage, resolveRuntimeContext } from '../open-runtime.js';
 
 const transfers = new Hono();
 
@@ -19,14 +19,20 @@ const authMiddleware = () => {
     return await middleware(c, next);
   };
 };
-
-
-const auditMiddleware = (resource: string, action: string) => {
-  return async (c: Context, next: Next) => {
-    const middleware = createAuditMiddleware(getAuth(), { resource, action });
-    return await middleware(c, next);
-  };
-};
+const organizationContextRequiredResponse = (c: Context) =>
+  c.json(
+    {
+      success: false,
+      error: 'Authorization failed',
+      code: 'ORGANIZATION_CONTEXT_REQUIRED',
+      message: organizationContextRequiredMessage(),
+      suggestions: [
+        'In PayIn Open, verify the default merchant bootstrap completed successfully',
+        'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key',
+      ],
+    },
+    401
+  );
 
 /**
  * List transfers with filtering and pagination
@@ -35,26 +41,16 @@ const auditMiddleware = (resource: string, action: string) => {
  *               detectedAfter, detectedBefore, page, limit, sortBy, sortOrder
  * Required permission: transfers:read
  */
-transfers.get(
-  '/',
-  authMiddleware(),
-  async (c) => {
+transfers.get('/', authMiddleware(), async c => {
   try {
     const manager = getManager();
 
-    // Get organizationId from auth context for multi-tenant isolation
-    const organizationId = resolveBusinessOrganizationId(c);
-    if (!organizationId) {
-      return c.json({
-        success: false,
-        error: 'Authorization failed',
-        message: 'Organization context is required'
-      }, 401);
+    const runtimeContext = resolveRuntimeContext(c);
+    if (!runtimeContext) {
+      return organizationContextRequiredResponse(c);
     }
 
-    const filters: any = {
-      organizationId // Multi-tenant isolation - only show transfers from user's organization
-    };
+    const filters: any = {};
 
     const orderId = c.req.query('orderId');
     if (orderId) filters.orderId = orderId;
@@ -95,7 +91,7 @@ transfers.get(
     const sortOrder = c.req.query('sortOrder');
     if (sortOrder) filters.sortOrder = sortOrder as any;
 
-    const result = await manager.listTransfers(filters);
+    const result = await manager.listTransfersForRuntimeScope(runtimeContext, filters);
 
     return c.json({
       success: true,
@@ -104,16 +100,19 @@ transfers.get(
         page: result.page,
         limit: result.limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / result.limit)
-      }
+        totalPages: Math.ceil(result.total / result.limit),
+      },
     });
   } catch (error) {
     console.error('Failed to list transfers:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to list transfers',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to list transfers',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -123,41 +122,49 @@ transfers.get(
  * Query params: orderId OR depositReference (one required)
  * Required permission: transfers:read
  */
-transfers.get(
-  '/by-reference',
-  authMiddleware(),
-  async (c) => {
+transfers.get('/by-reference', authMiddleware(), async c => {
   try {
     const manager = getManager();
     const orderId = c.req.query('orderId');
     const depositReference = c.req.query('depositReference');
 
     if (!orderId && !depositReference) {
-      return c.json({
-        success: false,
-        error: 'Validation failed',
-        message: 'Either orderId or depositReference is required'
-      }, 400);
+      return c.json(
+        {
+          success: false,
+          error: 'Validation failed',
+          message: 'Either orderId or depositReference is required',
+        },
+        400
+      );
+    }
+
+    const runtimeContext = resolveRuntimeContext(c);
+    if (!runtimeContext) {
+      return organizationContextRequiredResponse(c);
     }
 
     const reference: any = {};
     if (orderId) reference.orderId = orderId;
     if (depositReference) reference.depositReference = depositReference;
 
-    const transfersList = await manager.getTransfers(reference);
+    const transfersList = await manager.getTransfersForRuntimeScope(reference, runtimeContext);
 
     return c.json({
       success: true,
       data: transfersList,
-      total: transfersList.length
+      total: transfersList.length,
     });
   } catch (error) {
     console.error('Failed to get transfers:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to get transfers',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to get transfers',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 

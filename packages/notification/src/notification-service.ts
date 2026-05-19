@@ -8,8 +8,35 @@ import { Pool } from 'pg';
 import { NotificationRepository } from './repository/notification.repository.js';
 import { NotificationQueue, QueueConfig } from './queue/notification-queue.js';
 import { initializeDatabase } from './database/database.js';
-import type { NotificationEvent, Endpoint, CreateEndpointRequest, UpdateEndpointRequest } from './types/index.js';
+import type {
+  NotificationEvent,
+  Endpoint,
+  CreateEndpointRequest,
+  UpdateEndpointRequest,
+} from './types/index.js';
 import { createLogger, LogCategory } from '@payin/shared';
+
+export interface NotificationPaymentScope {
+  id: string;
+  kind?: string;
+  label?: string;
+}
+
+export type NotificationRuntimeScope =
+  | NotificationPaymentScope
+  | { paymentScope: NotificationPaymentScope };
+
+export function notificationRuntimeScopeToOrganizationId(
+  scope: NotificationRuntimeScope | undefined
+): string | undefined {
+  if (!scope) return undefined;
+
+  if ('paymentScope' in scope) {
+    return scope.paymentScope.id;
+  }
+
+  return scope.id;
+}
 
 export interface NotificationServiceConfig {
   database: {
@@ -135,10 +162,33 @@ export class NotificationService extends EventEmitter {
   }
 
   /**
+   * Create endpoint with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers pass RuntimeContext/PaymentScope while the
+   * repository still persists organization_id.
+   */
+  async createEndpointForRuntimeScope(
+    scope: NotificationRuntimeScope,
+    request: Omit<CreateEndpointRequest, 'organization_id'> & Record<string, unknown>
+  ): Promise<Endpoint> {
+    return await this.createEndpoint({
+      ...request,
+      organization_id: notificationRuntimeScopeToOrganizationId(scope) as string,
+    } as CreateEndpointRequest);
+  }
+
+  /**
    * Get endpoint by ID
    */
-  async getEndpoint(id: string): Promise<Endpoint | null> {
-    return await this.repository.getEndpoint(id);
+  async getEndpoint(id: string, organizationId?: string): Promise<Endpoint | null> {
+    return await this.repository.getEndpoint(id, organizationId);
+  }
+
+  async getEndpointForRuntimeScope(
+    id: string,
+    scope: NotificationRuntimeScope
+  ): Promise<Endpoint | null> {
+    return await this.getEndpoint(id, notificationRuntimeScopeToOrganizationId(scope));
   }
 
   /**
@@ -151,29 +201,62 @@ export class NotificationService extends EventEmitter {
   /**
    * List all endpoints
    */
-  async listEndpoints(filters?: { endpoint_type?: string; is_enabled?: boolean }): Promise<Endpoint[]> {
+  async listEndpoints(filters?: {
+    organization_id?: string;
+    endpoint_type?: string;
+    is_enabled?: boolean;
+  }): Promise<Endpoint[]> {
     return await this.repository.listEndpoints(filters);
+  }
+
+  async listEndpointsForRuntimeScope(
+    scope: NotificationRuntimeScope,
+    filters: Omit<
+      NonNullable<Parameters<NotificationService['listEndpoints']>[0]>,
+      'organization_id'
+    > = {}
+  ): Promise<Endpoint[]> {
+    return await this.listEndpoints({
+      ...filters,
+      organization_id: notificationRuntimeScopeToOrganizationId(scope),
+    });
   }
 
   /**
    * Update endpoint
    */
-  async updateEndpoint(id: string, updates: UpdateEndpointRequest): Promise<Endpoint> {
-    return await this.repository.updateEndpoint(id, updates);
+  async updateEndpoint(
+    id: string,
+    updates: UpdateEndpointRequest,
+    organizationId?: string
+  ): Promise<Endpoint> {
+    return await this.repository.updateEndpoint(id, updates, organizationId);
+  }
+
+  async updateEndpointForRuntimeScope(
+    id: string,
+    updates: UpdateEndpointRequest,
+    scope: NotificationRuntimeScope
+  ): Promise<Endpoint> {
+    return await this.updateEndpoint(id, updates, notificationRuntimeScopeToOrganizationId(scope));
   }
 
   /**
    * Delete endpoint
    */
-  async deleteEndpoint(id: string): Promise<void> {
-    await this.repository.deleteEndpoint(id);
+  async deleteEndpoint(id: string, organizationId?: string): Promise<void> {
+    await this.repository.deleteEndpoint(id, organizationId);
+  }
+
+  async deleteEndpointForRuntimeScope(id: string, scope: NotificationRuntimeScope): Promise<void> {
+    await this.deleteEndpoint(id, notificationRuntimeScopeToOrganizationId(scope));
   }
 
   /**
    * Test endpoint by sending a test notification
    */
-  async testEndpoint(id: string): Promise<boolean> {
-    const endpoint = await this.repository.getEndpoint(id);
+  async testEndpoint(id: string, organizationId?: string): Promise<boolean> {
+    const endpoint = await this.repository.getEndpoint(id, organizationId);
 
     if (!endpoint) {
       throw new Error(`Endpoint ${id} not found`);
@@ -203,12 +286,17 @@ export class NotificationService extends EventEmitter {
     }
   }
 
+  async testEndpointForRuntimeScope(id: string, scope: NotificationRuntimeScope): Promise<boolean> {
+    return await this.testEndpoint(id, notificationRuntimeScopeToOrganizationId(scope));
+  }
+
   // ==================== Notification Logs ====================
 
   /**
    * Get notification logs
    */
   async getNotificationLogs(filters: {
+    organization_id?: string;
     endpoint_id?: string;
     event_type?: string;
     status?: string;
@@ -220,11 +308,32 @@ export class NotificationService extends EventEmitter {
     return await this.repository.getNotificationLogs(filters as any);
   }
 
+  async getNotificationLogsForRuntimeScope(
+    scope: NotificationRuntimeScope,
+    filters: Omit<Parameters<NotificationService['getNotificationLogs']>[0], 'organization_id'>
+  ): Promise<any> {
+    return await this.getNotificationLogs({
+      ...filters,
+      organization_id: notificationRuntimeScopeToOrganizationId(scope),
+    });
+  }
+
   /**
    * Get notification log by ID
    */
   async getNotificationLog(id: string): Promise<any> {
     return await this.repository.getNotificationLog(id);
+  }
+
+  async getNotificationLogForRuntimeScope(
+    id: string,
+    scope: NotificationRuntimeScope
+  ): Promise<any | null> {
+    const log = await this.getNotificationLog(id);
+    if (!log || log.organization_id !== notificationRuntimeScopeToOrganizationId(scope)) {
+      return null;
+    }
+    return log;
   }
 
   /**
@@ -237,7 +346,18 @@ export class NotificationService extends EventEmitter {
   /**
    * Batch retry failed notifications
    */
+  async retryFailedNotificationsForRuntimeScope(
+    scope: NotificationRuntimeScope,
+    filters: Omit<Parameters<NotificationService['retryFailedNotifications']>[0], 'organization_id'>
+  ): Promise<number> {
+    return await this.retryFailedNotifications({
+      ...filters,
+      organization_id: notificationRuntimeScopeToOrganizationId(scope),
+    });
+  }
+
   async retryFailedNotifications(filters: {
+    organization_id?: string;
     endpoint_id?: string;
     event_type?: string;
     failed_after?: string;
@@ -274,6 +394,18 @@ export class NotificationService extends EventEmitter {
     dateRange?: { startDate: string; endDate: string }
   ): Promise<any> {
     return await this.repository.getStatistics(organizationId, endpointId, dateRange);
+  }
+
+  async getStatisticsForRuntimeScope(
+    scope: NotificationRuntimeScope,
+    endpointId?: string,
+    dateRange?: { startDate: string; endDate: string }
+  ): Promise<any> {
+    return await this.getStatistics(
+      notificationRuntimeScopeToOrganizationId(scope),
+      endpointId,
+      dateRange
+    );
   }
 
   /**

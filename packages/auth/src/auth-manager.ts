@@ -26,21 +26,29 @@ import {
   OrganizationPlan,
   OrganizationRole,
 } from './types/index.js';
-import {
-  hasOrganizationPermission,
-  hasOrganizationResourcePermission
-} from './permissions.js';
+import { hasOrganizationPermission, hasOrganizationResourcePermission } from './permissions.js';
 import { OrganizationManager } from './organization-manager.js';
-import {
-  validateRegistration,
-  sanitizeUsername,
-  sanitizeEmail,
-} from './validation.js';
+import { validateRegistration, sanitizeUsername, sanitizeEmail } from './validation.js';
 import type { EmailService } from '@payin/email';
+import {
+  paymentScopeToOrganizationId,
+  type PaymentScope,
+  type RuntimeContext,
+} from '@payin/processor';
 
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 const DEFAULT_ORGANIZATION_NAME = 'Default Organization';
 const DEFAULT_ORGANIZATION_SLUG = 'default';
+
+export type ApiKeyRuntimeScope = PaymentScope | RuntimeContext;
+
+export function apiKeyRuntimeScopeToOrganizationId(scope: ApiKeyRuntimeScope): string {
+  if ('paymentScope' in scope) {
+    return paymentScopeToOrganizationId(scope.paymentScope);
+  }
+
+  return paymentScopeToOrganizationId(scope);
+}
 
 export interface AuthManagerOptions {
   /** Database connection string (shared with Manager) */
@@ -221,10 +229,9 @@ export class AuthManager {
     const defaultEmail = 'admin@payin.local';
 
     // Check if admin user exists
-    const existing = await this.db.query(
-      'SELECT id FROM users WHERE username = $1',
-      [defaultUsername]
-    );
+    const existing = await this.db.query('SELECT id FROM users WHERE username = $1', [
+      defaultUsername,
+    ]);
 
     if (existing.rows.length > 0) {
       const existingUserId = existing.rows[0].id as string;
@@ -245,7 +252,9 @@ export class AuthManager {
 
     await this.ensureDefaultOrganizationMembership(userId);
 
-    console.log(`✅ Default admin user created (username: ${defaultUsername}, password: ${defaultPassword})`);
+    console.log(
+      `✅ Default admin user created (username: ${defaultUsername}, password: ${defaultPassword})`
+    );
     console.warn('⚠️  Please change the default admin password after first login!');
   }
 
@@ -260,17 +269,18 @@ export class AuthManager {
     try {
       await client.query('BEGIN');
 
-      const organizationName = organizationId === DEFAULT_ORGANIZATION_ID
-        ? DEFAULT_ORGANIZATION_NAME
-        : 'PayIn Open Merchant';
-      const organizationSlug = organizationId === DEFAULT_ORGANIZATION_ID
-        ? DEFAULT_ORGANIZATION_SLUG
-        : `payin-open-${organizationId.slice(0, 8)}`;
+      const organizationName =
+        organizationId === DEFAULT_ORGANIZATION_ID
+          ? DEFAULT_ORGANIZATION_NAME
+          : 'PayIn Open Merchant';
+      const organizationSlug =
+        organizationId === DEFAULT_ORGANIZATION_ID
+          ? DEFAULT_ORGANIZATION_SLUG
+          : `payin-open-${organizationId.slice(0, 8)}`;
 
-      const orgResult = await client.query(
-        'SELECT id FROM organizations WHERE id = $1',
-        [organizationId]
-      );
+      const orgResult = await client.query('SELECT id FROM organizations WHERE id = $1', [
+        organizationId,
+      ]);
 
       if (orgResult.rows.length === 0) {
         await client.query(
@@ -400,7 +410,11 @@ export class AuthManager {
     return jwt.sign(payload, this.jwtSecret, { expiresIn } as jwt.SignOptions);
   }
 
-  verifyPreviewToken(token: string): { valid: boolean; payload?: Record<string, any>; error?: string } {
+  verifyPreviewToken(token: string): {
+    valid: boolean;
+    payload?: Record<string, any>;
+    error?: string;
+  } {
     try {
       const decoded = jwt.verify(token, this.jwtSecret) as Record<string, any>;
       return { valid: true, payload: decoded };
@@ -472,7 +486,6 @@ export class AuthManager {
       values.push(passwordHash);
     }
 
-
     if (input.isActive !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
       values.push(input.isActive);
@@ -519,7 +532,8 @@ export class AuthManager {
     if (!user.passwordHash) {
       return {
         success: false,
-        error: 'This account uses passwordless login. Please use magic link or social login instead.'
+        error:
+          'This account uses passwordless login. Please use magic link or social login instead.',
       };
     }
 
@@ -617,7 +631,11 @@ export class AuthManager {
   /**
    * Check if organization role has resource permission
    */
-  hasResourcePermission(role: OrganizationRole | string, resource: string, action: 'read' | 'write' | 'delete'): boolean {
+  hasResourcePermission(
+    role: OrganizationRole | string,
+    resource: string,
+    action: 'read' | 'write' | 'delete'
+  ): boolean {
     return hasOrganizationResourcePermission(role as OrganizationRole, resource, action);
   }
 
@@ -763,6 +781,20 @@ export class AuthManager {
   }
 
   /**
+   * Create a new API key for a runtime payment scope.
+   *
+   * Compatibility seam: current Auth storage still persists the payment scope
+   * in organization_id, but callers should pass RuntimeContext/PaymentScope.
+   */
+  async createApiKeyForRuntimeScope(
+    userId: string,
+    scope: ApiKeyRuntimeScope,
+    input: CreateApiKeyInput
+  ): Promise<CreateApiKeyResult> {
+    return await this.createApiKey(userId, apiKeyRuntimeScopeToOrganizationId(scope), input);
+  }
+
+  /**
    * Verify an API key and return organization context
    */
   async verifyApiKey(apiKey: string): Promise<ApiKeyVerificationResult> {
@@ -863,6 +895,19 @@ export class AuthManager {
     );
 
     return result.rows;
+  }
+
+  /**
+   * List API keys for a runtime payment scope.
+   *
+   * Compatibility seam: current Auth storage still persists the payment scope
+   * in organization_id, but callers should pass RuntimeContext/PaymentScope.
+   */
+  async listApiKeysForRuntimeScope(
+    scope: ApiKeyRuntimeScope,
+    userId?: string
+  ): Promise<ApiKeyPublic[]> {
+    return await this.listApiKeys(apiKeyRuntimeScopeToOrganizationId(scope), userId);
   }
 
   /**

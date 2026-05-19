@@ -2,8 +2,16 @@ import { Processor } from '../processor.js';
 import type { ProcessorConfig } from '../core/processor-config-manager.js';
 import type { ConfigProvider } from '@payin/shared';
 import type { CreateOrderRequest, CreateOrderResponse } from '../services/order-service.js';
-import type { BindAddressRequest, BindAddressResponse, UnbindAddressRequest } from '../services/deposit-service.js';
-import { singleMerchantScope, type PaymentScope } from '../context/payment-scope.js';
+import type {
+  BindAddressRequest,
+  BindAddressResponse,
+  UnbindAddressRequest,
+} from '../services/deposit-service.js';
+import { paymentScopeToOrganizationId, type PaymentScope } from '../context/payment-scope.js';
+import {
+  SingleTenantContextProvider,
+  type RuntimeContextProvider,
+} from '../context/runtime-context.js';
 
 /**
  * Default single-merchant organization used by PayIn Open.
@@ -19,6 +27,8 @@ export interface OpenProcessorOptions {
   organizationId?: string;
   /** Display name for the compatibility organization row. */
   organizationName?: string;
+  /** Runtime context provider. Defaults to PayIn Open single-tenant provider. */
+  contextProvider?: RuntimeContextProvider;
   /** Slug for the compatibility organization row. */
   organizationSlug?: string;
 }
@@ -40,14 +50,22 @@ export class OpenProcessor {
   readonly paymentScope: PaymentScope;
   readonly organizationName: string;
   readonly organizationSlug: string;
+  readonly contextProvider: RuntimeContextProvider;
 
   constructor(
     private readonly processor: Processor,
     options: OpenProcessorOptions = {}
   ) {
-    this.organizationId = options.organizationId ?? DEFAULT_OPEN_ORGANIZATION_ID;
-    this.paymentScope = singleMerchantScope(this.organizationId, options.organizationName);
-    this.organizationName = options.organizationName ?? 'PayIn Open Merchant';
+    this.contextProvider =
+      options.contextProvider ??
+      new SingleTenantContextProvider({
+        scopeId: options.organizationId ?? DEFAULT_OPEN_ORGANIZATION_ID,
+        scopeLabel: options.organizationName,
+      });
+    this.paymentScope = this.contextProvider.getPaymentScope();
+    this.organizationId = paymentScopeToOrganizationId(this.paymentScope);
+    this.organizationName =
+      options.organizationName ?? this.paymentScope.label ?? 'PayIn Open Merchant';
     this.organizationSlug = options.organizationSlug ?? 'payin-open-merchant';
   }
 
@@ -143,7 +161,10 @@ export class OpenProcessor {
     });
   }
 
-  unbindDepositAddressByAddress(request: { address: string; protocol: OpenProtocol }): Promise<void> {
+  unbindDepositAddressByAddress(request: {
+    address: string;
+    protocol: OpenProtocol;
+  }): Promise<void> {
     return this.processor.unbindDepositAddressByAddress({
       organizationId: this.organizationId,
       ...request,
@@ -172,16 +193,20 @@ export class OpenProcessor {
     return this.processor.getAddressPoolAvailability(this.organizationId, protocol);
   }
 
-  addAddressesToPool(addresses: Array<{
-    address: string;
-    protocol: OpenProtocol;
-    masterPublicKey?: string | null;
-    derivationIndex?: number | null;
-  }>): Promise<void> {
-    return this.processor.addAddressesToPool(addresses.map((address) => ({
-      organizationId: this.organizationId,
-      ...address,
-    })));
+  addAddressesToPool(
+    addresses: Array<{
+      address: string;
+      protocol: OpenProtocol;
+      masterPublicKey?: string | null;
+      derivationIndex?: number | null;
+    }>
+  ): Promise<void> {
+    return this.processor.addAddressesToPool(
+      addresses.map(address => ({
+        organizationId: this.organizationId,
+        ...address,
+      }))
+    );
   }
 
   archiveAddress(address: string): Promise<void> {
@@ -207,40 +232,46 @@ export class OpenProcessor {
     });
   }
 
-  getOrderStatistics(filters: { chain?: string; token?: string; createdAfter?: Date; createdBefore?: Date } = {}) {
+  getOrderStatistics(
+    filters: { chain?: string; token?: string; createdAfter?: Date; createdBefore?: Date } = {}
+  ) {
     return this.processor.getOrderStatistics({
       ...filters,
       organizationId: this.organizationId,
     });
   }
 
-  listTransfers(filters: {
-    orderId?: string;
-    depositReference?: string;
-    businessType?: 'order' | 'deposit';
-    chain?: string;
-    token?: string;
-    isConfirmed?: boolean;
-    isFailed?: boolean;
-    detectedAfter?: Date;
-    detectedBefore?: Date;
-    page?: number;
-    limit?: number;
-    sortBy?: 'detected_at' | 'confirmed_at' | 'amount';
-    sortOrder?: 'ASC' | 'DESC';
-  } = {}) {
+  listTransfers(
+    filters: {
+      orderId?: string;
+      depositReference?: string;
+      businessType?: 'order' | 'deposit';
+      chain?: string;
+      token?: string;
+      isConfirmed?: boolean;
+      isFailed?: boolean;
+      detectedAfter?: Date;
+      detectedBefore?: Date;
+      page?: number;
+      limit?: number;
+      sortBy?: 'detected_at' | 'confirmed_at' | 'amount';
+      sortOrder?: 'ASC' | 'DESC';
+    } = {}
+  ) {
     return this.processor.listTransfers({
       ...filters,
       organizationId: this.organizationId,
     });
   }
 
-  listDepositAddresses(filters: {
-    protocol?: 'evm' | 'tron';
-    depositReference?: string;
-    page?: number;
-    limit?: number;
-  } = {}) {
+  listDepositAddresses(
+    filters: {
+      protocol?: 'evm' | 'tron';
+      depositReference?: string;
+      page?: number;
+      limit?: number;
+    } = {}
+  ) {
     return this.processor.listDepositAddresses({
       ...filters,
       organizationId: this.organizationId,

@@ -16,23 +16,22 @@
       "@payin/shared": ["../shared/dist"],
       "@payin/shared/*": ["../shared/dist/*"],
       "@payin/email": ["../email/dist"],
-      "@payin/email/*": ["../email/dist/*"]
+      "@payin/email/*": ["../email/dist/*"],
+      "@payin/processor": ["../processor/dist"],
+      "@payin/processor/*": ["../processor/dist/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts"
-  ],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
   "references": [
     {
       "path": "../shared"
     },
     {
       "path": "../email"
+    },
+    {
+      "path": "../processor"
     }
   ]
 }

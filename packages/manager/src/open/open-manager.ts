@@ -1,9 +1,16 @@
-import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
+import {
+  DEFAULT_OPEN_ORGANIZATION_ID,
+  paymentScopeToOrganizationId,
+  SingleTenantContextProvider,
+} from '@payin/processor';
+import type { PaymentScope, RuntimeContextProvider } from '@payin/processor';
 import type { ConfigurationManager } from '../manager.js';
 
 export interface OpenManagerOptions {
   /** Internal compatibility organization id. Defaults to DEFAULT_OPEN_ORGANIZATION_ID. */
   organizationId?: string;
+  /** Runtime context provider. Defaults to PayIn Open single-tenant provider. */
+  contextProvider?: RuntimeContextProvider;
 }
 
 export type OpenCreateOrderInput = {
@@ -33,12 +40,20 @@ export type OpenBindDepositAddressInput = {
  */
 export class OpenManager {
   readonly organizationId: string;
+  readonly paymentScope: PaymentScope;
+  readonly contextProvider: RuntimeContextProvider;
 
   constructor(
     private readonly manager: ConfigurationManager,
     options: OpenManagerOptions = {}
   ) {
-    this.organizationId = options.organizationId ?? DEFAULT_OPEN_ORGANIZATION_ID;
+    this.contextProvider =
+      options.contextProvider ??
+      new SingleTenantContextProvider({
+        scopeId: options.organizationId ?? DEFAULT_OPEN_ORGANIZATION_ID,
+      });
+    this.paymentScope = this.contextProvider.getPaymentScope();
+    this.organizationId = paymentScopeToOrganizationId(this.paymentScope);
   }
 
   get rawManager(): ConfigurationManager {
@@ -56,14 +71,18 @@ export class OpenManager {
     return this.manager.getOrder(orderId, this.organizationId);
   }
 
-  listOrders(filters: Omit<Parameters<ConfigurationManager['listOrders']>[0], 'organizationId'> = {}) {
+  listOrders(
+    filters: Omit<Parameters<ConfigurationManager['listOrders']>[0], 'organizationId'> = {}
+  ) {
     return this.manager.listOrders({
       ...filters,
       organizationId: this.organizationId,
     });
   }
 
-  getOrderStatistics(filters: Omit<Parameters<ConfigurationManager['getOrderStatistics']>[0], 'organizationId'> = {}) {
+  getOrderStatistics(
+    filters: Omit<Parameters<ConfigurationManager['getOrderStatistics']>[0], 'organizationId'> = {}
+  ) {
     return this.manager.getOrderStatistics({
       ...filters,
       organizationId: this.organizationId,
@@ -77,25 +96,40 @@ export class OpenManager {
     } as any);
   }
 
-  getUserDepositAddress(depositReference: string, protocol: 'evm' | 'tron' | 'solana' = 'evm'): Promise<any> {
+  getUserDepositAddress(
+    depositReference: string,
+    protocol: 'evm' | 'tron' | 'solana' = 'evm'
+  ): Promise<any> {
     return this.manager.getUserDepositAddress(this.organizationId, depositReference, protocol);
   }
 
-  listDepositReferences(filters: Omit<Parameters<ConfigurationManager['listDepositReferences']>[0], 'organizationId'> = {}) {
+  listDepositReferences(
+    filters: Omit<
+      Parameters<ConfigurationManager['listDepositReferences']>[0],
+      'organizationId'
+    > = {}
+  ) {
     return this.manager.listDepositReferences({
       ...filters,
       organizationId: this.organizationId,
     });
   }
 
-  listDepositAddresses(filters: Omit<Parameters<ConfigurationManager['listDepositAddresses']>[0], 'organizationId'> = {}) {
+  listDepositAddresses(
+    filters: Omit<
+      Parameters<ConfigurationManager['listDepositAddresses']>[0],
+      'organizationId'
+    > = {}
+  ) {
     return this.manager.listDepositAddresses({
       ...filters,
       organizationId: this.organizationId,
     });
   }
 
-  listTransfers(filters: Omit<Parameters<ConfigurationManager['listTransfers']>[0], 'organizationId'> = {}) {
+  listTransfers(
+    filters: Omit<Parameters<ConfigurationManager['listTransfers']>[0], 'organizationId'> = {}
+  ) {
     return this.manager.listTransfers({
       ...filters,
       organizationId: this.organizationId,
@@ -106,23 +140,29 @@ export class OpenManager {
     return this.manager.getAddressPoolAvailability(this.organizationId, protocol);
   }
 
-  listAddresses(params: Omit<Parameters<ConfigurationManager['listAddresses']>[0], 'organizationId'> = {}) {
+  listAddresses(
+    params: Omit<Parameters<ConfigurationManager['listAddresses']>[0], 'organizationId'> = {}
+  ) {
     return this.manager.listAddresses({
       ...params,
       organizationId: this.organizationId,
     });
   }
 
-  addAddressesToPool(addresses: Array<{
-    address: string;
-    derivationIndex: number;
-    protocol: 'evm' | 'tron' | 'solana';
-    masterPublicKey: string;
-  }>) {
-    return this.manager.addAddressesToPool(addresses.map((address) => ({
-      ...address,
-      organizationId: this.organizationId,
-    })));
+  addAddressesToPool(
+    addresses: Array<{
+      address: string;
+      derivationIndex: number;
+      protocol: 'evm' | 'tron' | 'solana';
+      masterPublicKey: string;
+    }>
+  ) {
+    return this.manager.addAddressesToPool(
+      addresses.map(address => ({
+        ...address,
+        organizationId: this.organizationId,
+      }))
+    );
   }
 
   archiveAddress(address: string): Promise<void> {
@@ -163,7 +203,9 @@ export class OpenManager {
     return this.manager.restorePaymentLink(paymentLinkId, this.organizationId);
   }
 
-  listPaymentLinks(filters: Omit<Parameters<ConfigurationManager['listPaymentLinks']>[0], 'organizationId'> = {}) {
+  listPaymentLinks(
+    filters: Omit<Parameters<ConfigurationManager['listPaymentLinks']>[0], 'organizationId'> = {}
+  ) {
     return this.manager.listPaymentLinks({
       ...filters,
       organizationId: this.organizationId,

@@ -15,10 +15,21 @@ export interface PaymentScope {
   label?: string;
 }
 
-export function singleMerchantScope(id: string, label = 'PayIn Open Merchant'): PaymentScope {
+/** Stable internal payment scope used by the default PayIn Open runtime. */
+export const DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_ID = '00000000-0000-0000-0000-000000000001';
+export const DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_LABEL = 'PayIn Open Merchant';
+
+export function singleMerchantScope(
+  id: string = DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_ID,
+  label = DEFAULT_SINGLE_TENANT_PAYMENT_SCOPE_LABEL
+): PaymentScope {
   return { id, kind: 'single-merchant', label };
 }
 
 export function tenantPaymentScope(id: string, label?: string): PaymentScope {
   return { id, kind: 'tenant', ...(label ? { label } : {}) };
+}
+
+export function paymentScopeToOrganizationId(scope: PaymentScope): string {
+  return scope.id;
 }

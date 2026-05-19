@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
-import { getOpenRuntimeOrganizationId, injectOpenRuntimeAuthContext, isOpenRuntime, organizationContextRequiredMessage, resolveBusinessOrganizationId } from '../src/open-runtime.js';
+import {
+  getOpenRuntimeOrganizationId,
+  injectOpenRuntimeAuthContext,
+  isOpenRuntime,
+  organizationContextRequiredMessage,
+  resolveBusinessOrganizationId,
+  resolveBusinessPaymentScope,
+  resolveRuntimeContext,
+} from '../src/open-runtime.js';
 import { createApp } from '../src/server.js';
 
 function contextWithOrganizationId(value?: string) {
@@ -8,6 +16,9 @@ function contextWithOrganizationId(value?: string) {
   if (value !== undefined) values.set('organizationId', value);
 
   return {
+    req: {
+      header: (name: string) => (name.toLowerCase() === 'x-request-id' ? 'req-1' : undefined),
+    },
     get(key: string) {
       return values.get(key);
     },
@@ -34,7 +45,9 @@ describe('Open runtime API context', () => {
   });
 
   it('injects default Open merchant context when auth has no organization', () => {
-    const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), { PAYIN_RUNTIME: 'open' } as any);
+    const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), {
+      PAYIN_RUNTIME: 'open',
+    } as any);
 
     expect(org).toBe(DEFAULT_OPEN_ORGANIZATION_ID);
   });
@@ -46,15 +59,44 @@ describe('Open runtime API context', () => {
     } as any);
 
     expect(org).toBe('44444444-4444-4444-4444-444444444444');
-    expect(getOpenRuntimeOrganizationId({ PAYIN_OPEN_ORGANIZATION_ID: '44444444-4444-4444-4444-444444444444' } as any))
-      .toBe('44444444-4444-4444-4444-444444444444');
+    expect(
+      getOpenRuntimeOrganizationId({
+        PAYIN_OPEN_ORGANIZATION_ID: '44444444-4444-4444-4444-444444444444',
+      } as any)
+    ).toBe('44444444-4444-4444-4444-444444444444');
+  });
+
+  it('resolves neutral payment and runtime context for Open API routes', () => {
+    const context = contextWithOrganizationId(undefined);
+    context.set('userId', 'operator-1');
+    context.set('authType', 'jwt');
+
+    const scope = resolveBusinessPaymentScope(context, { PAYIN_RUNTIME: 'open' } as any);
+    const runtimeContext = resolveRuntimeContext(context, { PAYIN_RUNTIME: 'open' } as any);
+
+    expect(scope).toEqual({
+      id: DEFAULT_OPEN_ORGANIZATION_ID,
+      kind: 'single-merchant',
+      label: 'PayIn Open Merchant',
+    });
+    expect(runtimeContext).toMatchObject({
+      runtimeKind: 'single-tenant',
+      paymentScope: scope,
+      actor: { type: 'operator', id: 'operator-1' },
+      requestId: 'req-1',
+      source: 'apps/api',
+    });
   });
 
   it('does not inject default context in Cloud runtime', () => {
-    const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), { PAYIN_RUNTIME: 'cloud' } as any);
+    const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), {
+      PAYIN_RUNTIME: 'cloud',
+    } as any);
 
     expect(org).toBeUndefined();
-    expect(organizationContextRequiredMessage({ PAYIN_RUNTIME: 'cloud' } as any)).toContain('hosted multi-tenant');
+    expect(organizationContextRequiredMessage({ PAYIN_RUNTIME: 'cloud' } as any)).toContain(
+      'hosted multi-tenant'
+    );
   });
 
   it('does not grant default owner authorization to arbitrary JWT users in Open runtime', () => {
@@ -118,5 +160,34 @@ describe('Open runtime API context', () => {
       if (previousRuntime === undefined) delete process.env.PAYIN_RUNTIME;
       else process.env.PAYIN_RUNTIME = previousRuntime;
     }
+  });
+
+  it('allows overlays to compose additional API routes without copying Open route files', async () => {
+    const app = createApp({
+      extendApiRoutes: api => {
+        api.get('/overlay-health', c => c.json({ ok: true, source: 'overlay' }));
+      },
+    });
+
+    const response = await app.request('/api/v1/overlay-health');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, source: 'overlay' });
+  });
+
+  it('allows composed runtimes to override infrastructure dependencies', async () => {
+    const app = createApp({
+      getManager: () => {
+        throw new Error('manager unavailable');
+      },
+    });
+
+    const response = await app.request('/health');
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      status: 'unhealthy',
+      error: 'manager unavailable',
+    });
   });
 });

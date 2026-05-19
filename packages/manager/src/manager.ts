@@ -31,7 +31,12 @@ import {
   OperationalConfigValidator,
 } from './validators/index.js';
 import { mapOrderStatusEvent, mapDepositEvent } from '@payin/notification';
-import { ProcessorEventName } from '@payin/processor';
+import {
+  ProcessorEventName,
+  paymentScopeToOrganizationId,
+  type PaymentScope,
+  type RuntimeContext,
+} from '@payin/processor';
 import { RedirectService, type RedirectConfig } from './services/redirect.service.js';
 import {
   PaymentLinkService,
@@ -40,6 +45,20 @@ import {
   type PaymentLinkListResult,
   type PublishPaymentLinkInput,
 } from './services/payment-link.service.js';
+
+export type OrderRuntimeScope = PaymentScope | RuntimeContext;
+
+export function orderRuntimeScopeToOrganizationId(
+  scope: OrderRuntimeScope | undefined
+): string | undefined {
+  if (!scope) return undefined;
+
+  if ('paymentScope' in scope) {
+    return paymentScopeToOrganizationId(scope.paymentScope);
+  }
+
+  return paymentScopeToOrganizationId(scope);
+}
 
 export interface ManagerOptions {
   /** Database connection string (required) */
@@ -105,10 +124,13 @@ export class ConfigurationManager implements ConfigProvider {
   private paymentLinkService: PaymentLinkService;
 
   // Configuration cache (singleton pattern ensures consistency)
-  private configCache = new Map<string, {
-    value: any;
-    organizationId: string | null;
-  }>();
+  private configCache = new Map<
+    string,
+    {
+      value: any;
+      organizationId: string | null;
+    }
+  >();
 
   private readonly chainValidator: ChainValidator;
   private readonly tokenValidator: TokenValidator;
@@ -215,7 +237,7 @@ export class ConfigurationManager implements ConfigProvider {
           WHERE table_schema = 'public'
           AND table_name = $1
         )`,
-        [tableName],
+        [tableName]
       );
 
       if (result.rows[0].exists) {
@@ -229,7 +251,7 @@ export class ConfigurationManager implements ConfigProvider {
       isComplete: missing.length === 0,
       missingTables: missing,
       existingTables: existing,
-      requiredTables: [...TABLE_NAMES]
+      requiredTables: [...TABLE_NAMES],
     };
   }
 
@@ -277,9 +299,9 @@ export class ConfigurationManager implements ConfigProvider {
     try {
       // Dynamically import Processor.getDefaults()
       // Using type assertion to avoid cross-package TypeScript errors
-      const processorModule = await import('@payin/processor') as any;
+      const processorModule = (await import('@payin/processor')) as any;
 
-      const defaults = await processorModule.getDefaults(this.options.yamlPath) as any;
+      const defaults = (await processorModule.getDefaults(this.options.yamlPath)) as any;
 
       console.log('📦 Initializing default configuration from Processor...');
       console.log(`   - Chains: ${defaults.chains.length}`);
@@ -370,7 +392,7 @@ export class ConfigurationManager implements ConfigProvider {
         data.is_enabled !== undefined ? data.is_enabled : true,
         data.display_order || null,
         data.metadata || null,
-      ],
+      ]
     );
 
     return result.rows[0];
@@ -379,7 +401,7 @@ export class ConfigurationManager implements ConfigProvider {
   async updateChain(
     chainId: string,
     updates: Partial<ChainConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<ChainConfig> {
     const current = await this.getChain(chainId);
     if (!current) {
@@ -408,7 +430,7 @@ export class ConfigurationManager implements ConfigProvider {
 
     const result = await this.db.query(
       `UPDATE processor_chains SET ${fields.join(', ')} WHERE chain_id = $${paramIndex} RETURNING *`,
-      values,
+      values
     );
 
     return result.rows[0];
@@ -429,11 +451,17 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   async getChain(chainId: string): Promise<ChainConfig | null> {
-    const result = await this.db.query('SELECT * FROM processor_chains WHERE chain_id = $1', [chainId]);
+    const result = await this.db.query('SELECT * FROM processor_chains WHERE chain_id = $1', [
+      chainId,
+    ]);
     return result.rows[0] || null;
   }
 
-  async listChains(filters?: { protocol?: string; network?: string; is_enabled?: boolean }): Promise<ChainConfig[]> {
+  async listChains(filters?: {
+    protocol?: string;
+    network?: string;
+    is_enabled?: boolean;
+  }): Promise<ChainConfig[]> {
     let query = 'SELECT * FROM processor_chains WHERE 1=1';
     const values: any[] = [];
     let paramIndex = 1;
@@ -478,7 +506,7 @@ export class ConfigurationManager implements ConfigProvider {
         data.is_active !== undefined ? data.is_active : true,
         data.icon_url || null,
         data.metadata || null,
-      ],
+      ]
     );
 
     return result.rows[0];
@@ -487,7 +515,7 @@ export class ConfigurationManager implements ConfigProvider {
   async updateToken(
     symbol: string,
     updates: Partial<TokenConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<TokenConfig> {
     const current = await this.getToken(symbol);
     if (!current) {
@@ -515,7 +543,7 @@ export class ConfigurationManager implements ConfigProvider {
 
     const result = await this.db.query(
       `UPDATE processor_tokens SET ${fields.join(', ')} WHERE symbol = $${paramIndex} RETURNING *`,
-      values,
+      values
     );
 
     return result.rows[0];
@@ -536,7 +564,9 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   async getToken(symbol: string): Promise<TokenConfig | null> {
-    const result = await this.db.query('SELECT * FROM processor_tokens WHERE symbol = $1', [symbol]);
+    const result = await this.db.query('SELECT * FROM processor_tokens WHERE symbol = $1', [
+      symbol,
+    ]);
     return result.rows[0] || null;
   }
 
@@ -558,14 +588,20 @@ export class ConfigurationManager implements ConfigProvider {
 
   // ==================== TokenChain CRUD ====================
 
-  async createTokenChain(data: TokenChainConfig, context?: OperationContext): Promise<TokenChainConfig> {
+  async createTokenChain(
+    data: TokenChainConfig,
+    context?: OperationContext
+  ): Promise<TokenChainConfig> {
     // Convert symbol to token_id if provided
     const tokenId = data.symbol || data.token_id;
     if (!tokenId) {
       throw new Error('Either symbol or token_id must be provided');
     }
 
-    const validation = await this.tokenChainValidator.validateCreate({ ...data, token_id: tokenId }, context);
+    const validation = await this.tokenChainValidator.validateCreate(
+      { ...data, token_id: tokenId },
+      context
+    );
     if (!validation.valid) {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
     }
@@ -582,7 +618,7 @@ export class ConfigurationManager implements ConfigProvider {
         data.confirmations || 3,
         data.is_active !== undefined ? data.is_active : true,
         data.verified || false,
-      ],
+      ]
     );
 
     return result.rows[0];
@@ -592,7 +628,7 @@ export class ConfigurationManager implements ConfigProvider {
     tokenId: string,
     chainId: string,
     updates: Partial<TokenChainConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<TokenChainConfig> {
     const current = await this.getTokenChain(tokenId, chainId);
     if (!current) {
@@ -622,13 +658,17 @@ export class ConfigurationManager implements ConfigProvider {
       `UPDATE processor_token_chains SET ${fields.join(', ')}
        WHERE token_id = $${paramIndex} AND chain_id = $${paramIndex + 1}
        RETURNING *`,
-      values,
+      values
     );
 
     return result.rows[0];
   }
 
-  async deleteTokenChain(tokenId: string, chainId: string, context?: OperationContext): Promise<void> {
+  async deleteTokenChain(
+    tokenId: string,
+    chainId: string,
+    context?: OperationContext
+  ): Promise<void> {
     const current = await this.getTokenChain(tokenId, chainId);
     if (!current) {
       throw new Error(`TokenChain '${tokenId}:${chainId}' not found`);
@@ -639,16 +679,16 @@ export class ConfigurationManager implements ConfigProvider {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
     }
 
-    await this.db.query('DELETE FROM processor_token_chains WHERE token_id = $1 AND chain_id = $2', [
-      tokenId,
-      chainId,
-    ]);
+    await this.db.query(
+      'DELETE FROM processor_token_chains WHERE token_id = $1 AND chain_id = $2',
+      [tokenId, chainId]
+    );
   }
 
   async getTokenChain(tokenId: string, chainId: string): Promise<TokenChainConfig | null> {
     const result = await this.db.query(
       'SELECT * FROM processor_token_chains WHERE token_id = $1 AND chain_id = $2',
-      [tokenId, chainId],
+      [tokenId, chainId]
     );
     return result.rows[0] || null;
   }
@@ -683,7 +723,10 @@ export class ConfigurationManager implements ConfigProvider {
 
   // ==================== RPC Provider CRUD ====================
 
-  async createRPCProvider(data: RPCProviderConfig, context?: OperationContext): Promise<RPCProviderConfig> {
+  async createRPCProvider(
+    data: RPCProviderConfig,
+    context?: OperationContext
+  ): Promise<RPCProviderConfig> {
     const validation = await this.rpcProviderValidator.validateCreate(data, context);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
@@ -707,7 +750,7 @@ export class ConfigurationManager implements ConfigProvider {
         data.supported_chains || null,
         data.default_settings || null,
         data.is_active !== undefined ? data.is_active : true,
-      ],
+      ]
     );
 
     return result.rows[0];
@@ -716,7 +759,7 @@ export class ConfigurationManager implements ConfigProvider {
   async updateRPCProvider(
     providerName: string,
     updates: Partial<RPCProviderConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<RPCProviderConfig> {
     const current = await this.getRPCProvider(providerName);
     if (!current) {
@@ -744,7 +787,7 @@ export class ConfigurationManager implements ConfigProvider {
 
     const result = await this.db.query(
       `UPDATE processor_rpc_providers SET ${fields.join(', ')} WHERE provider_name = $${paramIndex} RETURNING *`,
-      values,
+      values
     );
 
     return result.rows[0];
@@ -761,17 +804,23 @@ export class ConfigurationManager implements ConfigProvider {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
     }
 
-    await this.db.query('DELETE FROM processor_rpc_providers WHERE provider_name = $1', [providerName]);
+    await this.db.query('DELETE FROM processor_rpc_providers WHERE provider_name = $1', [
+      providerName,
+    ]);
   }
 
   async getRPCProvider(providerName: string): Promise<RPCProviderConfig | null> {
-    const result = await this.db.query('SELECT * FROM processor_rpc_providers WHERE provider_name = $1', [
-      providerName,
-    ]);
+    const result = await this.db.query(
+      'SELECT * FROM processor_rpc_providers WHERE provider_name = $1',
+      [providerName]
+    );
     return result.rows[0] || null;
   }
 
-  async listRPCProviders(filters?: { provider_type?: string; is_active?: boolean }): Promise<RPCProviderConfig[]> {
+  async listRPCProviders(filters?: {
+    provider_type?: string;
+    is_active?: boolean;
+  }): Promise<RPCProviderConfig[]> {
     let query = 'SELECT * FROM processor_rpc_providers WHERE 1=1';
     const values: any[] = [];
     let paramIndex = 1;
@@ -793,7 +842,10 @@ export class ConfigurationManager implements ConfigProvider {
 
   // ==================== RPC Chain Config CRUD ====================
 
-  async createRPCChainConfig(data: RPCChainConfig, context?: OperationContext): Promise<RPCChainConfig> {
+  async createRPCChainConfig(
+    data: RPCChainConfig,
+    context?: OperationContext
+  ): Promise<RPCChainConfig> {
     const validation = await this.rpcChainConfigValidator.validateCreate(data, context);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
@@ -816,7 +868,7 @@ export class ConfigurationManager implements ConfigProvider {
         data.strategy || null,
         data.custom_endpoint_url || null,
         data.is_enabled !== undefined ? data.is_enabled : true,
-      ],
+      ]
     );
 
     return result.rows[0];
@@ -826,7 +878,7 @@ export class ConfigurationManager implements ConfigProvider {
     chainId: string,
     providerName: string,
     updates: Partial<RPCChainConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<RPCChainConfig> {
     const current = await this.getRPCChainConfig(chainId, providerName);
     if (!current) {
@@ -856,13 +908,17 @@ export class ConfigurationManager implements ConfigProvider {
       `UPDATE processor_rpc_chain_configs SET ${fields.join(', ')}
        WHERE chain_id = $${paramIndex} AND provider_name = $${paramIndex + 1}
        RETURNING *`,
-      values,
+      values
     );
 
     return result.rows[0];
   }
 
-  async deleteRPCChainConfig(chainId: string, providerName: string, context?: OperationContext): Promise<void> {
+  async deleteRPCChainConfig(
+    chainId: string,
+    providerName: string,
+    context?: OperationContext
+  ): Promise<void> {
     const current = await this.getRPCChainConfig(chainId, providerName);
     if (!current) {
       throw new Error(`RPC Chain Config '${chainId}:${providerName}' not found`);
@@ -873,16 +929,16 @@ export class ConfigurationManager implements ConfigProvider {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
     }
 
-    await this.db.query('DELETE FROM processor_rpc_chain_configs WHERE chain_id = $1 AND provider_name = $2', [
-      chainId,
-      providerName,
-    ]);
+    await this.db.query(
+      'DELETE FROM processor_rpc_chain_configs WHERE chain_id = $1 AND provider_name = $2',
+      [chainId, providerName]
+    );
   }
 
   async getRPCChainConfig(chainId: string, providerName: string): Promise<RPCChainConfig | null> {
     const result = await this.db.query(
       'SELECT * FROM processor_rpc_chain_configs WHERE chain_id = $1 AND provider_name = $2',
-      [chainId, providerName],
+      [chainId, providerName]
     );
     return result.rows[0] || null;
   }
@@ -917,7 +973,10 @@ export class ConfigurationManager implements ConfigProvider {
 
   // ==================== Operational Config CRUD ====================
 
-  async createOperationalConfig(data: OperationalConfig, context?: OperationContext): Promise<OperationalConfig> {
+  async createOperationalConfig(
+    data: OperationalConfig,
+    context?: OperationContext
+  ): Promise<OperationalConfig> {
     const validation = await this.operationalConfigValidator.validateCreate(data, context);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
@@ -925,7 +984,7 @@ export class ConfigurationManager implements ConfigProvider {
 
     const result = await this.db.query(
       `INSERT INTO processor_configs (category, config_data) VALUES ($1, $2) RETURNING *`,
-      [data.category, data.config_data],
+      [data.category, data.config_data]
     );
 
     return result.rows[0];
@@ -934,21 +993,25 @@ export class ConfigurationManager implements ConfigProvider {
   async updateOperationalConfig(
     category: string,
     updates: Partial<OperationalConfig>,
-    context?: OperationContext,
+    context?: OperationContext
   ): Promise<OperationalConfig> {
     const current = await this.getOperationalConfig(category);
     if (!current) {
       throw new Error(`Operational config '${category}' not found`);
     }
 
-    const validation = await this.operationalConfigValidator.validateUpdate(current, updates, context);
+    const validation = await this.operationalConfigValidator.validateUpdate(
+      current,
+      updates,
+      context
+    );
     if (!validation.valid) {
       throw new Error(`Validation failed: ${JSON.stringify(validation.errors, null, 2)}`);
     }
 
     const result = await this.db.query(
       `UPDATE processor_configs SET config_data = $1, updated_at = NOW() WHERE category = $2 RETURNING *`,
-      [updates.config_data || current.config_data, category],
+      [updates.config_data || current.config_data, category]
     );
 
     return result.rows[0];
@@ -969,7 +1032,9 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   async getOperationalConfig(category: string): Promise<OperationalConfig | null> {
-    const result = await this.db.query('SELECT * FROM processor_configs WHERE category = $1', [category]);
+    const result = await this.db.query('SELECT * FROM processor_configs WHERE category = $1', [
+      category,
+    ]);
     return result.rows[0] || null;
   }
 
@@ -988,10 +1053,7 @@ export class ConfigurationManager implements ConfigProvider {
    * Note: description is defined in config_metadata table, not stored in config_values
    * Note: Audit logging is handled by Auth module via middleware
    */
-  async setSystemSetting(
-    key: string,
-    value: any
-  ): Promise<SystemSetting> {
+  async setSystemSetting(key: string, value: any): Promise<SystemSetting> {
     // Check if setting exists
     const existing = await this.getSystemSetting(key);
 
@@ -1028,10 +1090,7 @@ export class ConfigurationManager implements ConfigProvider {
    * Get a system setting by key
    */
   async getSystemSetting(key: string): Promise<SystemSetting | null> {
-    const result = await this.db.query(
-      'SELECT * FROM config_values WHERE key = $1',
-      [key]
-    );
+    const result = await this.db.query('SELECT * FROM config_values WHERE key = $1', [key]);
 
     if (result.rows.length === 0) {
       return null;
@@ -1044,9 +1103,7 @@ export class ConfigurationManager implements ConfigProvider {
   /**
    * List system settings
    */
-  async listSystemSettings(filters?: {
-    editableViaUi?: boolean;
-  }): Promise<SystemSetting[]> {
+  async listSystemSettings(filters?: { editableViaUi?: boolean }): Promise<SystemSetting[]> {
     let query = 'SELECT * FROM config_values WHERE 1=1';
     const values: any[] = [];
     let paramIndex = 1;
@@ -1126,7 +1183,7 @@ export class ConfigurationManager implements ConfigProvider {
 
     return {
       successUrl,
-      cancelUrl
+      cancelUrl,
     };
   }
 
@@ -1152,7 +1209,10 @@ export class ConfigurationManager implements ConfigProvider {
    * Get system setting with cache support and organization isolation
    * Internal method used by both getConfig() and getSystemSetting()
    */
-  private async getSystemSettingWithCache(key: string, organizationId?: string): Promise<SystemSetting | null> {
+  private async getSystemSettingWithCache(
+    key: string,
+    organizationId?: string
+  ): Promise<SystemSetting | null> {
     // Try organization-level cache first
     if (organizationId) {
       const orgCacheKey = this.buildCacheKey(key, organizationId);
@@ -1164,7 +1224,7 @@ export class ConfigurationManager implements ConfigProvider {
           organization_id: cached.organizationId,
           category: 'business_rules', // Category info not cached, filled for type compatibility
           editable_via_ui: true,
-          updated_at: new Date()
+          updated_at: new Date(),
         } as SystemSetting;
       }
     }
@@ -1179,7 +1239,7 @@ export class ConfigurationManager implements ConfigProvider {
         organization_id: null,
         category: 'business_rules',
         editable_via_ui: true,
-        updated_at: new Date()
+        updated_at: new Date(),
       } as SystemSetting;
     }
 
@@ -1193,10 +1253,10 @@ export class ConfigurationManager implements ConfigProvider {
       if (orgResult.rows.length > 0) {
         const setting = orgResult.rows[0];
         // Cache organization-level config
-        this.configCache.set(
-          this.buildCacheKey(key, organizationId),
-          { value: setting.value, organizationId: setting.organization_id }
-        );
+        this.configCache.set(this.buildCacheKey(key, organizationId), {
+          value: setting.value,
+          organizationId: setting.organization_id,
+        });
         return setting;
       }
     }
@@ -1209,10 +1269,10 @@ export class ConfigurationManager implements ConfigProvider {
     if (globalResult.rows.length > 0) {
       const setting = globalResult.rows[0];
       // Cache global config
-      this.configCache.set(
-        this.buildCacheKey(key, null),
-        { value: setting.value, organizationId: null }
-      );
+      this.configCache.set(this.buildCacheKey(key, null), {
+        value: setting.value,
+        organizationId: null,
+      });
       return setting;
     }
 
@@ -1241,7 +1301,7 @@ export class ConfigurationManager implements ConfigProvider {
   getConfigCacheStats(): { size: number; keys: string[] } {
     return {
       size: this.configCache.size,
-      keys: Array.from(this.configCache.keys())
+      keys: Array.from(this.configCache.keys()),
     };
   }
 
@@ -1255,10 +1315,9 @@ export class ConfigurationManager implements ConfigProvider {
     const { CONFIG_METADATA } = await import('./config/config-metadata.js');
 
     for (const metadata of CONFIG_METADATA) {
-      const existing = await this.db.query(
-        'SELECT * FROM config_metadata WHERE key = $1',
-        [metadata.key]
-      );
+      const existing = await this.db.query('SELECT * FROM config_metadata WHERE key = $1', [
+        metadata.key,
+      ]);
 
       if (existing.rows.length === 0) {
         await this.db.query(
@@ -1274,7 +1333,7 @@ export class ConfigurationManager implements ConfigProvider {
             JSON.stringify(metadata.validationRules || null),
             JSON.stringify(metadata.uiHints || null),
             metadata.editable !== false,
-            metadata.globalOnly === true
+            metadata.globalOnly === true,
           ]
         );
       }
@@ -1312,7 +1371,8 @@ export class ConfigurationManager implements ConfigProvider {
         const data = opConfig.config_data;
         if (data.poolManagement) {
           if (data.poolManagement.defaultCooldownMinutes !== undefined) {
-            defaultValues['address_pool.cooldown_minutes'] = data.poolManagement.defaultCooldownMinutes;
+            defaultValues['address_pool.cooldown_minutes'] =
+              data.poolManagement.defaultCooldownMinutes;
           }
         }
       }
@@ -1321,7 +1381,9 @@ export class ConfigurationManager implements ConfigProvider {
         const data = opConfig.config_data;
         if (data.checkInterval !== undefined) {
           // Convert milliseconds to seconds for storage in Manager DB
-          defaultValues['delayed_confirmation.check_interval'] = Math.floor(data.checkInterval / 1000);
+          defaultValues['delayed_confirmation.check_interval'] = Math.floor(
+            data.checkInterval / 1000
+          );
         }
       }
 
@@ -1356,9 +1418,10 @@ export class ConfigurationManager implements ConfigProvider {
       const existing = await this.getSystemSetting(metadata.key);
       if (!existing) {
         // Use Processor default if available, otherwise use metadata default
-        const defaultValue = processorDefaults[metadata.key] !== undefined
-          ? processorDefaults[metadata.key]
-          : metadata.defaultValue;
+        const defaultValue =
+          processorDefaults[metadata.key] !== undefined
+            ? processorDefaults[metadata.key]
+            : metadata.defaultValue;
 
         await this.setSystemSetting(metadata.key, defaultValue);
       }
@@ -1480,18 +1543,18 @@ export class ConfigurationManager implements ConfigProvider {
       this.getMonitorDefaultConfig(),
       this.getProcessorDefaultConfig(),
       this.getManagerYamlConfig(),
-      this.listSystemSettings()
+      this.listSystemSettings(),
     ]);
 
     // Build merged configuration (simplified - actual merge happens in Processor/Monitor)
     const merged = {
       database: {
-        connectionString: this.maskConnectionString(this.connectionString)
+        connectionString: this.maskConnectionString(this.connectionString),
       },
       ...processor,
       monitor,
       // Database settings override YAML values
-      _databaseOverrides: database
+      _databaseOverrides: database,
     };
 
     return {
@@ -1501,9 +1564,9 @@ export class ConfigurationManager implements ConfigProvider {
         monitor,
         processor,
         manager,
-        database
+        database,
       },
-      merged
+      merged,
     };
   }
 
@@ -1511,10 +1574,7 @@ export class ConfigurationManager implements ConfigProvider {
    * Get configuration metadata for a specific key
    */
   async getConfigMetadata(key: string): Promise<any | null> {
-    const result = await this.db.query(
-      'SELECT * FROM config_metadata WHERE key = $1',
-      [key]
-    );
+    const result = await this.db.query('SELECT * FROM config_metadata WHERE key = $1', [key]);
     const rows = result.rows;
 
     if (rows.length === 0) {
@@ -1528,7 +1588,7 @@ export class ConfigurationManager implements ConfigProvider {
       dataType: row.data_type,
       defaultValue: row.default_value,
       validationRules: row.validation_rules,
-      description: row.description
+      description: row.description,
     };
   }
 
@@ -1566,7 +1626,11 @@ export class ConfigurationManager implements ConfigProvider {
    * @param config.monitor - Monitor configuration (e.g., rpcKeys, chains)
    * @param config.processorConfigFile - Optional path to Processor config file (e.g., 'development.yaml')
    */
-  async startProcessor(config?: { monitor?: any; processorConfigFile?: string; [key: string]: any }): Promise<void> {
+  async startProcessor(config?: {
+    monitor?: any;
+    processorConfigFile?: string;
+    [key: string]: any;
+  }): Promise<void> {
     const { Processor } = await import('@payin/processor');
     const { ConfigProviderAdapter } = await import('./config-provider-adapter.js');
 
@@ -1703,12 +1767,46 @@ export class ConfigurationManager implements ConfigProvider {
     return await this.paymentLinkService.createPaymentLink(request);
   }
 
+  /**
+   * Create a payment link with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async createPaymentLinkForRuntimeScope(
+    scope: OrderRuntimeScope,
+    request: CreatePaymentLinkInput & Record<string, unknown>
+  ): Promise<PaymentLink> {
+    return await this.createPaymentLink({
+      ...request,
+      organizationId: orderRuntimeScopeToOrganizationId(scope) as string,
+    } as unknown as CreatePaymentLinkInput);
+  }
+
   async updatePaymentLink(
     paymentLinkId: string,
     organizationId: string,
     updates: UpdatePaymentLinkInput
   ): Promise<PaymentLink> {
     return await this.paymentLinkService.updatePaymentLink(paymentLinkId, organizationId, updates);
+  }
+
+  /**
+   * Update a payment link with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async updatePaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope,
+    updates: UpdatePaymentLinkInput
+  ): Promise<PaymentLink> {
+    return await this.updatePaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string,
+      updates
+    );
   }
 
   async publishPaymentLink(
@@ -1724,24 +1822,98 @@ export class ConfigurationManager implements ConfigProvider {
     return await this.paymentLinkService.publishPaymentLink(payload);
   }
 
+  async publishPaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope,
+    slug?: string
+  ): Promise<PaymentLink> {
+    return await this.publishPaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string,
+      slug
+    );
+  }
+
   async unpublishPaymentLink(paymentLinkId: string, organizationId: string): Promise<PaymentLink> {
     return await this.paymentLinkService.unpublishPaymentLink(paymentLinkId, organizationId);
+  }
+
+  async unpublishPaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope
+  ): Promise<PaymentLink> {
+    return await this.unpublishPaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string
+    );
   }
 
   async archivePaymentLink(paymentLinkId: string, organizationId: string): Promise<PaymentLink> {
     return await this.paymentLinkService.archivePaymentLink(paymentLinkId, organizationId);
   }
 
+  async archivePaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope
+  ): Promise<PaymentLink> {
+    return await this.archivePaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string
+    );
+  }
+
   async restorePaymentLink(paymentLinkId: string, organizationId: string): Promise<PaymentLink> {
     return await this.paymentLinkService.restorePaymentLink(paymentLinkId, organizationId);
+  }
+
+  async restorePaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope
+  ): Promise<PaymentLink> {
+    return await this.restorePaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string
+    );
   }
 
   async listPaymentLinks(filters: PaymentLinkFilters): Promise<PaymentLinkListResult> {
     return await this.paymentLinkService.listPaymentLinks(filters);
   }
 
+  /**
+   * List payment links with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listPaymentLinksForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<PaymentLinkFilters, 'organizationId'> = {}
+  ): Promise<PaymentLinkListResult> {
+    return await this.listPaymentLinks({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
+  }
+
   async getPaymentLink(paymentLinkId: string, organizationId: string): Promise<PaymentLink | null> {
     return await this.paymentLinkService.getPaymentLinkById(paymentLinkId, organizationId);
+  }
+
+  /**
+   * Get a payment link with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getPaymentLinkForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope
+  ): Promise<PaymentLink | null> {
+    return await this.getPaymentLink(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string
+    );
   }
 
   async getPaymentLinkBySlug(slug: string): Promise<PaymentLink | null> {
@@ -1755,6 +1927,27 @@ export class ConfigurationManager implements ConfigProvider {
     return await this.paymentLinkService.listPaymentLinkOrders(paymentLinkId, organizationId);
   }
 
+  async listPaymentLinkOrdersForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope
+  ): Promise<PaymentLinkOrder[]> {
+    return await this.listPaymentLinkOrders(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string
+    );
+  }
+
+  /**
+   * Return the legacy organization id for a payment-link runtime scope.
+   *
+   * Compatibility seam for auth/preview token payloads while tokens still
+   * carry organizationId. Routes should not import legacy RuntimeContext
+   * conversion helpers directly.
+   */
+  getPaymentLinkOrganizationIdForRuntimeScope(scope: OrderRuntimeScope): string {
+    return orderRuntimeScopeToOrganizationId(scope) as string;
+  }
+
   /**
    * Update payment link currencies configuration
    */
@@ -1763,7 +1956,23 @@ export class ConfigurationManager implements ConfigProvider {
     organizationId: string,
     input: UpdatePaymentLinkCurrenciesInput
   ): Promise<PaymentLink> {
-    return await this.paymentLinkService.updatePaymentLinkCurrencies(paymentLinkId, organizationId, input);
+    return await this.paymentLinkService.updatePaymentLinkCurrencies(
+      paymentLinkId,
+      organizationId,
+      input
+    );
+  }
+
+  async updatePaymentLinkCurrenciesForRuntimeScope(
+    paymentLinkId: string,
+    scope: OrderRuntimeScope,
+    input: UpdatePaymentLinkCurrenciesInput
+  ): Promise<PaymentLink> {
+    return await this.updatePaymentLinkCurrencies(
+      paymentLinkId,
+      orderRuntimeScopeToOrganizationId(scope) as string,
+      input
+    );
   }
 
   /**
@@ -1879,11 +2088,27 @@ export class ConfigurationManager implements ConfigProvider {
     if (!ordersEnabled) {
       throw new Error(
         `Order service is disabled for organization ${request.organizationId}. ` +
-        `Please contact support for assistance.`
+          `Please contact support for assistance.`
       );
     }
 
     return await this.getProcessor().createOrder(request);
+  }
+
+  /**
+   * Create order with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async createOrderForRuntimeScope(
+    scope: OrderRuntimeScope,
+    request: Omit<Parameters<ConfigurationManager['createOrder']>[0], 'organizationId'>
+  ): Promise<any> {
+    return await this.createOrder({
+      ...request,
+      organizationId: orderRuntimeScopeToOrganizationId(scope) as string,
+    });
   }
 
   /**
@@ -1896,34 +2121,64 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Get order with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getOrderForRuntimeScope(orderId: string, scope: OrderRuntimeScope): Promise<any> {
+    return await this.getOrder(orderId, orderRuntimeScopeToOrganizationId(scope));
+  }
+
+  /**
    * List orders with filtering and pagination (proxy to Processor)
    */
-  async listOrders(filters: {
-    organizationId?: string; // Multi-tenant isolation
-    status?: string | string[];
-    chain?: string;
-    token?: string;
-    orderReference?: string;
-    createdAfter?: Date;
-    createdBefore?: Date;
-    page?: number;
-    limit?: number;
-    sortBy?: 'created_at' | 'updated_at' | 'amount';
-    sortOrder?: 'ASC' | 'DESC';
-  } = {}): Promise<{ orders: any[]; total: number; page: number; limit: number }> {
+  async listOrders(
+    filters: {
+      organizationId?: string; // Multi-tenant isolation
+      status?: string | string[];
+      chain?: string;
+      token?: string;
+      orderReference?: string;
+      createdAfter?: Date;
+      createdBefore?: Date;
+      page?: number;
+      limit?: number;
+      sortBy?: 'created_at' | 'updated_at' | 'amount';
+      sortOrder?: 'ASC' | 'DESC';
+    } = {}
+  ): Promise<{ orders: any[]; total: number; page: number; limit: number }> {
     return await this.getProcessor().listOrders(filters);
+  }
+
+  /**
+   * List orders with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listOrdersForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<Parameters<ConfigurationManager['listOrders']>[0], 'organizationId'> = {}
+  ): Promise<{ orders: any[]; total: number; page: number; limit: number }> {
+    return await this.listOrders({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
   }
 
   /**
    * Get order statistics (proxy to Processor)
    */
-  async getOrderStatistics(filters: {
-    organizationId?: string; // Multi-tenant isolation
-    chain?: string;
-    token?: string;
-    createdAfter?: Date;
-    createdBefore?: Date;
-  } = {}): Promise<{
+  async getOrderStatistics(
+    filters: {
+      organizationId?: string; // Multi-tenant isolation
+      chain?: string;
+      token?: string;
+      createdAfter?: Date;
+      createdBefore?: Date;
+    } = {}
+  ): Promise<{
     totalOrders: number;
     completedOrders: number;
     pendingOrders: number;
@@ -1936,6 +2191,22 @@ export class ConfigurationManager implements ConfigProvider {
     byToken: Record<string, number>;
   }> {
     return await this.getProcessor().getOrderStatistics(filters);
+  }
+
+  /**
+   * Get order statistics with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getOrderStatisticsForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<Parameters<ConfigurationManager['getOrderStatistics']>[0], 'organizationId'> = {}
+  ): Promise<Awaited<ReturnType<ConfigurationManager['getOrderStatistics']>>> {
+    return await this.getOrderStatistics({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
   }
 
   /**
@@ -1954,7 +2225,7 @@ export class ConfigurationManager implements ConfigProvider {
     if (!depositsEnabled) {
       throw new Error(
         `Deposit service is disabled for organization ${request.organizationId}. ` +
-        `Please contact support for assistance.`
+          `Please contact support for assistance.`
       );
     }
 
@@ -1962,11 +2233,25 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Bind deposit address with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async bindDepositAddressForRuntimeScope(
+    scope: OrderRuntimeScope,
+    request: Omit<Parameters<ConfigurationManager['bindDepositAddress']>[0], 'organizationId'>
+  ): Promise<Awaited<ReturnType<ConfigurationManager['bindDepositAddress']>>> {
+    return await this.bindDepositAddress({
+      ...request,
+      organizationId: orderRuntimeScopeToOrganizationId(scope) as string,
+    });
+  }
+
+  /**
    * Unbind deposit address (proxy to Processor)
    */
-  async unbindDepositAddress(request: {
-    depositReference: string;
-  }): Promise<void> {
+  async unbindDepositAddress(request: { depositReference: string }): Promise<void> {
     return await this.getProcessor().unbindDepositAddress(request);
   }
 
@@ -1982,14 +2267,35 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Unbind deposit address by address with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async unbindDepositAddressByAddressForRuntimeScope(
+    scope: OrderRuntimeScope,
+    request: Omit<
+      Parameters<ConfigurationManager['unbindDepositAddressByAddress']>[0],
+      'organizationId'
+    >
+  ): Promise<void> {
+    return await this.unbindDepositAddressByAddress({
+      ...request,
+      organizationId: orderRuntimeScopeToOrganizationId(scope) as string,
+    });
+  }
+
+  /**
    * List deposit references with statistics (proxy to Processor)
    */
-  async listDepositReferences(filters: {
-    organizationId?: string; // Multi-tenant filtering
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<{
+  async listDepositReferences(
+    filters: {
+      organizationId?: string; // Multi-tenant filtering
+      page?: number;
+      limit?: number;
+      search?: string;
+    } = {}
+  ): Promise<{
     references: Array<{
       depositReference: string;
       protocols: string[];
@@ -2006,13 +2312,58 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * List deposit references with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listDepositReferencesForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<
+      Parameters<ConfigurationManager['listDepositReferences']>[0],
+      'organizationId'
+    > = {}
+  ): Promise<Awaited<ReturnType<ConfigurationManager['listDepositReferences']>>> {
+    return await this.listDepositReferences({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
+  }
+
+  /**
    * Get user deposit address (proxy to Processor)
    * @param organizationId - Organization ID for multi-tenant filtering
    * @param depositReference - Deposit reference ID
    * @param protocol - Protocol (evm or tron)
    */
-  async getUserDepositAddress(organizationId: string, depositReference: string, protocol: 'evm' | 'tron' | 'solana' = 'evm'): Promise<any> {
-    return await this.getProcessor().getUserDepositAddress(organizationId, depositReference, protocol);
+  async getUserDepositAddress(
+    organizationId: string,
+    depositReference: string,
+    protocol: 'evm' | 'tron' | 'solana' = 'evm'
+  ): Promise<any> {
+    return await this.getProcessor().getUserDepositAddress(
+      organizationId,
+      depositReference,
+      protocol
+    );
+  }
+
+  /**
+   * Get user deposit address with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getUserDepositAddressForRuntimeScope(
+    scope: OrderRuntimeScope,
+    depositReference: string,
+    protocol: 'evm' | 'tron' | 'solana' = 'evm'
+  ): Promise<any> {
+    return await this.getUserDepositAddress(
+      orderRuntimeScopeToOrganizationId(scope) as string,
+      depositReference,
+      protocol
+    );
   }
 
   /**
@@ -2027,43 +2378,98 @@ export class ConfigurationManager implements ConfigProvider {
   /**
    * List deposit addresses (proxy to Processor)
    */
-  async listDepositAddresses(filters: {
-    organizationId?: string;
-    protocol?: 'evm' | 'tron';
-    depositReference?: string;
-    page?: number;
-    limit?: number;
-  } = {}): Promise<{ addresses: any[]; total: number; page: number; limit: number }> {
+  async listDepositAddresses(
+    filters: {
+      organizationId?: string;
+      protocol?: 'evm' | 'tron';
+      depositReference?: string;
+      page?: number;
+      limit?: number;
+    } = {}
+  ): Promise<{ addresses: any[]; total: number; page: number; limit: number }> {
     return await this.getProcessor().listDepositAddresses(filters);
+  }
+
+  /**
+   * List deposit addresses with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listDepositAddressesForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<
+      Parameters<ConfigurationManager['listDepositAddresses']>[0],
+      'organizationId'
+    > = {}
+  ): Promise<Awaited<ReturnType<ConfigurationManager['listDepositAddresses']>>> {
+    return await this.listDepositAddresses({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
   }
 
   /**
    * List transfers with filtering and pagination (proxy to Processor)
    */
-  async listTransfers(filters: {
-    organizationId?: string; // Multi-tenant filtering
-    orderId?: string;
-    depositReference?: string;
-    businessType?: 'order' | 'deposit';
-    chain?: string;
-    token?: string;
-    isConfirmed?: boolean;
-    isFailed?: boolean;
-    detectedAfter?: Date;
-    detectedBefore?: Date;
-    page?: number;
-    limit?: number;
-    sortBy?: 'detected_at' | 'confirmed_at' | 'amount';
-    sortOrder?: 'ASC' | 'DESC';
-  } = {}): Promise<{ transfers: any[]; total: number; page: number; limit: number }> {
+  async listTransfers(
+    filters: {
+      organizationId?: string; // Multi-tenant filtering
+      orderId?: string;
+      depositReference?: string;
+      businessType?: 'order' | 'deposit';
+      chain?: string;
+      token?: string;
+      isConfirmed?: boolean;
+      isFailed?: boolean;
+      detectedAfter?: Date;
+      detectedBefore?: Date;
+      page?: number;
+      limit?: number;
+      sortBy?: 'detected_at' | 'confirmed_at' | 'amount';
+      sortOrder?: 'ASC' | 'DESC';
+    } = {}
+  ): Promise<{ transfers: any[]; total: number; page: number; limit: number }> {
     return await this.getProcessor().listTransfers(filters);
+  }
+
+  /**
+   * List transfers with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listTransfersForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: Omit<Parameters<ConfigurationManager['listTransfers']>[0], 'organizationId'> = {}
+  ): Promise<Awaited<ReturnType<ConfigurationManager['listTransfers']>>> {
+    return await this.listTransfers({
+      ...filters,
+      organizationId: orderRuntimeScopeToOrganizationId(scope),
+    });
   }
 
   /**
    * Get transfers for order or deposit reference (proxy to Processor)
    */
-  async getTransfers(reference: { orderId?: string; depositReference?: string }): Promise<any[]> {
-    return await this.getProcessor().getTransfers(reference);
+  async getTransfers(
+    reference: { orderId?: string; depositReference?: string },
+    organizationId?: string
+  ): Promise<any[]> {
+    return await this.getProcessor().getTransfers(reference, organizationId);
+  }
+
+  /**
+   * Get transfers for an order or deposit reference with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getTransfersForRuntimeScope(
+    reference: Parameters<ConfigurationManager['getTransfers']>[0],
+    scope: OrderRuntimeScope
+  ): Promise<Awaited<ReturnType<ConfigurationManager['getTransfers']>>> {
+    return await this.getTransfers(reference, orderRuntimeScopeToOrganizationId(scope));
   }
 
   /**
@@ -2076,7 +2482,10 @@ export class ConfigurationManager implements ConfigProvider {
   /**
    * Get address pool availability (proxy to Processor)
    */
-  async getAddressPoolAvailability(organizationId: string, protocol: 'evm' | 'tron' | 'solana' = 'evm'): Promise<{
+  async getAddressPoolAvailability(
+    organizationId: string,
+    protocol: 'evm' | 'tron' | 'solana' = 'evm'
+  ): Promise<{
     total: number;
     available: number;
     allocated: number;
@@ -2085,6 +2494,101 @@ export class ConfigurationManager implements ConfigProvider {
     archived: number;
   }> {
     return await this.getProcessor().getAddressPoolAvailability(organizationId, protocol);
+  }
+
+  /**
+   * Get address pool availability with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getAddressPoolAvailabilityForRuntimeScope(
+    scope: OrderRuntimeScope,
+    protocol: 'evm' | 'tron' | 'solana' = 'evm'
+  ): Promise<Awaited<ReturnType<ConfigurationManager['getAddressPoolAvailability']>>> {
+    return await this.getAddressPoolAvailability(
+      orderRuntimeScopeToOrganizationId(scope) as string,
+      protocol
+    );
+  }
+
+  /**
+   * Get aggregated address pool summary with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async getAddressPoolSummaryForRuntimeScope(
+    scope: OrderRuntimeScope,
+    protocols: Array<'evm' | 'tron' | 'solana'> = ['evm', 'tron', 'solana']
+  ): Promise<{
+    protocols: Array<{
+      protocol: 'evm' | 'tron' | 'solana';
+      total: number;
+      available: number;
+      allocated: number;
+      bound: number;
+      coolingDown: number;
+      archived: number;
+      error?: string;
+    }>;
+    totalAddresses: number;
+    totalAvailable: number;
+    hasAddresses: boolean;
+    hasAvailableAddresses: boolean;
+  }> {
+    const organizationId = orderRuntimeScopeToOrganizationId(scope) as string;
+    const protocolSummaries: Array<{
+      protocol: 'evm' | 'tron' | 'solana';
+      total: number;
+      available: number;
+      allocated: number;
+      bound: number;
+      coolingDown: number;
+      archived: number;
+      error?: string;
+    }> = [];
+
+    for (const protocol of protocols) {
+      try {
+        const stats = await this.getAddressPoolAvailability(organizationId, protocol);
+        protocolSummaries.push({
+          protocol,
+          total: stats.total,
+          available: stats.available,
+          allocated: stats.allocated,
+          bound: stats.bound,
+          coolingDown: stats.coolingDown,
+          archived: stats.archived ?? 0,
+        });
+      } catch (error) {
+        console.warn(
+          `Failed to fetch address pool summary for protocol ${protocol}:`,
+          error instanceof Error ? error.message : error
+        );
+        protocolSummaries.push({
+          protocol,
+          total: 0,
+          available: 0,
+          allocated: 0,
+          bound: 0,
+          coolingDown: 0,
+          archived: 0,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    const totalAddresses = protocolSummaries.reduce((acc, item) => acc + (item.total || 0), 0);
+    const totalAvailable = protocolSummaries.reduce((acc, item) => acc + (item.available || 0), 0);
+
+    return {
+      protocols: protocolSummaries,
+      totalAddresses,
+      totalAvailable,
+      hasAddresses: totalAddresses > 0,
+      hasAvailableAddresses: totalAvailable > 0,
+    };
   }
 
   /**
@@ -2113,16 +2617,56 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * List address-pool addresses with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async listAddressesForRuntimeScope(
+    scope: OrderRuntimeScope,
+    params: Omit<Parameters<ConfigurationManager['listAddresses']>[0], 'organizationId'>
+  ): Promise<Awaited<ReturnType<ConfigurationManager['listAddresses']>>> {
+    return await this.listAddresses({
+      ...params,
+      organizationId: orderRuntimeScopeToOrganizationId(scope) as string,
+    });
+  }
+
+  /**
    * Add addresses to pool (proxy to Processor)
    */
-  async addAddressesToPool(addresses: Array<{
-    organizationId: string;
-    address: string;
-    derivationIndex: number;
-    protocol: 'evm' | 'tron' | 'solana';
-    masterPublicKey: string;
-  }>): Promise<{ added: number; skipped: number; errors: string[] }> {
+  async addAddressesToPool(
+    addresses: Array<{
+      organizationId: string;
+      address: string;
+      derivationIndex: number;
+      protocol: 'evm' | 'tron' | 'solana';
+      masterPublicKey: string;
+    }>
+  ): Promise<{ added: number; skipped: number; errors: string[] }> {
     return await this.getProcessor().addAddressesToPool(addresses);
+  }
+
+  /**
+   * Add addresses to pool with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async addAddressesToPoolForRuntimeScope(
+    scope: OrderRuntimeScope,
+    addresses: Array<
+      Omit<Parameters<ConfigurationManager['addAddressesToPool']>[0][number], 'organizationId'>
+    >
+  ): Promise<Awaited<ReturnType<ConfigurationManager['addAddressesToPool']>>> {
+    const organizationId = orderRuntimeScopeToOrganizationId(scope) as string;
+
+    return await this.addAddressesToPool(
+      addresses.map(address => ({
+        ...address,
+        organizationId,
+      }))
+    );
   }
 
   /**
@@ -2134,10 +2678,30 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Archive an address with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async archiveAddressForRuntimeScope(scope: OrderRuntimeScope, address: string): Promise<void> {
+    return await this.archiveAddress(orderRuntimeScopeToOrganizationId(scope) as string, address);
+  }
+
+  /**
    * Unarchive an address (restore to available state)
    */
   async unarchiveAddress(organizationId: string, address: string): Promise<void> {
     return await this.getProcessor().unarchiveAddress(organizationId, address);
+  }
+
+  /**
+   * Unarchive an address with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   */
+  async unarchiveAddressForRuntimeScope(scope: OrderRuntimeScope, address: string): Promise<void> {
+    return await this.unarchiveAddress(orderRuntimeScopeToOrganizationId(scope) as string, address);
   }
 
   // ==================== Configuration Query (Proxy to Processor) ====================
@@ -2183,14 +2747,16 @@ export class ConfigurationManager implements ConfigProvider {
   /**
    * Get chain sync status for all chains (proxy to Processor)
    */
-  async getAllChainsSyncStatus(): Promise<Array<{
-    chain: string;
-    latest_processed_block: number;
-    sync_status?: string;
-    is_healthy?: boolean;
-    behind_blocks?: number;
-    updated_at: Date;
-  }>> {
+  async getAllChainsSyncStatus(): Promise<
+    Array<{
+      chain: string;
+      latest_processed_block: number;
+      sync_status?: string;
+      is_healthy?: boolean;
+      behind_blocks?: number;
+      updated_at: Date;
+    }>
+  > {
     return await this.getProcessor().getAllChainsSyncStatus();
   }
 
@@ -2216,8 +2782,12 @@ export class ConfigurationManager implements ConfigProvider {
    */
   private async loadRedirectConfig(): Promise<void> {
     try {
-      const defaultOrderSuccessUrl = await this.getSystemSetting('redirect.default_order_success_url');
-      const defaultOrderCancelUrl = await this.getSystemSetting('redirect.default_order_cancel_url');
+      const defaultOrderSuccessUrl = await this.getSystemSetting(
+        'redirect.default_order_success_url'
+      );
+      const defaultOrderCancelUrl = await this.getSystemSetting(
+        'redirect.default_order_cancel_url'
+      );
       const depositSuccessUrl = await this.getSystemSetting('redirect.deposit_success_url');
 
       this.redirectService.updateConfig({
@@ -2292,10 +2862,7 @@ export class ConfigurationManager implements ConfigProvider {
       );
     }
     if (config.deposit_success_url !== undefined) {
-      await this.setSystemSetting(
-        'redirect.deposit_success_url',
-        config.deposit_success_url
-      );
+      await this.setSystemSetting('redirect.deposit_success_url', config.deposit_success_url);
     }
 
     // Update RedirectService in-memory config

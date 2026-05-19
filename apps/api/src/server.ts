@@ -44,11 +44,31 @@ import orderStatusRoutes from './routes/order-status.js';
 import transferStatusRoutes from './routes/transfer-status.js';
 import { cloudOnlyRouteGuard } from './open-runtime.js';
 
+export interface CreateAppOptions {
+  /**
+   * Compatibility seam for health checks and future composed runtimes.
+   * Defaults to the Open manager singleton wiring.
+   */
+  getManager?: typeof getManager;
+  /**
+   * Override Cloud-only route guard wiring. Open uses the default guard; a
+   * hosted overlay can provide its own guard/policy middleware without editing
+   * this app factory.
+   */
+  cloudOnlyRouteGuard?: typeof cloudOnlyRouteGuard;
+  /** Add public, unauthenticated routes after the built-in Open public routes. */
+  extendPublicRoutes?: (app: Hono) => void;
+  /** Add API v1 routes after the built-in Open API routes. */
+  extendApiRoutes?: (api: Hono) => void;
+}
+
 /**
  * Create and configure Hono application
  */
-export function createApp() {
+export function createApp(options: CreateAppOptions = {}) {
   const app = new Hono();
+  const managerProvider = options.getManager ?? getManager;
+  const cloudOnlyGuard = options.cloudOnlyRouteGuard ?? cloudOnlyRouteGuard;
 
   // Middleware
   app.use('*', logger());
@@ -58,14 +78,20 @@ export function createApp() {
   // Map /dist/* and /assets/* to files in public directory
   // File location: apps/api/public/dist/assets/style.css
   // URL: /dist/assets/style.css -> public/dist/assets/style.css
-  app.use('/dist/*', serveStatic({
-    root: publicDir,
-    rewriteRequestPath: (path) => path // Keep original path including /dist
-  }));
-  app.use('/assets/*', serveStatic({
-    root: publicDir,
-    rewriteRequestPath: (path) => path // Keep original path including /assets
-  }));
+  app.use(
+    '/dist/*',
+    serveStatic({
+      root: publicDir,
+      rewriteRequestPath: path => path, // Keep original path including /dist
+    })
+  );
+  app.use(
+    '/assets/*',
+    serveStatic({
+      root: publicDir,
+      rewriteRequestPath: path => path, // Keep original path including /assets
+    })
+  );
 
   // Serve favicon and other root-level static files
   // Explicitly list each file since wildcard patterns don't work with serveStatic
@@ -83,24 +109,27 @@ export function createApp() {
    * Health check endpoint
    * GET /health
    */
-  app.get('/health', async (c) => {
+  app.get('/health', async c => {
     try {
-      const manager = getManager();
+      managerProvider();
 
       return c.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         manager: {
-          initialized: true
+          initialized: true,
         },
-        version: '0.1.0'
+        version: '0.1.0',
       });
     } catch (error) {
-      return c.json({
-        status: 'unhealthy',
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }, 503);
+      return c.json(
+        {
+          status: 'unhealthy',
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        503
+      );
     }
   });
 
@@ -122,9 +151,10 @@ export function createApp() {
   app.route('/api/chains', apiChainsRoutes);
   app.route('/api/deposits', apiDepositsRoutes);
   app.route('/api/payment-links', apiPaymentLinksRoutes);
-  app.route('/api/tokens', tokensRoutes);  // Public token configuration API
-  app.route('/api/order-status', orderStatusRoutes);  // Public order status API
-  app.route('/api/transfer-status', transferStatusRoutes);  // Public transfer status API
+  app.route('/api/tokens', tokensRoutes); // Public token configuration API
+  app.route('/api/order-status', orderStatusRoutes); // Public order status API
+  app.route('/api/transfer-status', transferStatusRoutes); // Public transfer status API
+  options.extendPublicRoutes?.(app);
 
   // ==================== API Routes ====================
 
@@ -140,16 +170,16 @@ export function createApp() {
   api.route('/api-keys', apiKeysRoutes);
 
   // Multi-tenancy API (Cloud-only in hosted runtime; hidden in PayIn Open)
-  api.use('/organizations/*', cloudOnlyRouteGuard('Organizations API'));
-  api.use('/organizations', cloudOnlyRouteGuard('Organizations API'));
+  api.use('/organizations/*', cloudOnlyGuard('Organizations API'));
+  api.use('/organizations', cloudOnlyGuard('Organizations API'));
   api.route('/organizations', organizationsRoutes);
 
   // Configuration Management API (Phase 2)
-  api.route('/config', configRoutes);  // Legacy config API (backward compatibility)
+  api.route('/config', configRoutes); // Legacy config API (backward compatibility)
   // Multi-tenant configuration management is Cloud-only; Open uses local/self-hosted config flows.
-  api.use('/config-management/*', cloudOnlyRouteGuard('Config Management API'));
-  api.use('/config-management', cloudOnlyRouteGuard('Config Management API'));
-  api.route('/config-management', configManagementRoutes);  // New config API with multi-tenant support
+  api.use('/config-management/*', cloudOnlyGuard('Config Management API'));
+  api.use('/config-management', cloudOnlyGuard('Config Management API'));
+  api.route('/config-management', configManagementRoutes); // New config API with multi-tenant support
   api.route('/config/diagnostics', configDiagnosticsRoutes);
   api.route('/chains', chainsRoutes);
   api.route('/tokens', tokensRoutes);
@@ -167,13 +197,18 @@ export function createApp() {
   // Public checkout API (no auth required) — alias for /api/payment-links
   api.route('/checkout', apiPaymentLinksRoutes);
 
+  options.extendApiRoutes?.(api);
+
   // ==================== 404 Handler ====================
 
-  app.notFound((c) => {
-    return c.json({
-      error: 'Not Found',
-      message: `Route ${c.req.method} ${c.req.path} not found`
-    }, 404);
+  app.notFound(c => {
+    return c.json(
+      {
+        error: 'Not Found',
+        message: `Route ${c.req.method} ${c.req.path} not found`,
+      },
+      404
+    );
   });
 
   // ==================== Error Handler ====================
@@ -181,10 +216,13 @@ export function createApp() {
   app.onError((err, c) => {
     console.error('❌ Error:', err);
 
-    return c.json({
-      error: 'Internal Server Error',
-      message: err.message
-    }, 500);
+    return c.json(
+      {
+        error: 'Internal Server Error',
+        message: err.message,
+      },
+      500
+    );
   });
 
   return app;
