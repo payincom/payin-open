@@ -73,7 +73,8 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: addressPoolRoutes } = await import('../src/routes/address-pool.js');
+const { default: addressPoolRoutes, createAddressPoolRoutes } =
+  await import('../src/routes/address-pool.js');
 
 function createAddressPoolApp() {
   const app = new Hono();
@@ -364,5 +365,53 @@ describe('address-pool route runtime context resolution', () => {
     } finally {
       restoreRuntime();
     }
+  });
+
+  it('can be composed as a factory with injected manager, middleware, and runtime dependencies', async () => {
+    const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
+    const injectedManager = {
+      listAddressesForRuntimeScope: vi.fn().mockResolvedValue([{ address: '0xabc' }]),
+    } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const getAuth = vi.fn(() => ({}) as any);
+    const createAuthMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const createAuditMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const requirePermission = vi.fn((permission: string) => async (c: any, next: any) => {
+      c.set('permission', permission);
+      await next();
+    });
+    const resolveRuntimeContext = vi.fn((c: any) => {
+      expect(c.get('permission')).toBe('address-pool:read');
+      return runtimeContext;
+    });
+
+    const app = new Hono();
+    app.route(
+      '/address-pool',
+      createAddressPoolRoutes({
+        getManager,
+        getAuth,
+        createAuthMiddleware,
+        createAuditMiddleware,
+        requirePermission,
+        resolveRuntimeContext,
+      })
+    );
+
+    const response = await app.request('/address-pool/addresses?protocol=evm&pageSize=5');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ success: true, data: [{ address: '0xabc' }] });
+    expect(injectedManager.listAddressesForRuntimeScope).toHaveBeenCalledWith(runtimeContext, {
+      protocol: 'evm',
+      page: 1,
+      pageSize: 5,
+    });
+    expect(mocks.manager.listAddressesForRuntimeScope).not.toHaveBeenCalled();
   });
 });

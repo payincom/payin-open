@@ -18,6 +18,7 @@ type NotificationService = NonNullable<
 >;
 
 export interface NotificationsRouteDependencies {
+  getManager?: typeof getManager;
   getNotificationService?: () => NotificationService | null | undefined;
   getAuth?: typeof getAuth;
   createAuthMiddleware?: typeof createAuthMiddleware;
@@ -28,8 +29,9 @@ export interface NotificationsRouteDependencies {
 
 export function createNotificationsRoutes(deps: NotificationsRouteDependencies = {}) {
   const app = new Hono();
+  const getManagerInstance = deps.getManager ?? getManager;
   const getNotificationService =
-    deps.getNotificationService ?? (() => getManager().getNotificationService());
+    deps.getNotificationService ?? (() => getManagerInstance().getNotificationService());
   const getAuthManager = deps.getAuth ?? getAuth;
   const authMiddlewareFactory = deps.createAuthMiddleware ?? createAuthMiddleware;
   const requirePermissionMiddleware = deps.requirePermission ?? requirePermission;
