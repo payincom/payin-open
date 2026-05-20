@@ -1,35 +1,28 @@
 # Open overlay seams implementation plan
 
-Date: 2026-05-17
-Status: implementation-focused Phase 1 plan for `payin-open`.
+Date: 2026-05-17; refreshed after Phase 2 PR #7 and order-create seam PR #8 on 2026-05-20
+Status: Open route/app composition merged; first order-create policy/event seam merged.
 
 ## Current structure and flow inventory
 
-### Packages/apps
-
-- `apps/api`: Hono API runtime. `src/server.ts` now exposes a small `createApp(options)` composition seam for infrastructure overrides and additional route mounting. Most route files still import concrete singleton accessors internally, so deeper route-factory dependency injection remains future work.
-- `packages/processor`: payment core for orders, deposits, transfers, monitor integration, PostgreSQL repositories, and the Open facade in `src/open/open-processor.ts`.
-- `packages/manager`: configuration/payment-link/processor orchestration, plus the Open facade in `src/open/open-manager.ts`.
+- `apps/api`: Hono API runtime. `src/server.ts` exposes `createApp(options)` with route factory/dependency composition, infrastructure/guard overrides, and public/API extension hooks.
+- `packages/processor`: payment core for orders, deposits, transfers, monitor integration, PostgreSQL repositories, `RuntimeContext` / `PaymentScope`, and the Open facade.
+- `packages/manager`: configuration/payment-link/processor orchestration and Open manager facade.
 - `packages/auth`: local users/API keys and inherited organization/member/role storage.
 - `packages/notification`: webhook delivery and notification persistence.
 - `packages/shared`: logger, config provider interface, checkout rendering helpers.
 
-### Current tenant/scope/auth path
+## Current tenant/scope/auth path
 
-- API auth middleware stores verified identity on the Hono context, including `organizationId` when available.
-- Open API route helpers live in `apps/api/src/open-runtime.ts`:
-  - `isOpenRuntime()` defaults this repository to Open mode.
-  - `resolveBusinessOrganizationId(c)` now delegates to neutral payment-scope resolution but still returns an id for legacy services.
-  - `cloudOnlyRouteGuard()` hides hosted SaaS organization/config-management APIs in Open.
-- Open facade constants and defaults are in `packages/processor/src/open/open-processor.ts` and are exported as `DEFAULT_OPEN_ORGANIZATION_ID`.
-- First formal scope seam is in `packages/processor/src/context/*`:
-  - `PaymentScope` is the neutral ownership scope.
-  - `RuntimeContext` carries scope plus actor/request metadata.
-  - `SingleTenantContextProvider` supplies the default PayIn Open single-merchant scope.
-- Many lower-level service/repository signatures still accept raw `organizationId`; this remains a storage compatibility detail for now.
-- Business route groups now resolve `RuntimeContext` at the route boundary and pass it to `*ForRuntimeScope` manager/auth/notification seams. Legacy `organization_id` conversion remains inside compatibility seams and repositories.
+- Open API route helpers live in `apps/api/src/open-runtime.ts`.
+- `PaymentScope`, `RuntimeContext`, and `SingleTenantContextProvider` live in `packages/processor/src/context/*`.
+- Business route groups resolve `RuntimeContext` at the route boundary and pass it to `*ForRuntimeScope` seams.
+- Lower service/repository signatures may still accept raw `organizationId`; this is compatibility storage detail, not the Open public model.
+- Hosted organization management remains Cloud-only: `apps/api/src/server.ts` guards `/organizations` and `/config-management` in Open.
 
-## Phase 15 checkpoint: route seam audit
+## Merged checkpoints
+
+### Phase 1 — route scope seams
 
 Completed API business route RuntimeContext seams:
 
@@ -41,99 +34,69 @@ Completed API business route RuntimeContext seams:
 - `apps/api/src/routes/api-keys.ts`
 - `apps/api/src/routes/notifications.ts`
 
-Remaining direct `c.get('organizationId')` route references are classified as non-business seams:
+Remaining direct `c.get('organizationId')` route references are intentionally outside business payment operations, such as authenticated user context in `auth.ts` or guarded hosted organization-management routes.
 
-- `apps/api/src/routes/auth.ts`
-  - `GET /api/v1/auth/me`: **auth internal / authenticated user context**. The value is read from the already-authenticated Hono context to report the caller's current organization membership. It is not a payment/business operation and should not be migrated to `RuntimeContext`.
-- `apps/api/src/routes/organizations.ts`
-  - `GET /api/v1/organizations/:orgId`
-  - `PATCH /api/v1/organizations/:orgId`
-  - `DELETE /api/v1/organizations/:orgId`
-  - `GET /api/v1/organizations/:orgId/members`
-  - `POST /api/v1/organizations/:orgId/members`
-  - `PATCH /api/v1/organizations/:orgId/members/:targetUserId`
-  - `DELETE /api/v1/organizations/:orgId/members/:targetUserId`
-  - `GET /api/v1/organizations/:orgId/api-keys`
-  - `POST /api/v1/organizations/:orgId/api-keys`
-  - `DELETE /api/v1/organizations/:orgId/api-keys/:keyId`
-  - `POST /api/v1/organizations/:orgId/transfer`
-  - `GET /api/v1/organizations/:orgId/transfer/pending`
-  - Classification: **hosted organization-management route**. This route file models hosted multi-tenant organization/member/role/ownership administration. It intentionally remains on authenticated organization context instead of `RuntimeContext`.
+### Phase 2 — app and route composition
 
-Open handling for hosted organization management:
-
-- `apps/api/src/server.ts` mounts `cloudOnlyRouteGuard('Organizations API')` before `api.route('/organizations', organizationsRoutes)`.
-- `cloudOnlyRouteGuard()` returns a 404-style `CLOUD_ONLY_ROUTE_DISABLED` payload in PayIn Open, hiding the hosted organization-management surface from the Open public model.
-- Open remains a complete self-hosted single-tenant product through the single merchant runtime context, operator bootstrap/registration, API-key routes, CLI/Agent operations, and business APIs. The underlying `organization_id` remains a compatibility storage scope rather than a merchant-facing Open concept.
-
-No remaining direct `organizationId` route reference was classified as a business route requiring another RuntimeContext migration slice.
-
-Next recommended phase beyond route migration:
-
-- Promote `RuntimeContext`/`PaymentScope` into manager and processor service/facade methods while keeping repository `organization_id` persistence unchanged.
-- Expand the initial `createApp(options)` composition seam into route factories with injected manager/auth/notification/runtime/policy/event dependencies.
-- After service seams are stable, introduce policy/event ports so a hosted overlay can provide Cloud-specific implementations without copying Open route files.
-
-## Phase 2 checkpoint: first app composition seam
-
-Implemented first slice:
+Merged in PR #7.
 
 - `apps/api/src/server.ts` exports `CreateAppOptions` and `createApp(options)`.
-- The default Open app behavior is unchanged when no options are provided.
-- Composed runtimes can now:
-  - override `getManager` for health/infrastructure wiring;
-  - override `cloudOnlyRouteGuard`;
-  - mount additional unauthenticated public routes through `extendPublicRoutes(app)`;
-  - mount additional API v1 routes through `extendApiRoutes(api)`.
-- `apps/api/tests/open-runtime.test.ts` covers overlay route mounting and infrastructure dependency override behavior.
+- `createApp(options)` supports `routeFactories?: BuiltInRouteFactories` and `routeDependencies?: BuiltInRouteDependencies`.
+- Built-in business route factories now exist for `api-keys`, `orders`, `payment-links`, `deposits`, `address-pool`, `transfers`, and `notifications`.
+- Each route preserves default Open behavior with `export default createXRoutes()`.
+- Future overlays can inject route dependencies or replace factories without remounting paths or copying Open route files.
 
-Implemented first route-factory slice:
+Phase 2 intentionally did not extract lower manager/service/repository providers, add Cloud runtime, or implement billing/subscription/entitlement/metering behavior.
 
-- `apps/api/src/routes/api-keys.ts` exports `ApiKeysRouteDependencies` and `createApiKeysRoutes(deps)` while preserving the default route export.
-- The route factory accepts injected auth manager access, auth/audit/permission middleware factories, runtime-context resolution, and organization-context error messaging.
-- `apps/api/tests/api-keys-runtime-context.test.ts` covers composition with injected auth, middleware, and runtime dependencies.
+### PR #8 — order-create policy/event seam
 
-Limitations still remaining before full Phase 2 exit:
+Merged in PR #8.
 
-- Most built-in Open route modules still import `getManager()`, `getAuth()`, route-level middleware factories, and runtime helpers directly; `api-keys` is the first converted route factory.
-- Cloud cannot yet replace built-in Open route dependencies without route-factory refactors.
-- Policy/entitlement and event sink dependencies are not injected yet.
+- `apps/api/src/order-create-seam.ts` defines neutral order-create policy and event contracts.
+- `apps/api/src/routes/orders.ts` wires `orderCreatePolicy` and `orderCreateEventSink` only for `POST /api/v1/orders`.
+- Open defaults are allow-all policy and no-op event sink.
+- Successful order creation records a neutral `order.created` envelope on a best-effort/no-throw basis.
+- The seam is not a Cloud billing, plan-limit, entitlement, or usage-metering implementation.
 
-## Ordered refactor plan
+## Ordered next implementation candidates
 
-1. **Centralize Open runtime context defaults (current first step)**
-   - Keep `PaymentScope` in `packages/processor/src/context/payment-scope.ts`.
-   - Add `RuntimeContext` and `SingleTenantContextProvider` in `packages/processor/src/context/runtime-context.ts`.
-   - Export these types/providers from `@payin/processor`.
-   - Update Open facades and API runtime helpers to use the provider while preserving existing public behavior.
+1. **Payment-link policy/event seam**
+   - Add a narrow seam only around create/update/publish operations if an overlay needs policy/audit hooks.
+   - Defaults must be allow-all/no-op and preserve Open behavior.
 
-2. **Promote scope/context at route seams**
-   - Add route helpers that return `RuntimeContext` for business routes.
-   - Convert one route group at a time (`orders.ts`, then `payment-links.ts`, then deposits/address-pool) to derive context once per handler and pass only compatibility ids at the final service call.
-   - Add tests proving Open callers do not need to provide an organization id for single-tenant operations.
+2. **Notification/webhook policy/event seam**
+   - Add bounded hooks for webhook create/retry or delivery audit.
+   - Keep Open notification behavior local/self-hosted; no hosted SLA, billing, or metering logic.
 
-3. **Promote scope/context at manager/processor facades**
-   - Add overloads or input objects accepting `PaymentScope`/`RuntimeContext` beside existing raw-id methods.
-   - Keep `organization_id` persistence unchanged until repository ports exist.
-   - Prefer Open facades (`OpenManager`, `OpenProcessor`) from Open-facing scripts/API code.
+3. **Open self-hosted runtime profile**
+   - Clarify local operator bootstrap/admin semantics.
+   - Ensure org/member/billing/superadmin SaaS concepts stay hidden from Open product UX.
 
-4. **Introduce policy and event ports with Open defaults**
-   - Add allow-all Open policy defaults for create order, create/update/publish payment link, bind address, address import/archive, webhook create/retry, and config writes.
-   - Add domain event sink envelopes including `paymentScope`, actor, request id, and idempotency key.
-   - Do not add Cloud billing or plan logic to Open; only add ports and defaults.
+4. **Targeted service/facade scope hardening**
+   - Promote `RuntimeContext` / `PaymentScope` where it removes route/service coupling.
+   - Keep repository `organization_id` persistence unchanged until a concrete extraction need exists.
 
-5. **Move toward route/app composition**
-   - Convert route groups into factories accepting runtime/auth/policy/event dependencies.
-   - Keep `createApp()` as the Open default wiring and later add a `createOpenApp(deps)` surface.
-   - Cloud overlay should compose routes through these factories instead of copying route files.
+5. **Repository/provider extraction discovery**
+   - Audit exact repository seams needed for future overlay composition.
+   - Do not implement broad storage extraction or migrations as speculative Cloud prep.
 
-6. **Extract storage/provider interfaces where needed**
-   - Start with processor order/transfer/address repositories and notification repository.
-   - Follow with config/auth repositories only after runtime/context route seams are stable.
+## Non-goals and guardrails
 
-## Guardrails
+- Do not create the final private Cloud overlay repo yet.
+- Do not add SaaS billing, subscriptions, plans, pricing, plan limits, Cloud admin UI, support/risk/admin controls, or hosted ops features to Open.
+- Do not add database migrations or repository extraction unless separately scoped and approved.
+- Do not expose organization/member/billing/admin Cloud concepts as Open product features.
+- Existing DB `organization_id` columns remain compatibility storage, not the Open public model.
+- New overlay-facing behavior belongs behind neutral Open-owned ports/providers and must default to allow-all/no-op in Open.
 
-- Open public API remains single-tenant/self-hosted; do not expose organization/member/billing/admin Cloud concepts as Open product features.
-- Existing DB `organization_id` columns are compatibility storage, not Open public model.
-- New Cloud behavior belongs behind ports/providers and must default to no-op/allow-all in Open.
-- Prefer small vertical slices with tests and run `npm run boundary:check` plus touched-package checks.
+## RATP expectations
+
+Future agent/RATP workflow notes should include explicit context-budget fields:
+
+- `contextWindowTokens`
+- `usableContextTokens`
+- `estimatedRequiredTokens`
+- `contextBudgetSource`
+- direct/delegate rationale and compact/no-compact outcome
+
+Use evidence IDs for bounded implementation reports, and stop at merge-ready evidence unless PR/merge lifecycle work is explicitly requested.
