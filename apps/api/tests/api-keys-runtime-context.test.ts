@@ -9,8 +9,11 @@ const mocks = vi.hoisted(() => {
     listApiKeys: vi.fn(),
     listApiKeysForRuntimeScope: vi.fn(),
     getApiKeyById: vi.fn(),
+    getApiKeyByIdForRuntimeScope: vi.fn(),
     updateApiKey: vi.fn(),
+    updateApiKeyForRuntimeScope: vi.fn(),
     revokeApiKey: vi.fn(),
+    revokeApiKeyForRuntimeScope: vi.fn(),
   };
 
   return { auth };
@@ -66,6 +69,27 @@ describe('api-keys route runtime context resolution', () => {
     mocks.auth.listApiKeys.mockResolvedValue([]);
     mocks.auth.listApiKeysForRuntimeScope.mockImplementation((runtimeContext, userId) =>
       mocks.auth.listApiKeys(runtimeContext.paymentScope.id, userId)
+    );
+    mocks.auth.getApiKeyById.mockResolvedValue({
+      id: 'key-1',
+      userId: 'test-user',
+      organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
+    });
+    mocks.auth.getApiKeyByIdForRuntimeScope.mockImplementation((keyId, runtimeContext) =>
+      mocks.auth.getApiKeyById(`${keyId}:${runtimeContext.paymentScope.id}`)
+    );
+    mocks.auth.updateApiKey.mockResolvedValue({
+      id: 'key-1',
+      userId: 'test-user',
+      organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
+      name: 'Updated key',
+    });
+    mocks.auth.updateApiKeyForRuntimeScope.mockImplementation((keyId, runtimeContext, input) =>
+      mocks.auth.updateApiKey(`${keyId}:${runtimeContext.paymentScope.id}`, input)
+    );
+    mocks.auth.revokeApiKey.mockResolvedValue(undefined);
+    mocks.auth.revokeApiKeyForRuntimeScope.mockImplementation((keyId, runtimeContext) =>
+      mocks.auth.revokeApiKey(`${keyId}:${runtimeContext.paymentScope.id}`)
     );
   });
 
@@ -183,6 +207,92 @@ describe('api-keys route runtime context resolution', () => {
       });
       expect(mocks.auth.createApiKeyForRuntimeScope).not.toHaveBeenCalled();
       expect(mocks.auth.createApiKey).not.toHaveBeenCalled();
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('gets API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+    const restoreRuntime = setRuntime('open');
+    try {
+      const response = await createApiKeysApp().request('/api-keys/key-1');
+
+      expect(response.status).toBe(200);
+      expect(mocks.auth.getApiKeyByIdForRuntimeScope).toHaveBeenCalledWith(
+        'key-1',
+        expect.objectContaining({
+          runtimeKind: 'single-tenant',
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        })
+      );
+      expect(mocks.auth.getApiKeyById).toHaveBeenCalledWith(
+        `key-1:${DEFAULT_OPEN_ORGANIZATION_ID}`
+      );
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('does not get API keys when Cloud runtime has no organization context', async () => {
+    const restoreRuntime = setRuntime('cloud');
+    try {
+      const response = await createApiKeysApp().request('/api-keys/key-1');
+
+      expect(response.status).toBe(401);
+      expect(mocks.auth.getApiKeyByIdForRuntimeScope).not.toHaveBeenCalled();
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('updates API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+    const restoreRuntime = setRuntime('open');
+    try {
+      const response = await createApiKeysApp().request('/api-keys/key-1', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Updated key' }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.auth.getApiKeyByIdForRuntimeScope).toHaveBeenCalledWith(
+        'key-1',
+        expect.objectContaining({
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        })
+      );
+      expect(mocks.auth.updateApiKeyForRuntimeScope).toHaveBeenCalledWith(
+        'key-1',
+        expect.objectContaining({
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        }),
+        { name: 'Updated key', isActive: undefined, expiresAt: undefined }
+      );
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('revokes API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+    const restoreRuntime = setRuntime('open');
+    try {
+      const response = await createApiKeysApp().request('/api-keys/key-1', {
+        method: 'DELETE',
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.auth.getApiKeyByIdForRuntimeScope).toHaveBeenCalledWith(
+        'key-1',
+        expect.objectContaining({
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        })
+      );
+      expect(mocks.auth.revokeApiKeyForRuntimeScope).toHaveBeenCalledWith(
+        'key-1',
+        expect.objectContaining({
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        })
+      );
     } finally {
       restoreRuntime();
     }

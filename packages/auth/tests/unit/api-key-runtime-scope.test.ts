@@ -61,4 +61,57 @@ describe('AuthManager API key runtime-scope compatibility seams', () => {
 
     expect(listApiKeys).toHaveBeenCalledWith('tenant-org-list-keys', 'user-1');
   });
+
+  it('queries API key by id within the runtime payment scope', async () => {
+    const manager = Object.create(AuthManager.prototype) as AuthManager;
+    const db = {
+      query: vi.fn(async () => ({ rows: [{ id: 'key-1', organizationId: 'tenant-org-get' }] })),
+    };
+    (manager as any).db = db;
+
+    const result = await manager.getApiKeyByIdForRuntimeScope(
+      'key-1',
+      tenantPaymentScope('tenant-org-get')
+    );
+
+    expect(result).toEqual({ id: 'key-1', organizationId: 'tenant-org-get' });
+    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('organization_id = $2'), [
+      'key-1',
+      'tenant-org-get',
+    ]);
+  });
+
+  it('updates API key within the runtime payment scope', async () => {
+    const manager = Object.create(AuthManager.prototype) as AuthManager;
+    const db = {
+      query: vi.fn(async () => ({ rows: [{ id: 'key-1', organizationId: 'tenant-org-update' }] })),
+    };
+    (manager as any).db = db;
+
+    const result = await manager.updateApiKeyForRuntimeScope(
+      'key-1',
+      tenantPaymentScope('tenant-org-update'),
+      { name: 'Updated key' }
+    );
+
+    expect(result).toEqual({ id: 'key-1', organizationId: 'tenant-org-update' });
+    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('organization_id = $3'), [
+      'Updated key',
+      'key-1',
+      'tenant-org-update',
+    ]);
+  });
+
+  it('revokes API key within the runtime payment scope', async () => {
+    const manager = Object.create(AuthManager.prototype) as AuthManager;
+    const db = { query: vi.fn(async () => ({ rows: [] })) };
+    (manager as any).db = db;
+
+    await manager.revokeApiKeyForRuntimeScope('key-1', tenantPaymentScope('tenant-org-revoke'));
+
+    expect(db.query).toHaveBeenCalledWith(
+      'DELETE FROM api_keys WHERE id = $1 AND organization_id = $2',
+      ['key-1', 'tenant-org-revoke']
+    );
+  });
 });

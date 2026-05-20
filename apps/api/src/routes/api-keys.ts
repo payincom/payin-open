@@ -217,6 +217,12 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
       const authManager = getAuthManager();
       const userId = c.get('userId') as string;
       const keyId = c.req.param('id')!;
+      const runtimeContext = resolveRuntimeContext(c);
+
+      // Validate Open business scope / Cloud organization context
+      if (!runtimeContext) {
+        return organizationContextRequiredResponse(c);
+      }
 
       if (typeof userId !== 'string' || userId.trim() === '') {
         return c.json(
@@ -229,7 +235,7 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         );
       }
 
-      const key = await authManager.getApiKeyById(keyId);
+      const key = await authManager.getApiKeyByIdForRuntimeScope(keyId, runtimeContext);
 
       if (!key) {
         return c.json(
@@ -287,7 +293,13 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         const authManager = getAuthManager();
         const userId = c.get('userId') as string;
         const keyId = c.req.param('id')!;
+        const runtimeContext = resolveRuntimeContext(c);
         const body = await c.req.json();
+
+        // Validate Open business scope / Cloud organization context
+        if (!runtimeContext) {
+          return organizationContextRequiredResponse(c);
+        }
 
         if (typeof userId !== 'string' || userId.trim() === '') {
           return c.json(
@@ -301,7 +313,7 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         }
 
         // Check ownership
-        const existingKey = await authManager.getApiKeyById(keyId);
+        const existingKey = await authManager.getApiKeyByIdForRuntimeScope(keyId, runtimeContext);
         if (!existingKey) {
           return c.json(
             {
@@ -345,11 +357,22 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         }
 
         // Update API key
-        const updated = await authManager.updateApiKey(keyId, {
+        const updated = await authManager.updateApiKeyForRuntimeScope(keyId, runtimeContext, {
           name: body.name,
           isActive: body.isActive,
           expiresAt,
         });
+
+        if (!updated) {
+          return c.json(
+            {
+              success: false,
+              error: 'Not found',
+              message: 'API key not found',
+            },
+            404
+          );
+        }
 
         return c.json({
           success: true,
@@ -385,8 +408,26 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         const userId = c.get('userId') as string;
         const keyId = c.req.param('id')!;
 
+        const runtimeContext = resolveRuntimeContext(c);
+
+        // Validate Open business scope / Cloud organization context
+        if (!runtimeContext) {
+          return organizationContextRequiredResponse(c);
+        }
+
+        if (typeof userId !== 'string' || userId.trim() === '') {
+          return c.json(
+            {
+              success: false,
+              error: 'Authentication failed',
+              message: 'User context is required',
+            },
+            401
+          );
+        }
+
         // Check ownership
-        const existingKey = await authManager.getApiKeyById(keyId);
+        const existingKey = await authManager.getApiKeyByIdForRuntimeScope(keyId, runtimeContext);
         if (!existingKey) {
           return c.json(
             {
@@ -410,7 +451,7 @@ export function createApiKeysRoutes(deps: ApiKeysRouteDependencies = {}) {
         }
 
         // Revoke API key
-        await authManager.revokeApiKey(keyId);
+        await authManager.revokeApiKeyForRuntimeScope(keyId, runtimeContext);
 
         return c.json({
           success: true,

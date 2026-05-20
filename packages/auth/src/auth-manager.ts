@@ -927,6 +927,28 @@ export class AuthManager {
   }
 
   /**
+   * Get API key by ID for a runtime payment scope.
+   *
+   * Compatibility seam: current Auth storage still persists the payment scope
+   * in organization_id, but callers should pass RuntimeContext/PaymentScope.
+   */
+  async getApiKeyByIdForRuntimeScope(
+    keyId: string,
+    scope: ApiKeyRuntimeScope
+  ): Promise<ApiKeyPublic | null> {
+    const result = await this.db.query(
+      `SELECT id, user_id AS "userId", organization_id AS "organizationId",
+              key_prefix AS "keyPrefix", name, is_active AS "isActive",
+              last_used_at AS "lastUsedAt", expires_at AS "expiresAt",
+              created_at AS "createdAt", updated_at AS "updatedAt"
+       FROM api_keys WHERE id = $1 AND organization_id = $2`,
+      [keyId, apiKeyRuntimeScopeToOrganizationId(scope)]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  /**
    * Update API key
    */
   async updateApiKey(keyId: string, input: UpdateApiKeyInput): Promise<ApiKeyPublic> {
@@ -966,10 +988,70 @@ export class AuthManager {
   }
 
   /**
+   * Update API key for a runtime payment scope.
+   *
+   * Compatibility seam: limits the update to the resolved payment scope while
+   * the current Auth storage still persists the scope in organization_id.
+   */
+  async updateApiKeyForRuntimeScope(
+    keyId: string,
+    scope: ApiKeyRuntimeScope,
+    input: UpdateApiKeyInput
+  ): Promise<ApiKeyPublic | null> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (input.name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(input.name);
+    }
+
+    if (input.isActive !== undefined) {
+      updates.push(`is_active = $${paramIndex++}`);
+      values.push(input.isActive);
+    }
+
+    if (input.expiresAt !== undefined) {
+      updates.push(`expires_at = $${paramIndex++}`);
+      values.push(input.expiresAt);
+    }
+
+    updates.push('updated_at = NOW()');
+    values.push(keyId);
+    values.push(apiKeyRuntimeScopeToOrganizationId(scope));
+
+    const result = await this.db.query(
+      `UPDATE api_keys SET ${updates.join(', ')}
+       WHERE id = $${paramIndex++} AND organization_id = $${paramIndex}
+       RETURNING id, user_id AS "userId", organization_id AS "organizationId",
+                 key_prefix AS "keyPrefix", name, is_active AS "isActive",
+                 last_used_at AS "lastUsedAt", expires_at AS "expiresAt",
+                 created_at AS "createdAt", updated_at AS "updatedAt"`,
+      values
+    );
+
+    return result.rows[0] || null;
+  }
+
+  /**
    * Revoke (delete) API key
    */
   async revokeApiKey(keyId: string): Promise<void> {
     await this.db.query('DELETE FROM api_keys WHERE id = $1', [keyId]);
+  }
+
+  /**
+   * Revoke API key for a runtime payment scope.
+   *
+   * Compatibility seam: limits the delete to the resolved payment scope while
+   * the current Auth storage still persists the scope in organization_id.
+   */
+  async revokeApiKeyForRuntimeScope(keyId: string, scope: ApiKeyRuntimeScope): Promise<void> {
+    await this.db.query('DELETE FROM api_keys WHERE id = $1 AND organization_id = $2', [
+      keyId,
+      apiKeyRuntimeScopeToOrganizationId(scope),
+    ]);
   }
 
   // ==================== Email Verification ====================

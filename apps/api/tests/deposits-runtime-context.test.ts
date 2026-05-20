@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => {
     bindDepositAddress: vi.fn(),
     bindDepositAddressForRuntimeScope: vi.fn(),
     unbindDepositAddress: vi.fn(),
+    unbindDepositAddressForRuntimeScope: vi.fn(),
     unbindDepositAddressByAddress: vi.fn(),
     unbindDepositAddressByAddressForRuntimeScope: vi.fn(),
     listDepositReferences: vi.fn(),
@@ -84,6 +85,13 @@ describe('deposits route runtime context resolution', () => {
       })
     );
     mocks.manager.unbindDepositAddress.mockResolvedValue(undefined);
+    mocks.manager.unbindDepositAddressForRuntimeScope.mockImplementation(
+      (_runtimeContext, request) =>
+        mocks.manager.unbindDepositAddress({
+          ...request,
+          organizationId: _runtimeContext.paymentScope.id,
+        })
+    );
     mocks.manager.unbindDepositAddressByAddress.mockResolvedValue(undefined);
     mocks.manager.unbindDepositAddressByAddressForRuntimeScope.mockImplementation(
       (_runtimeContext, request) =>
@@ -308,6 +316,49 @@ describe('deposits route runtime context resolution', () => {
         protocol: 'evm',
         organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
       });
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('uses the runtime-scope manager seam when unbinding by deposit reference in Open runtime', async () => {
+    const restoreRuntime = setRuntime('open');
+    try {
+      const response = await createDepositsApp().request('/deposits/unbind', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ depositReference: 'customer-1' }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.manager.unbindDepositAddressForRuntimeScope).toHaveBeenCalledWith(
+        expect.objectContaining({
+          runtimeKind: 'single-tenant',
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        }),
+        { depositReference: 'customer-1', protocol: undefined }
+      );
+      expect(mocks.manager.unbindDepositAddress).toHaveBeenCalledWith({
+        depositReference: 'customer-1',
+        protocol: undefined,
+        organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
+      });
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('keeps hosted organization-context-required behavior for unbind-by-reference when Cloud runtime has no context', async () => {
+    const restoreRuntime = setRuntime('cloud');
+    try {
+      const response = await createDepositsApp().request('/deposits/unbind', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ depositReference: 'customer-1' }),
+      });
+
+      expect(response.status).toBe(401);
+      expect(mocks.manager.unbindDepositAddressForRuntimeScope).not.toHaveBeenCalled();
     } finally {
       restoreRuntime();
     }

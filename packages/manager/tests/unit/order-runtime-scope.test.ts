@@ -190,6 +190,28 @@ describe('ConfigurationManager order runtime scope seams', () => {
     });
   });
 
+  it('maps RuntimeContext to legacy organization id when unbinding a deposit reference across supported protocols', async () => {
+    const manager = Object.create(ConfigurationManager.prototype) as ConfigurationManager;
+    const unbindDepositAddress = vi.fn(async () => undefined);
+    (manager as any).unbindDepositAddress = unbindDepositAddress;
+    const provider = new SingleTenantContextProvider();
+
+    await manager.unbindDepositAddressForRuntimeScope(provider.getPaymentScope(), {
+      depositReference: 'customer-1',
+    });
+
+    expect(unbindDepositAddress).toHaveBeenCalledWith({
+      depositReference: 'customer-1',
+      protocol: 'evm',
+      organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
+    });
+    expect(unbindDepositAddress).toHaveBeenCalledWith({
+      depositReference: 'customer-1',
+      protocol: 'tron',
+      organizationId: DEFAULT_OPEN_ORGANIZATION_ID,
+    });
+  });
+
   it('maps RuntimeContext to legacy organization id when listing deposit references', async () => {
     const manager = Object.create(ConfigurationManager.prototype) as ConfigurationManager;
     const listDepositReferences = vi.fn(async filters => ({
