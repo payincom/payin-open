@@ -2251,8 +2251,38 @@ export class ConfigurationManager implements ConfigProvider {
   /**
    * Unbind deposit address (proxy to Processor)
    */
-  async unbindDepositAddress(request: { depositReference: string }): Promise<void> {
+  async unbindDepositAddress(request: {
+    organizationId: string;
+    depositReference: string;
+    protocol: 'evm' | 'tron';
+  }): Promise<void> {
     return await this.getProcessor().unbindDepositAddress(request);
+  }
+
+  /**
+   * Unbind deposit address(es) with neutral runtime/payment scope.
+   *
+   * Compatibility seam: callers can pass RuntimeContext/PaymentScope while the
+   * current service and repository layers still persist organization_id.
+   * If protocol is omitted, preserve the route contract by unbinding all
+   * currently supported deposit protocols for the scoped reference.
+   */
+  async unbindDepositAddressForRuntimeScope(
+    scope: OrderRuntimeScope,
+    request: { depositReference: string; protocol?: 'evm' | 'tron' }
+  ): Promise<void> {
+    const organizationId = orderRuntimeScopeToOrganizationId(scope) as string;
+    const protocols = request.protocol ? [request.protocol] : (['evm', 'tron'] as const);
+
+    await Promise.all(
+      protocols.map(protocol =>
+        this.unbindDepositAddress({
+          organizationId,
+          depositReference: request.depositReference,
+          protocol,
+        })
+      )
+    );
   }
 
   /**

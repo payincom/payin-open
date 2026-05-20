@@ -169,8 +169,25 @@ deposits.post(
 
       if (body.depositReference) {
         // Method 1: Unbind by depositReference
-        await manager.unbindDepositAddress({
+        if (body.protocol && !ALLOWED_PROTOCOLS.includes(body.protocol)) {
+          return c.json(
+            {
+              success: false,
+              error: 'Validation failed',
+              code: 'DEPOSIT_PROTOCOL_UNSUPPORTED',
+              message: 'Protocol must be either "evm" or "tron"',
+              suggestions: [
+                'Use "evm" for Ethereum-compatible chains or "tron" for Tron-compatible chains',
+                'Omit protocol to unbind all supported protocol bindings for the depositReference',
+              ],
+            },
+            400
+          );
+        }
+
+        await manager.unbindDepositAddressForRuntimeScope(runtimeContext, {
           depositReference: body.depositReference,
+          protocol: body.protocol,
         });
 
         return c.json({
