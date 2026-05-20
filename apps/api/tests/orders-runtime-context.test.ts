@@ -58,7 +58,7 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: ordersRoutes } = await import('../src/routes/orders.js');
+const { default: ordersRoutes, createOrdersRoutes } = await import('../src/routes/orders.js');
 
 function createOrdersApp() {
   const app = new Hono();
@@ -285,5 +285,68 @@ describe('orders route runtime context resolution', () => {
     } finally {
       restoreRuntime();
     }
+  });
+
+  it('can be composed as a factory with injected manager, middleware, runtime, and URL dependencies', async () => {
+    const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
+    const injectedManager = {
+      listOrdersForRuntimeScope: vi.fn().mockResolvedValue({
+        orders: [{ id: 'injected-order' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+      }),
+    } as any;
+    const injectedAuth = { source: 'injected-auth' } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const getAuth = vi.fn(() => injectedAuth);
+    const createAuthMiddleware = vi.fn((auth: any) => async (c: any, next: any) => {
+      c.set('authType', `auth:${auth.source}`);
+      await next();
+    });
+    const createAuditMiddleware = vi.fn((_auth: any, audit: any) => async (c: any, next: any) => {
+      c.set('audit', audit);
+      await next();
+    });
+    const requirePermission = vi.fn((permission: string) => async (c: any, next: any) => {
+      c.set('permission', permission);
+      await next();
+    });
+    const resolveRuntimeContext = vi.fn((c: any) => {
+      expect(c.get('authType')).toBe('auth:injected-auth');
+      expect(c.get('permission')).toBe('orders:read');
+      return runtimeContext;
+    });
+
+    const app = new Hono();
+    app.route(
+      '/orders',
+      createOrdersRoutes({
+        getManager,
+        getAuth,
+        createAuthMiddleware,
+        createAuditMiddleware,
+        requirePermission,
+        resolveRuntimeContext,
+        getBaseUrl: () => 'https://pay.example',
+        buildOrderPaymentUrl: (baseUrl: string, orderId: string) => `${baseUrl}/orders/${orderId}`,
+      })
+    );
+
+    const response = await app.request('/orders');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toEqual([
+      { id: 'injected-order', url: 'https://pay.example/orders/injected-order' },
+    ]);
+    expect(getManager).toHaveBeenCalledTimes(1);
+    expect(getAuth).toHaveBeenCalledTimes(1);
+    expect(createAuthMiddleware).toHaveBeenCalledWith(injectedAuth);
+    expect(createAuditMiddleware).not.toHaveBeenCalled();
+    expect(requirePermission).toHaveBeenCalledWith('orders:read');
+    expect(resolveRuntimeContext).toHaveBeenCalledTimes(1);
+    expect(injectedManager.listOrdersForRuntimeScope).toHaveBeenCalledWith(runtimeContext, {});
+    expect(mocks.manager.listOrdersForRuntimeScope).not.toHaveBeenCalled();
   });
 });

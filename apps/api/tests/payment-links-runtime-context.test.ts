@@ -58,7 +58,8 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: paymentLinksRoutes } = await import('../src/routes/payment-links.js');
+const { default: paymentLinksRoutes, createPaymentLinksRoutes } =
+  await import('../src/routes/payment-links.js');
 
 function createPaymentLinksApp() {
   const app = new Hono();
@@ -284,5 +285,68 @@ describe('payment-links route runtime context resolution', () => {
     } finally {
       restoreRuntime();
     }
+  });
+
+  it('can be composed as a factory with injected manager, middleware, runtime, and URL dependencies', async () => {
+    const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
+    const injectedManager = {
+      listPaymentLinksForRuntimeScope: vi.fn().mockResolvedValue({
+        links: [{ id: 'injected-link', status: 'published', slug: 'injected' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+      }),
+    } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const getAuth = vi.fn(() => ({ source: 'injected-auth' }) as any);
+    const createAuthMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const createAuditMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const requirePermission = vi.fn((permission: string) => async (c: any, next: any) => {
+      c.set('permission', permission);
+      await next();
+    });
+    const resolveRuntimeContext = vi.fn((c: any) => {
+      expect(c.get('permission')).toBe('orders:read');
+      return runtimeContext;
+    });
+
+    const app = new Hono();
+    app.route(
+      '/payment-links',
+      createPaymentLinksRoutes({
+        getManager,
+        getAuth,
+        createAuthMiddleware,
+        createAuditMiddleware,
+        requirePermission,
+        resolveRuntimeContext,
+        getBaseUrl: () => 'https://pay.example',
+        buildPaymentLinkCheckoutUrl: (baseUrl: string, slug: string) =>
+          `${baseUrl}/checkout/${slug}`,
+      })
+    );
+
+    const response = await app.request('/payment-links?includeArchived=true');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toEqual([
+      {
+        id: 'injected-link',
+        status: 'published',
+        slug: 'injected',
+        url: 'https://pay.example/checkout/injected',
+      },
+    ]);
+    expect(requirePermission).toHaveBeenCalledWith('orders:read');
+    expect(injectedManager.listPaymentLinksForRuntimeScope).toHaveBeenCalledWith(
+      runtimeContext,
+      expect.objectContaining({ includeArchived: true })
+    );
+    expect(mocks.manager.listPaymentLinksForRuntimeScope).not.toHaveBeenCalled();
   });
 });

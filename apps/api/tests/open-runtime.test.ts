@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { Hono } from 'hono';
+import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
 import {
   getOpenRuntimeOrganizationId,
@@ -189,5 +190,66 @@ describe('Open runtime API context', () => {
       status: 'unhealthy',
       error: 'manager unavailable',
     });
+  });
+
+  it('injects business route dependencies through the app composition layer', async () => {
+    const runtimeContext = {
+      runtimeKind: 'single-tenant',
+      paymentScope: {
+        id: '55555555-5555-4555-8555-555555555555',
+        kind: 'single-merchant',
+        label: 'Injected Merchant',
+      },
+      actor: { type: 'api-key', id: 'test-key' },
+      requestId: 'req-composed',
+      source: 'test',
+    };
+    const listOrdersForRuntimeScope = vi.fn().mockResolvedValue({
+      orders: [{ id: '550e8400-e29b-41d4-a716-446655440001', amount: '10.00' }],
+      page: 1,
+      limit: 20,
+      total: 1,
+    });
+
+    const app = createApp({
+      routeDependencies: {
+        orders: {
+          getManager: () => ({ listOrdersForRuntimeScope }) as any,
+          getAuth: () => ({}) as any,
+          createAuthMiddleware: () => async (_c: any, next: any) => next(),
+          requirePermission: () => async (_c: any, next: any) => next(),
+          resolveRuntimeContext: () => runtimeContext as any,
+          getBaseUrl: () => 'https://pay.example.test',
+          buildOrderPaymentUrl: (baseUrl: string, orderId: string) => `${baseUrl}/pay/${orderId}`,
+        },
+      },
+    });
+
+    const response = await app.request('/api/v1/orders');
+
+    expect(response.status).toBe(200);
+    expect(listOrdersForRuntimeScope).toHaveBeenCalledWith(runtimeContext, {});
+    expect(await response.json()).toMatchObject({
+      success: true,
+      data: [{ id: '550e8400-e29b-41d4-a716-446655440001', url: expect.stringContaining('/pay/') }],
+    });
+  });
+
+  it('allows built-in business route factories to be overridden without remounting paths', async () => {
+    const orders = new Hono();
+    orders.get('/', c => c.json({ success: true, source: 'custom-orders-factory' }));
+    const createOrdersRoutes = vi.fn(() => orders);
+
+    const app = createApp({
+      routeFactories: {
+        orders: createOrdersRoutes as any,
+      },
+    });
+
+    const response = await app.request('/api/v1/orders');
+
+    expect(createOrdersRoutes).toHaveBeenCalledWith(undefined);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, source: 'custom-orders-factory' });
   });
 });

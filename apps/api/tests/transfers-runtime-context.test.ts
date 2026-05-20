@@ -34,7 +34,8 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: transfersRoutes } = await import('../src/routes/transfers.js');
+const { default: transfersRoutes, createTransfersRoutes } =
+  await import('../src/routes/transfers.js');
 
 function createTransfersApp() {
   const app = new Hono();
@@ -215,5 +216,49 @@ describe('transfers route runtime context resolution', () => {
     } finally {
       restoreRuntime();
     }
+  });
+
+  it('can be composed as a factory with injected manager, middleware, and runtime dependencies', async () => {
+    const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
+    const injectedManager = {
+      listTransfersForRuntimeScope: vi.fn().mockResolvedValue({
+        transfers: [{ id: 'transfer-1' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+      }),
+    } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const getAuth = vi.fn(() => ({ source: 'injected-auth' }) as any);
+    const createAuthMiddleware = vi.fn((auth: any) => async (c: any, next: any) => {
+      c.set('authType', `auth:${auth.source}`);
+      await next();
+    });
+    const resolveRuntimeContext = vi.fn((c: any) => {
+      expect(c.get('authType')).toBe('auth:injected-auth');
+      return runtimeContext;
+    });
+
+    const app = new Hono();
+    app.route(
+      '/transfers',
+      createTransfersRoutes({
+        getManager,
+        getAuth,
+        createAuthMiddleware,
+        resolveRuntimeContext,
+      })
+    );
+
+    const response = await app.request('/transfers?businessType=order');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toEqual([{ id: 'transfer-1' }]);
+    expect(createAuthMiddleware).toHaveBeenCalledWith({ source: 'injected-auth' });
+    expect(injectedManager.listTransfersForRuntimeScope).toHaveBeenCalledWith(runtimeContext, {
+      businessType: 'order',
+    });
+    expect(mocks.manager.listTransfersForRuntimeScope).not.toHaveBeenCalled();
   });
 });

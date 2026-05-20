@@ -45,7 +45,7 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: depositsRoutes } = await import('../src/routes/deposits.js');
+const { default: depositsRoutes, createDepositsRoutes } = await import('../src/routes/deposits.js');
 
 function createDepositsApp() {
   const app = new Hono();
@@ -419,5 +419,62 @@ describe('deposits route runtime context resolution', () => {
     } finally {
       restoreRuntime();
     }
+  });
+
+  it('can be composed as a factory with injected manager, middleware, runtime, and URL dependencies', async () => {
+    const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
+    const injectedManager = {
+      listDepositAddressesForRuntimeScope: vi.fn().mockResolvedValue({
+        addresses: [{ deposit_reference: 'dep-1', protocol: 'evm' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+      }),
+    } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const getAuth = vi.fn(() => ({}) as any);
+    const createAuthMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const createAuditMiddleware = vi.fn(() => async (_c: any, next: any) => {
+      await next();
+    });
+    const requirePermission = vi.fn((permission: string) => async (c: any, next: any) => {
+      c.set('permission', permission);
+      await next();
+    });
+    const resolveRuntimeContext = vi.fn((c: any) => {
+      expect(c.get('permission')).toBe('deposits:read');
+      return runtimeContext;
+    });
+
+    const app = new Hono();
+    app.route(
+      '/deposits',
+      createDepositsRoutes({
+        getManager,
+        getAuth,
+        createAuthMiddleware,
+        createAuditMiddleware,
+        requirePermission,
+        resolveRuntimeContext,
+        getBaseUrl: () => 'https://pay.example',
+        buildDepositPageUrl: (baseUrl: string, reference: string, protocol: string) =>
+          `${baseUrl}/deposit/${protocol}/${reference}`,
+      })
+    );
+
+    const response = await app.request('/deposits?protocol=evm');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toEqual([
+      { deposit_reference: 'dep-1', protocol: 'evm', url: 'https://pay.example/deposit/evm/dep-1' },
+    ]);
+    expect(injectedManager.listDepositAddressesForRuntimeScope).toHaveBeenCalledWith(
+      runtimeContext,
+      expect.objectContaining({ protocol: 'evm' })
+    );
+    expect(mocks.manager.listDepositAddressesForRuntimeScope).not.toHaveBeenCalled();
   });
 });

@@ -20,18 +20,30 @@ const publicDir = resolve(__dirname, '../public');
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import auditRoutes from './routes/audit.js';
-import apiKeysRoutes from './routes/api-keys.js';
+import {
+  createApiKeysRoutes,
+  type ApiKeysRouteDependencies,
+} from './routes/api-keys.js';
 import configRoutes from './routes/config.js';
 import configManagementRoutes from './routes/config-management.js';
 import configDiagnosticsRoutes from './routes/config-diagnostics.js';
 import chainsRoutes from './routes/chains.js';
 import tokensRoutes from './routes/tokens.js';
-import ordersRoutes from './routes/orders.js';
-import depositsRoutes from './routes/deposits.js';
-import transfersRoutes from './routes/transfers.js';
-import addressPoolRoutes from './routes/address-pool.js';
-import paymentLinksRoutes from './routes/payment-links.js';
-import notificationsRoutes from './routes/notifications.js';
+import { createOrdersRoutes, type OrdersRouteDependencies } from './routes/orders.js';
+import { createDepositsRoutes, type DepositsRouteDependencies } from './routes/deposits.js';
+import { createTransfersRoutes, type TransfersRouteDependencies } from './routes/transfers.js';
+import {
+  createAddressPoolRoutes,
+  type AddressPoolRouteDependencies,
+} from './routes/address-pool.js';
+import {
+  createPaymentLinksRoutes,
+  type PaymentLinksRouteDependencies,
+} from './routes/payment-links.js';
+import {
+  createNotificationsRoutes,
+  type NotificationsRouteDependencies,
+} from './routes/notifications.js';
 import organizationsRoutes from './routes/organizations.js';
 import payOrderRoutes from './routes/pay-order.js';
 import payDepositRoutes from './routes/pay-deposit.js';
@@ -43,6 +55,26 @@ import apiPaymentLinksRoutes from './routes/api-payment-links.js';
 import orderStatusRoutes from './routes/order-status.js';
 import transferStatusRoutes from './routes/transfer-status.js';
 import { cloudOnlyRouteGuard } from './open-runtime.js';
+
+export interface BuiltInRouteFactories {
+  apiKeys?: typeof createApiKeysRoutes;
+  orders?: typeof createOrdersRoutes;
+  paymentLinks?: typeof createPaymentLinksRoutes;
+  deposits?: typeof createDepositsRoutes;
+  addressPool?: typeof createAddressPoolRoutes;
+  transfers?: typeof createTransfersRoutes;
+  notifications?: typeof createNotificationsRoutes;
+}
+
+export interface BuiltInRouteDependencies {
+  apiKeys?: ApiKeysRouteDependencies;
+  orders?: OrdersRouteDependencies;
+  paymentLinks?: PaymentLinksRouteDependencies;
+  deposits?: DepositsRouteDependencies;
+  addressPool?: AddressPoolRouteDependencies;
+  transfers?: TransfersRouteDependencies;
+  notifications?: NotificationsRouteDependencies;
+}
 
 export interface CreateAppOptions {
   /**
@@ -56,6 +88,10 @@ export interface CreateAppOptions {
    * this app factory.
    */
   cloudOnlyRouteGuard?: typeof cloudOnlyRouteGuard;
+  /** Override built-in business route factories without changing route mount paths. */
+  routeFactories?: BuiltInRouteFactories;
+  /** Inject dependencies into built-in business route factories. */
+  routeDependencies?: BuiltInRouteDependencies;
   /** Add public, unauthenticated routes after the built-in Open public routes. */
   extendPublicRoutes?: (app: Hono) => void;
   /** Add API v1 routes after the built-in Open API routes. */
@@ -69,6 +105,17 @@ export function createApp(options: CreateAppOptions = {}) {
   const app = new Hono();
   const managerProvider = options.getManager ?? getManager;
   const cloudOnlyGuard = options.cloudOnlyRouteGuard ?? cloudOnlyRouteGuard;
+  const routeFactories = {
+    apiKeys: createApiKeysRoutes,
+    orders: createOrdersRoutes,
+    paymentLinks: createPaymentLinksRoutes,
+    deposits: createDepositsRoutes,
+    addressPool: createAddressPoolRoutes,
+    transfers: createTransfersRoutes,
+    notifications: createNotificationsRoutes,
+    ...options.routeFactories,
+  };
+  const routeDependencies = options.routeDependencies ?? {};
 
   // Middleware
   app.use('*', logger());
@@ -167,7 +214,7 @@ export function createApp(options: CreateAppOptions = {}) {
   api.route('/auth', authRoutes);
   api.route('/users', usersRoutes);
   api.route('/audit', auditRoutes);
-  api.route('/api-keys', apiKeysRoutes);
+  api.route('/api-keys', routeFactories.apiKeys(routeDependencies.apiKeys));
 
   // Multi-tenancy API (Cloud-only in hosted runtime; hidden in PayIn Open)
   api.use('/organizations/*', cloudOnlyGuard('Organizations API'));
@@ -185,14 +232,14 @@ export function createApp(options: CreateAppOptions = {}) {
   api.route('/tokens', tokensRoutes);
 
   // Business Operations API (Phase 3) ✅
-  api.route('/orders', ordersRoutes);
-  api.route('/deposits', depositsRoutes);
-  api.route('/payment-links', paymentLinksRoutes);
-  api.route('/transfers', transfersRoutes);
-  api.route('/address-pool', addressPoolRoutes);
+  api.route('/orders', routeFactories.orders(routeDependencies.orders));
+  api.route('/deposits', routeFactories.deposits(routeDependencies.deposits));
+  api.route('/payment-links', routeFactories.paymentLinks(routeDependencies.paymentLinks));
+  api.route('/transfers', routeFactories.transfers(routeDependencies.transfers));
+  api.route('/address-pool', routeFactories.addressPool(routeDependencies.addressPool));
 
   // Notification API ✅
-  api.route('/notifications', notificationsRoutes);
+  api.route('/notifications', routeFactories.notifications(routeDependencies.notifications));
 
   // Public checkout API (no auth required) — alias for /api/payment-links
   api.route('/checkout', apiPaymentLinksRoutes);
