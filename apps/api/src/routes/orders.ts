@@ -10,6 +10,13 @@ import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
 import { buildOrderPaymentUrl, getBaseUrl } from '../utils/url-builder.js';
 import {
+  allowAllOrderCreatePolicy,
+  noOpOrderCreateEventSink,
+  type OrderCreateEventSink,
+  type OrderCreatePolicy,
+  type OrderCreatePolicyRequest,
+} from '../order-create-seam.js';
+import {
   organizationContextRequiredMessage,
   resolveRuntimeContext as defaultResolveRuntimeContext,
 } from '../open-runtime.js';
@@ -28,6 +35,8 @@ export interface OrdersRouteDependencies {
   organizationContextRequiredMessage?: typeof organizationContextRequiredMessage;
   getBaseUrl?: typeof getBaseUrl;
   buildOrderPaymentUrl?: typeof buildOrderPaymentUrl;
+  orderCreatePolicy?: OrderCreatePolicy;
+  orderCreateEventSink?: OrderCreateEventSink;
 }
 
 export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
@@ -42,6 +51,8 @@ export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
     deps.organizationContextRequiredMessage ?? organizationContextRequiredMessage;
   const getBaseUrlHelper = deps.getBaseUrl ?? getBaseUrl;
   const buildOrderPaymentUrlHelper = deps.buildOrderPaymentUrl ?? buildOrderPaymentUrl;
+  const orderCreatePolicy = deps.orderCreatePolicy ?? allowAllOrderCreatePolicy;
+  const orderCreateEventSink = deps.orderCreateEventSink ?? noOpOrderCreateEventSink;
 
   // Lazy middleware factories - only get Auth instance when request comes in
   const authMiddleware = () => {
@@ -71,7 +82,6 @@ export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
     auditMiddleware('orders', 'create'),
     async c => {
       try {
-        const manager = getManagerInstance();
         const body = await c.req.json();
 
         const missingFields: string[] = [];
@@ -143,7 +153,7 @@ export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
           );
         }
 
-        const order = await manager.createOrderForRuntimeScope(runtimeContext, {
+        const createRequest: OrderCreatePolicyRequest = {
           orderReference: body.orderReference,
           amount: body.amount,
           currency: body.currency,
@@ -151,7 +161,28 @@ export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
           successUrl: body.successUrl,
           cancelUrl: body.cancelUrl,
           metadata: body.metadata,
+        };
+
+        const policyDecision = await orderCreatePolicy.check({
+          runtimeContext,
+          request: createRequest,
         });
+
+        if (!policyDecision.allowed) {
+          return c.json(
+            {
+              success: false,
+              error: 'Order creation not allowed',
+              code: policyDecision.code ?? 'ORDER_CREATE_NOT_ALLOWED',
+              message: policyDecision.message ?? 'Order creation is not allowed for this request.',
+              suggestions: ['Review the request context and try again if it is valid'],
+            },
+            policyDecision.status ?? 403
+          );
+        }
+
+        const manager = getManagerInstance();
+        const order = await manager.createOrderForRuntimeScope(runtimeContext, createRequest);
 
         // Add payment URL
         // createOrder returns { orderId, ... } while DB objects use { id, ... }
@@ -160,6 +191,23 @@ export function createOrdersRoutes(deps: OrdersRouteDependencies = {}) {
           ...order,
           url: buildOrderPaymentUrlHelper(baseUrl, order.orderId || order.id),
         };
+
+        try {
+          await orderCreateEventSink.record({
+            name: 'order.created',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            order: {
+              id: order.orderId || order.id,
+              reference: body.orderReference,
+            },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record order-created event:', eventError);
+        }
 
         return c.json(
           {
