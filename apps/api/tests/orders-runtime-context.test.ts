@@ -287,6 +287,185 @@ describe('orders route runtime context resolution', () => {
     }
   });
 
+  it('prevents order creation when an injected create policy denies the request', async () => {
+    const runtimeContext = {
+      runtimeKind: 'single-tenant',
+      paymentScope: { id: 'scope-denied', kind: 'single-merchant' },
+      actor: { type: 'api-key', id: 'api-key-denied' },
+      source: 'test-suite',
+    } as any;
+    const injectedManager = {
+      createOrderForRuntimeScope: vi.fn(),
+    } as any;
+    const getManager = vi.fn(() => injectedManager);
+    const denyPolicy = {
+      check: vi.fn(() => ({
+        allowed: false,
+        code: 'ORDER_CREATE_NOT_ALLOWED',
+        message: 'Denied by test policy.',
+        status: 403,
+      })),
+    };
+
+    const app = new Hono();
+    app.route(
+      '/orders',
+      createOrdersRoutes({
+        getManager,
+        getAuth: () => ({}),
+        createAuthMiddleware: () => async (_c: any, next: any) => next(),
+        createAuditMiddleware: () => async (_c: any, next: any) => next(),
+        requirePermission: () => async (_c: any, next: any) => next(),
+        resolveRuntimeContext: () => runtimeContext,
+        orderCreatePolicy: denyPolicy,
+      })
+    );
+
+    const response = await app.request('/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(validCreateOrderBody),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body).toMatchObject({
+      success: false,
+      code: 'ORDER_CREATE_NOT_ALLOWED',
+      message: 'Denied by test policy.',
+    });
+    expect(denyPolicy.check).toHaveBeenCalledWith({
+      runtimeContext,
+      request: expect.objectContaining(validCreateOrderBody),
+    });
+    expect(getManager).not.toHaveBeenCalled();
+    expect(injectedManager.createOrderForRuntimeScope).not.toHaveBeenCalled();
+  });
+
+  it('records an order-created envelope after successful creation', async () => {
+    const runtimeContext = {
+      runtimeKind: 'single-tenant',
+      paymentScope: { id: 'scope-created', kind: 'single-merchant' },
+      actor: { type: 'api-key', id: 'api-key-created' },
+      requestId: 'request-created',
+      source: 'test-suite',
+    } as any;
+    const injectedManager = {
+      createOrderForRuntimeScope: vi.fn().mockResolvedValue({
+        orderId: '550e8400-e29b-41d4-a716-446655440099',
+        status: 'pending',
+      }),
+    } as any;
+    const eventSink = { record: vi.fn() };
+
+    const app = new Hono();
+    app.route(
+      '/orders',
+      createOrdersRoutes({
+        getManager: () => injectedManager,
+        getAuth: () => ({}),
+        createAuthMiddleware: () => async (_c: any, next: any) => next(),
+        createAuditMiddleware: () => async (_c: any, next: any) => next(),
+        requirePermission: () => async (_c: any, next: any) => next(),
+        resolveRuntimeContext: () => runtimeContext,
+        getBaseUrl: () => 'https://pay.example',
+        buildOrderPaymentUrl: (baseUrl: string, orderId: string) => `${baseUrl}/orders/${orderId}`,
+        orderCreateEventSink: eventSink,
+      })
+    );
+
+    const response = await app.request('/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(validCreateOrderBody),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data).toMatchObject({
+      orderId: '550e8400-e29b-41d4-a716-446655440099',
+      url: 'https://pay.example/orders/550e8400-e29b-41d4-a716-446655440099',
+    });
+    expect(injectedManager.createOrderForRuntimeScope).toHaveBeenCalledWith(
+      runtimeContext,
+      expect.objectContaining(validCreateOrderBody)
+    );
+    expect(eventSink.record).toHaveBeenCalledWith({
+      name: 'order.created',
+      occurredAt: expect.any(String),
+      paymentScope: runtimeContext.paymentScope,
+      actor: runtimeContext.actor,
+      requestId: runtimeContext.requestId,
+      source: runtimeContext.source,
+      order: {
+        id: '550e8400-e29b-41d4-a716-446655440099',
+        reference: validCreateOrderBody.orderReference,
+      },
+    });
+  });
+
+  it('still returns created when an injected order-created event sink throws', async () => {
+    const runtimeContext = {
+      runtimeKind: 'single-tenant',
+      paymentScope: { id: 'scope-created', kind: 'single-merchant' },
+      actor: { type: 'api-key', id: 'api-key-created' },
+      source: 'test-suite',
+    } as any;
+    const injectedManager = {
+      createOrderForRuntimeScope: vi.fn().mockResolvedValue({
+        orderId: '550e8400-e29b-41d4-a716-446655440088',
+        status: 'pending',
+      }),
+    } as any;
+    const eventSink = { record: vi.fn().mockRejectedValue(new Error('sink unavailable')) };
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      const app = new Hono();
+      app.route(
+        '/orders',
+        createOrdersRoutes({
+          getManager: () => injectedManager,
+          getAuth: () => ({}),
+          createAuthMiddleware: () => async (_c: any, next: any) => next(),
+          createAuditMiddleware: () => async (_c: any, next: any) => next(),
+          requirePermission: () => async (_c: any, next: any) => next(),
+          resolveRuntimeContext: () => runtimeContext,
+          getBaseUrl: () => 'https://pay.example',
+          buildOrderPaymentUrl: (baseUrl: string, orderId: string) => `${baseUrl}/orders/${orderId}`,
+          orderCreateEventSink: eventSink,
+        })
+      );
+
+      const response = await app.request('/orders', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(validCreateOrderBody),
+      });
+      const body = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(body).toMatchObject({
+        success: true,
+        data: {
+          orderId: '550e8400-e29b-41d4-a716-446655440088',
+          url: 'https://pay.example/orders/550e8400-e29b-41d4-a716-446655440088',
+        },
+      });
+      expect(injectedManager.createOrderForRuntimeScope).toHaveBeenCalledWith(
+        runtimeContext,
+        expect.objectContaining(validCreateOrderBody)
+      );
+      expect(eventSink.record).toHaveBeenCalledTimes(1);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to record order-created event:',
+        expect.any(Error)
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
   it('can be composed as a factory with injected manager, middleware, runtime, and URL dependencies', async () => {
     const runtimeContext = { paymentScope: { id: 'injected-org' } } as any;
     const injectedManager = {
