@@ -4,6 +4,7 @@ import {
   buildAuthHeaders,
   buildSmokeOrderPayload,
   checkHttpEndpoint,
+  collectOpenRuntimePostureChecks,
   extractOrderId,
   extractPaymentUrl,
   fetchWithTimeout,
@@ -35,7 +36,7 @@ if (values.help) {
   process.exit(0);
 }
 
-const checks: OpenOpsCheck[] = [];
+const checks: OpenOpsCheck[] = collectOpenRuntimePostureChecks();
 const baseUrl = values.url?.replace(/\/$/, '');
 const timeoutMs = Number.parseInt(values.timeout || '5000', 10);
 const authHeaders = buildAuthHeaders({ apiKey: values['api-key'], bearerToken: values.token });

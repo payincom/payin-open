@@ -4,6 +4,7 @@ import {
   buildSmokeOrderPayload,
   collectOpenDatabaseChecks,
   collectOpenDoctorChecks,
+  collectOpenRuntimePostureChecks,
   extractOrderId,
   extractPaymentUrl,
   isOpenRuntime,
@@ -30,6 +31,37 @@ describe('PayIn Open ops library', () => {
 
     expect(summary.ok).toBe(false);
     expect(summary.checks.find((check) => check.id === 'runtime.open')?.status).toBe('fail');
+    expect(summary.checks.find((check) => check.id === 'runtime.profile')?.status).toBe('fail');
+  });
+
+  it('reports Open runtime profile and operator posture', () => {
+    const checks = collectOpenRuntimePostureChecks({
+      env: { PAYIN_RUNTIME: 'open' },
+      defaultMerchantId: '00000000-0000-0000-0000-000000000001',
+    });
+
+    expect(checks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'runtime.profile',
+        status: 'pass',
+        message: expect.stringContaining('single-tenant self-hosted'),
+      }),
+      expect.objectContaining({
+        id: 'auth.api-key-scope',
+        status: 'pass',
+        message: expect.stringContaining('do not send X-Organization-ID'),
+      }),
+      expect.objectContaining({
+        id: 'auth.jwt-operator-caveat',
+        status: 'pass',
+        detail: expect.stringContaining('X-Organization-Id: 00000000-0000-0000-0000-000000000001'),
+      }),
+      expect.objectContaining({
+        id: 'admin.production-posture',
+        status: 'pass',
+        message: expect.stringContaining('No default production admin promotion'),
+      }),
+    ]));
   });
 
   it('warns but does not fail when database is not configured in non-strict preflight', () => {

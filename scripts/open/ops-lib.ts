@@ -30,6 +30,8 @@ export interface RuntimeEnv {
   [key: string]: string | undefined;
 }
 
+export const DEFAULT_OPEN_MERCHANT_SCOPE_ID = '00000000-0000-0000-0000-000000000001';
+
 export function redactConnectionString(value: string): string {
   return value.replace(/:[^:@/]+@/, ':****@');
 }
@@ -43,6 +45,45 @@ export function isOpenRuntime(env: RuntimeEnv = process.env): boolean {
   return runtime === 'open' || runtime === 'payin-open';
 }
 
+export function resolveOpenMerchantScopeId(env: RuntimeEnv = process.env): string {
+  return env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_MERCHANT_SCOPE_ID;
+}
+
+export function collectOpenRuntimePostureChecks(options: {
+  env?: RuntimeEnv;
+  defaultMerchantId?: string;
+} = {}): OpenOpsCheck[] {
+  const env = options.env ?? process.env;
+  const defaultMerchantId = options.defaultMerchantId ?? resolveOpenMerchantScopeId(env);
+
+  return [
+    {
+      id: 'runtime.profile',
+      status: isOpenRuntime(env) ? 'pass' : 'fail',
+      message: isOpenRuntime(env)
+        ? `Open profile is single-tenant self-hosted with default local merchant scope ${defaultMerchantId}.`
+        : 'Open profile is not active; single-tenant self-hosted assumptions do not apply.',
+      suggestion: 'Set PAYIN_RUNTIME=open before running Open self-hosted operations.',
+    },
+    {
+      id: 'auth.api-key-scope',
+      status: 'pass',
+      message: 'Business API key calls use the key-bound merchant scope; do not send X-Organization-ID.',
+    },
+    {
+      id: 'auth.jwt-operator-caveat',
+      status: 'pass',
+      message: 'JWT operator calls must still prove local operator membership for the Open merchant scope.',
+      detail: `Use X-Organization-Id: ${defaultMerchantId} with JWT operator requests until switching to a business API key.`,
+    },
+    {
+      id: 'admin.production-posture',
+      status: 'pass',
+      message: 'No default production admin promotion is performed; only first local operator/bootstrap is supported.',
+    },
+  ];
+}
+
 export function collectOpenDoctorChecks(options: {
   env?: RuntimeEnv;
   fileExists?: (path: string) => boolean;
@@ -53,6 +94,8 @@ export function collectOpenDoctorChecks(options: {
   const fileExists = options.fileExists ?? (() => true);
   const checks: OpenOpsCheck[] = [];
   const strict = options.strict ?? false;
+
+  checks.push(...collectOpenRuntimePostureChecks({ env }));
 
   checks.push({
     id: 'runtime.open',
