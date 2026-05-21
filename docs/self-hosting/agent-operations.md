@@ -56,6 +56,7 @@ npm run open:doctor -- --strict --json --url <api-url> --api-key <redacted>
 
 Checks include:
 
+- Runtime posture: Open single-tenant self-hosted profile, default local merchant scope, API-key scoping, JWT operator caveat, and production admin posture.
 - Open runtime detection.
 - Required repository files, self-hosting docs, and PayIn Open skill presence.
 - DB connection string presence with password redaction.
@@ -171,5 +172,6 @@ Before touching production/mainnet, confirm:
 - Separate production database is configured.
 - Sandbox flow has passed end to end.
 - Secrets are stored in the hosting provider or secret manager, not committed.
+- No default production admin promotion is expected; production access starts from the first local operator/bootstrap flow only.
 - `open:doctor -- --strict --url <production-api-url> --api-key <redacted>` passes.
 - A human explicitly approves production writes or mainnet operations.
