@@ -11,6 +11,15 @@ import { getManager } from '../manager-instance.js';
 import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '@payin/auth';
 import { buildPaymentLinkCheckoutUrl, getBaseUrl } from '../utils/url-builder.js';
 import {
+  allowAllPaymentLinkPolicy,
+  noOpPaymentLinkEventSink,
+  type PaymentLinkCreatePolicyRequest,
+  type PaymentLinkEventSink,
+  type PaymentLinkPolicy,
+  type PaymentLinkPublishPolicyRequest,
+  type PaymentLinkUpdatePolicyRequest,
+} from '../payment-link-seam.js';
+import {
   organizationContextRequiredMessage,
   resolveRuntimeContext as defaultResolveRuntimeContext,
 } from '../open-runtime.js';
@@ -71,6 +80,8 @@ export interface PaymentLinksRouteDependencies {
   organizationContextRequiredMessage?: typeof organizationContextRequiredMessage;
   getBaseUrl?: typeof getBaseUrl;
   buildPaymentLinkCheckoutUrl?: typeof buildPaymentLinkCheckoutUrl;
+  paymentLinkPolicy?: PaymentLinkPolicy;
+  paymentLinkEventSink?: PaymentLinkEventSink;
 }
 
 export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {}) {
@@ -86,6 +97,8 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
   const getBaseUrlHelper = deps.getBaseUrl ?? getBaseUrl;
   const buildPaymentLinkCheckoutUrlHelper =
     deps.buildPaymentLinkCheckoutUrl ?? buildPaymentLinkCheckoutUrl;
+  const paymentLinkPolicy = deps.paymentLinkPolicy ?? allowAllPaymentLinkPolicy;
+  const paymentLinkEventSink = deps.paymentLinkEventSink ?? noOpPaymentLinkEventSink;
 
   const authMiddleware = () => {
     return async (c: Context, next: Next) => {
@@ -117,6 +130,21 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
         ],
       },
       401
+    );
+
+  const policyDeniedResponse = (
+    c: Context,
+    decision: Awaited<ReturnType<PaymentLinkPolicy['check']>>
+  ) =>
+    c.json(
+      {
+        success: false,
+        error: 'Payment link operation not allowed',
+        code: decision.code ?? 'PAYMENT_LINK_OPERATION_NOT_ALLOWED',
+        message: decision.message ?? 'Payment link operation is not allowed for this request.',
+        suggestions: ['Review the request context and try again if it is valid'],
+      },
+      decision.status ?? 403
     );
 
   paymentLinks.post(
@@ -308,6 +336,29 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
           metadata: curr.metadata,
         })) as any[];
 
+        const createPolicyRequest: PaymentLinkCreatePolicyRequest = {
+          title: title.trim(),
+          description: body.description ?? null,
+          amount: normalizedAmount,
+          currencies: body.currencies,
+          inventoryTotal: normalizedInventory,
+          expiresAt: body.expiresAt ?? null,
+          metadata: body.metadata ?? null,
+          amountType: body.amountType ?? 'fixed',
+          ctaText: body.ctaText ?? null,
+          theme: body.theme ?? 'dark',
+        };
+
+        const policyDecision = await paymentLinkPolicy.check({
+          runtimeContext,
+          operation: 'create',
+          request: createPolicyRequest,
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         const result = await manager.createPaymentLinkForRuntimeScope(runtimeContext, {
           title: title.trim(),
           description: body.description ?? null,
@@ -321,6 +372,25 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
           cta_text: body.ctaText ?? null,
           theme: body.theme ?? 'dark',
         } as any);
+
+        try {
+          await paymentLinkEventSink.record({
+            name: 'payment_link.created',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'create',
+            paymentLink: {
+              id: result.id,
+              status: result.status,
+              slug: result.slug,
+            },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record payment-link-created event:', eventError);
+        }
 
         // Add URL if payment link is published and has a slug
         const baseUrl = getBaseUrlHelper();
@@ -474,6 +544,29 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
           );
         }
 
+        const updatePolicyRequest: PaymentLinkUpdatePolicyRequest = {
+          title: typeof body.title === 'string' ? body.title.trim() : body.title,
+          description: body.description === undefined ? undefined : body.description,
+          amount: normalizedAmount,
+          inventoryTotal: body.inventoryTotal,
+          expiresAt: body.expiresAt,
+          metadata: body.metadata === undefined ? undefined : body.metadata,
+          amountType: body.amountType,
+          ctaText: body.ctaText,
+          theme: body.theme,
+        };
+
+        const policyDecision = await paymentLinkPolicy.check({
+          runtimeContext,
+          operation: 'update',
+          paymentLinkId,
+          request: updatePolicyRequest,
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         const result = await manager.updatePaymentLinkForRuntimeScope(
           paymentLinkId,
           runtimeContext,
@@ -490,6 +583,25 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
             theme: body.theme,
           }
         );
+
+        try {
+          await paymentLinkEventSink.record({
+            name: 'payment_link.updated',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'update',
+            paymentLink: {
+              id: result.id,
+              status: result.status,
+              slug: result.slug,
+            },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record payment-link-updated event:', eventError);
+        }
 
         // Add URL if payment link is published and has a slug
         const baseUrl = getBaseUrlHelper();
@@ -747,11 +859,43 @@ export function createPaymentLinksRoutes(deps: PaymentLinksRouteDependencies = {
           );
         }
 
+        const publishPolicyRequest: PaymentLinkPublishPolicyRequest = { slug: slug?.trim() };
+
+        const policyDecision = await paymentLinkPolicy.check({
+          runtimeContext,
+          operation: 'publish',
+          paymentLinkId,
+          request: publishPolicyRequest,
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         const result = await manager.publishPaymentLinkForRuntimeScope(
           paymentLinkId,
           runtimeContext,
-          slug?.trim()
+          publishPolicyRequest.slug
         );
+
+        try {
+          await paymentLinkEventSink.record({
+            name: 'payment_link.published',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'publish',
+            paymentLink: {
+              id: result.id,
+              status: result.status,
+              slug: result.slug,
+            },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record payment-link-published event:', eventError);
+        }
 
         // Add URL (published links always have a slug)
         const baseUrl = getBaseUrlHelper();
