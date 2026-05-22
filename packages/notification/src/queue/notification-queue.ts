@@ -5,22 +5,40 @@
 
 import { NotificationRepository } from '../repository/notification.repository.js';
 import { WebhookNotifier } from '../notifiers/webhook-notifier.js';
+import type { BaseNotifier } from '../notifiers/base-notifier.js';
 import type { Endpoint, WebhookConfig } from '../types/endpoint.js';
 import type { NotificationEvent, NotificationLog, QueueItem } from '../types/notification.js';
 import { calculateNextRetryAt, shouldScheduleRetry } from '../utils/retry-strategy.js';
 import { createLogger, LogCategory } from '@payin/shared';
 
+export type NotificationNotifierFactory = (endpoint: Endpoint) => BaseNotifier;
+
 export interface QueueConfig {
   maxConcurrency?: number;
   checkIntervalMs?: number;
   batchSize?: number;
+  notifierFactory?: NotificationNotifierFactory;
 }
 
 const DEFAULT_QUEUE_CONFIG: Required<QueueConfig> = {
   maxConcurrency: 10,
   checkIntervalMs: 5000,
   batchSize: 50,
+  notifierFactory: createDefaultNotifier,
 };
+
+function createDefaultNotifier(endpoint: Endpoint): BaseNotifier {
+  switch (endpoint.endpoint_type) {
+    case 'webhook':
+      return new WebhookNotifier({
+        url: (endpoint.config as WebhookConfig).url,
+        secret: (endpoint.config as WebhookConfig).secret,
+        timeoutMs: endpoint.timeout_ms,
+      });
+    default:
+      throw new Error(`Unsupported endpoint type: ${endpoint.endpoint_type}`);
+  }
+}
 
 export class NotificationQueue {
   private readonly logger = createLogger(LogCategory.NOTIFICATION);
@@ -33,7 +51,11 @@ export class NotificationQueue {
     private repository: NotificationRepository,
     config?: QueueConfig
   ) {
-    this.config = { ...DEFAULT_QUEUE_CONFIG, ...config };
+    this.config = {
+      ...DEFAULT_QUEUE_CONFIG,
+      ...config,
+      notifierFactory: config?.notifierFactory ?? DEFAULT_QUEUE_CONFIG.notifierFactory,
+    };
   }
 
   /**
@@ -309,17 +331,8 @@ export class NotificationQueue {
   /**
    * Create notifier based on endpoint type
    */
-  private createNotifier(endpoint: Endpoint): WebhookNotifier {
-    switch (endpoint.endpoint_type) {
-      case 'webhook':
-        return new WebhookNotifier({
-          url: (endpoint.config as WebhookConfig).url,
-          secret: (endpoint.config as WebhookConfig).secret,
-          timeoutMs: endpoint.timeout_ms,
-        });
-      default:
-        throw new Error(`Unsupported endpoint type: ${endpoint.endpoint_type}`);
-    }
+  private createNotifier(endpoint: Endpoint): BaseNotifier {
+    return this.config.notifierFactory(endpoint);
   }
 
   /**

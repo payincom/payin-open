@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 import { Pool } from 'pg';
 import { NotificationRepository } from './repository/notification.repository.js';
 import { NotificationQueue, QueueConfig } from './queue/notification-queue.js';
+import type { NotificationNotifierFactory } from './queue/notification-queue.js';
 import { initializeDatabase } from './database/database.js';
 import type {
   NotificationEvent,
@@ -43,6 +44,7 @@ export interface NotificationServiceConfig {
     connectionString: string;
   };
   queue?: QueueConfig;
+  notifierFactory?: NotificationNotifierFactory;
 }
 
 export class NotificationService extends EventEmitter {
@@ -56,7 +58,12 @@ export class NotificationService extends EventEmitter {
     super();
     this.db = new Pool({ connectionString: config.database.connectionString });
     this.repository = new NotificationRepository(this.db);
-    this.queue = new NotificationQueue(this.repository, config.queue);
+    this.queue = new NotificationQueue(
+      this.repository,
+      config.notifierFactory
+        ? { ...config.queue, notifierFactory: config.notifierFactory }
+        : config.queue
+    );
   }
 
   /**
