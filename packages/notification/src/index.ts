@@ -44,7 +44,7 @@ export { NotificationRepository } from './repository/notification.repository.js'
 
 // Queue
 export { NotificationQueue } from './queue/notification-queue.js';
-export type { QueueConfig } from './queue/notification-queue.js';
+export type { NotificationNotifierFactory, QueueConfig } from './queue/notification-queue.js';
 
 // Database
 export { initializeDatabase, dropAllTables, tablesExist } from './database/database.js';
