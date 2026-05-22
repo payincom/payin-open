@@ -291,4 +291,57 @@ describe('PayIn Open release-readiness static checks', () => {
     expect(docs).not.toContain('api.payin.com');
     expect(docs).not.toContain('npm run db:migrate');
   });
+
+  it('keeps public guide docs Open-oriented and Cloud-only labels explicit', () => {
+    const guidePaths = [
+      'apps/docs/en/guide/introduction.md',
+      'apps/docs/en/guide/quick-start-mcp.md',
+      'apps/docs/en/guide/order-payment.md',
+      'apps/docs/en/guide/deposit-service.md',
+      'apps/docs/en/guide/security.md',
+      'apps/docs/en/guide/address-pool-setup.md',
+      'apps/docs/en/guide/address-management.md',
+      'apps/docs/en/guide/payment-links.md',
+      'apps/docs/en/guide/api-integration.md',
+      'apps/docs/zh/guide/introduction.md',
+      'apps/docs/zh/guide/quick-start-mcp.md',
+      'apps/docs/zh/guide/order-payment.md',
+      'apps/docs/zh/guide/deposit-service.md',
+      'apps/docs/zh/guide/security.md',
+      'apps/docs/zh/guide/address-pool-setup.md',
+      'apps/docs/zh/guide/address-management.md',
+      'apps/docs/zh/guide/payment-links.md',
+      'apps/docs/zh/guide/api-integration.md',
+    ];
+    const docs = guidePaths.map(path => readFileSync(path, 'utf8')).join('\n');
+
+    const staleOpenPhrases = [
+      new RegExp(['multi', 'tenant'].join('-'), 'i'),
+      new RegExp(['personal ', 'organization'].join('')),
+      new RegExp(['Cloud multi', 'tenant admin dashboard'].join('-')),
+      new RegExp(['Track payments ', 'in dashboard'].join('')),
+      new RegExp(['No-code payment ', 'collection'].join('')),
+      new RegExp([['Set', 'tings'].join(''), '.*', ['Sec', 'urity'].join('')].join('')),
+      new RegExp(['Select the corresponding ', 'organization'].join('')),
+      new RegExp(['选择对应', '的组织'].join('')),
+      new RegExp(['完整的', '组织隔离'].join('')),
+      new RegExp(['多', '租户'].join('')),
+      new RegExp(['管理组织', '和 API 密钥'].join('')),
+      new RegExp(['自动为您创建', '一个个人组织'].join('')),
+      new RegExp(['组织', '角色'].join('')),
+      new RegExp(['Payment Links ', '| One-off'].join('\\')),
+      new RegExp(['Payment Links ', '| No-code'].join('\\')),
+      new RegExp(['No-code Payment Links ', 'are a hosted'].join('')),
+    ];
+
+    for (const phrase of staleOpenPhrases) {
+      expect(docs).not.toMatch(phrase);
+    }
+
+    expect(readFileSync('apps/docs/en/guide/payment-links.md', 'utf8')).toContain('PayIn Cloud no-code feature');
+    expect(readFileSync('apps/docs/en/guide/payment-links.md', 'utf8')).toContain('PayIn Open does not ship');
+    expect(readFileSync('apps/docs/zh/guide/payment-links.md', 'utf8')).toContain('PayIn Cloud 的无代码功能');
+    expect(readFileSync('apps/docs/zh/guide/payment-links.md', 'utf8')).toContain('PayIn Open 不随附');
+  });
+
 });

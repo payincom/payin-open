@@ -11,7 +11,7 @@ Payment Links are PayIn Cloud no-code dashboard features. PayIn Open does not sh
 - 🔗 **Share anywhere** - Email, WhatsApp, social media, QR code
 - 💰 **Flexible pricing** - Fixed amount or custom amount
 - 🌐 **Multi-chain** - Support multiple networks and tokens
-- 📊 **Track payments** - Monitor all payments in dashboard
+- 📊 **Track payments** - Monitor payments in the PayIn Cloud dashboard
 - 📦 **Inventory control** - Limit quantity for tickets/products
 
 ## Payment Links vs Order API
@@ -77,7 +77,7 @@ Share your payment link via:
 1. Customer clicks your link
 2. Customer selects chain and pays
 3. You receive notification
-4. Payment appears in dashboard
+4. Payment appears in the PayIn Cloud dashboard
 
 ::: tip Test First
 Use testnet links to test the complete flow before sharing mainnet links to customers.
@@ -286,12 +286,12 @@ Archive payment links that are no longer needed:
 - Link becomes inaccessible
 - Existing payments remain in history
 - Can be restored if needed
-- Helps keep your dashboard organized
+- Helps keep your PayIn Cloud dashboard organized
 
 ### Viewing Payment History
 
 **For a specific link:**
-1. Go to Payment Links dashboard
+1. Go to the PayIn Cloud Payment Links dashboard
 2. Click on a payment link
 3. View **Orders** tab
 4. See all payments for this link
@@ -374,7 +374,7 @@ Archive payment links that are no longer needed:
 1. Create payment link for tickets
 2. Add link to event website
 3. Share on social media
-4. Monitor sales in dashboard
+4. Monitor sales in the PayIn Cloud dashboard
 5. Send ticket fulfillment emails (manual or automated)
 
 ### Online Course Enrollment
@@ -552,7 +552,7 @@ Product A        // Unclear
 ```
 
 **Monitor in real-time:**
-- Check dashboard for available/reserved/sold counts
+- Check the PayIn Cloud dashboard for available/reserved/sold counts
 - Update inventory if you add more capacity
 - Archive when sold out
 
@@ -567,7 +567,7 @@ Product A        // Unclear
 
 1. **Create testnet link** - Use testnet environment first
 2. **Test payment flow** - Complete a test payment yourself
-3. **Verify notifications** - Check dashboard updates
+3. **Verify notifications** - Check PayIn Cloud dashboard updates
 4. **Check mobile** - Test on mobile devices
 5. **Share internally** - Have team test before public launch
 
@@ -628,13 +628,13 @@ Limited slots available! 👇
 - Typo in URL
 
 **Solutions:**
-1. Verify link status in dashboard (should be "Published")
+1. Verify link status in the PayIn Cloud dashboard (should be "Published")
 2. Check if link is archived (restore if needed)
-3. Copy fresh URL from dashboard
+3. Copy a fresh URL from the PayIn Cloud dashboard
 
 ### Payment Not Detected
 
-**Problem:** Customer paid but payment not showing in dashboard.
+**Problem:** Customer paid but payment is not showing in the PayIn Cloud dashboard.
 
 **Causes:**
 - Wrong network (paid on different chain than selected)
@@ -660,7 +660,7 @@ Limited slots available! 👇
 **If stuck:**
 - Check order status (might still be pending)
 - Wait for blockchain confirmations
-- Refresh dashboard
+- Refresh the PayIn Cloud dashboard
 
 ### Cannot Edit Published Link
 
@@ -687,7 +687,7 @@ If customers already have the old link, keep it active until transition is compl
 - QR code image quality too low
 
 **Solutions:**
-1. Regenerate QR code from dashboard
+1. Regenerate the QR code from the PayIn Cloud dashboard
 2. Use URL shortener if needed
 3. Test QR code with multiple apps
 4. Increase QR code size/quality

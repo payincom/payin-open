@@ -11,7 +11,7 @@ Order Payment Service allocates a temporary payment address for each order. When
 - ⏱️ **Time-limited** - Orders have a payment window with grace period
 - ♻️ **Address recycling** - Addresses return to pool after order completion
 - 🔗 **Single-chain** - Each order monitors one specific blockchain
-- 🏢 **Multi-tenant** - Complete organization isolation
+- 🏢 **Open merchant scope** - Uses the internal default Open merchant/business scope
 
 ## Order vs Deposit
 
@@ -724,7 +724,7 @@ https://myshop.com/orders/ORDER-2025-001/success?order_reference=ORDER-2025-001&
 ```
 
 ::: tip Default Redirect URLs
-In PayIn Open, configure organization-wide default redirect URLs through the operator API/CLI or self-hosted console. Order-level URLs take precedence over defaults.
+In PayIn Open, configure merchant/business-scope default redirect URLs through the operator API/CLI or self-hosted console. Order-level URLs take precedence over defaults.
 :::
 
 ### Order Metadata
@@ -785,7 +785,7 @@ tmp_order      // Not permanent
 ```
 
 ::: tip Uniqueness is Critical
-Order references must be unique within your organization. PayIn will reject duplicate order references to prevent accidental double-charging.
+Order references must be unique within your Open merchant/business scope. PayIn will reject duplicate order references to prevent accidental double-charging.
 :::
 
 ### Amount Precision
@@ -1021,7 +1021,7 @@ if (existing.total > 0) {
 
 ### Related Services
 - [Deposit Service](/en/guide/deposit-service) - Permanent user addresses for recurring payments
-- [Payment Links](/en/guide/payment-links) - No-code payment collection
+- [Payment Links](/en/guide/payment-links) - Cloud-only hosted links, or build an Open link flow with the Order Payment API
 
 ### Technical References
 - [Supported Networks](/en/guide/supported-networks) - Available blockchains

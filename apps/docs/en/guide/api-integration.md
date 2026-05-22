@@ -10,7 +10,7 @@ Choose the integration method that best fits your needs:
 |--------|----------|------------|------------|
 | **Direct API** | Production applications, custom integrations, multiple languages | Medium | 30-60 min |
 | **MCP Server** | Prototyping, AI-assisted development, learning | Low | 5-10 min |
-| **Payment Links** | One-off payments, no-code scenarios, invoices | Very Low | 2 min |
+| **Cloud Payment Links / Open link flow** | One-off payments, invoices, self-built checkout pages | Varies | Varies |
 
 **Use Direct API when you need:**
 - Production-ready integration with full control
@@ -327,7 +327,7 @@ console.log('Deposits:', result.data.deposits);
 
 ### Pattern 3: Payment Link Flow
 
-Create shareable payment URLs for no-code payment collection.
+Create shareable payment URLs with PayIn Cloud Payment Links, or build the same flow for PayIn Open by creating orders and serving your own payment page.
 
 <details>
 <summary><strong>Example: Invoice Generator</strong></summary>
@@ -1411,9 +1411,9 @@ Rate limiting is not currently enforced but may be added in future versions. Fol
 - Avoid polling; use webhooks instead
 
 **Expected Future Limits:**
-- Orders: 100 requests/minute per organization
-- Deposits: 50 requests/minute per organization
-- Queries: 300 requests/minute per organization
+- Orders: 100 requests/minute per Open merchant/business scope
+- Deposits: 50 requests/minute per Open merchant/business scope
+- Queries: 300 requests/minute per Open merchant/business scope
 
 ## Next Steps
 
@@ -1427,7 +1427,7 @@ Rate limiting is not currently enforced but may be added in future versions. Fol
 
 - **[Order Payment Service](/en/guide/order-payment)** - Detailed order flow
 - **[Deposit Service](/en/guide/deposit-service)** - Detailed deposit flow
-- **[Payment Links](/en/guide/payment-links)** - Create shareable payment URLs
+- **[Payment Links](/en/guide/payment-links)** - Cloud-only hosted links, or build an Open link flow with the Order Payment API
 
 ### Reference
 

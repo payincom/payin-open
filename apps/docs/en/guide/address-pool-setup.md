@@ -206,7 +206,7 @@ No header needed, just paste addresses directly. Addresses imported this way wil
 
 1. Open your self-hosted console, or use the address-pool import API/CLI
 2. Authenticate with an API key or operator session
-3. Select the corresponding organization
+3. Select the Open merchant/business scope for your deployment
 
 ### Step 3: Import Addresses
 
@@ -441,12 +441,12 @@ Mnemonic equals all address private keys. Anyone who gets the mnemonic can contr
 - ⚠️ **bound**: Need to unbind before deleting
 - ❌ **Not Recommended**: Unless private key is lost or security issue
 
-### Q: Can multiple organizations share addresses?
+### Q: Can multiple business scopes share addresses?
 
-**No**. PayIn uses multi-tenant architecture, each organization's address pool is completely isolated:
+**No**. Keep each business/API-key scope on its own address pool:
 
-- ❌ Addresses cannot be shared between organizations
-- ✅ Each organization independently manages its own address pool
+- ❌ Addresses should not be shared between scopes
+- ✅ Each scope independently manages its own address pool
 - ✅ Ensures business data and funds are completely isolated
 
 ## Next Steps
@@ -456,7 +456,7 @@ After address pool setup is complete, you can:
 1. 📝 [Create Order Payment](./order-payment) - Start accepting cryptocurrency payments
 2. 💰 [Configure User Deposits](./deposit-service) - Provide deposit service for users
 3. 🔔 [Set Up Webhook Notifications](./webhooks) - Receive payment notifications
-4. 🔗 [Create Payment Links](./payment-links) - Quick payment method without coding
+4. 🔗 [Payment Links](./payment-links) - Cloud-only hosted links, or build an Open link flow with the Order Payment API
 
 ## Advanced Topics
 

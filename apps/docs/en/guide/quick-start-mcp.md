@@ -31,7 +31,7 @@ Visit [your-payin.example.com](https://your-payin.example.com) and create an acc
 - **Option 1**: Register with email and password
 - **Option 2**: Sign in with GitHub or Google
 
-After registration, PayIn automatically creates a personal organization for you.
+After setup, PayIn Open uses the internal default Open merchant scope unless you intentionally configure additional business scopes for your deployment.
 
 ### 1.2 Generate API Key
 
@@ -236,7 +236,7 @@ Once connected, your AI assistant can use these PayIn capabilities:
 
 ### "Operation not permitted"
 
-Your API key may lack necessary permissions. Check your organization role:
+Your API key may lack necessary permissions. Check the key scope for your Open deployment:
 - **Owner/Admin**: Full access to all operations
 - **Member**: Can create orders and deposits, cannot manage settings
 - **Viewer**: Read-only access

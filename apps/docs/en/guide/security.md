@@ -106,14 +106,13 @@ async function makeApiCall(endpoint: string, options: any) {
 
 ### Key Scope and Permissions
 
-PayIn uses role-based access control:
+PayIn Open scopes API access to your self-hosted deployment and configured business/API-key scope. It does not ship Cloud organization members or dashboard roles; protect operator functions with your identity provider, deployment controls, or a self-built console.
 
-| Role | Permissions | Use Case |
+| Key Scope | Permissions | Use Case |
 |------|-------------|----------|
-| **Owner** | Full access, can transfer ownership | Organization founder |
-| **Admin** | Manage settings, members, API keys | Operations team |
-| **Member** | Create orders, deposits, view data | Application backend |
-| **Viewer** | Read-only access | Monitoring, analytics |
+| **Operator** | Manage deployment settings, keys, webhooks, address pools | Trusted operations automation |
+| **Write** | Create orders and deposits, read related status | Application backend |
+| **Read-only** | Query status and history | Monitoring, analytics |
 
 **Best Practices:**
 - ✅ Create keys with minimum necessary permissions
@@ -436,12 +435,12 @@ Use DDoS protection services:
 
 ## Access Control
 
-### Role-Based Access Control (RBAC)
+### Application Access Control
 
-Implement least privilege principle:
+Implement least privilege in your application or self-built console:
 
 ```typescript
-// Define roles and permissions
+// Define application roles and permissions
 const ROLES = {
   owner: ['*'],  // All permissions
   admin: ['orders:*', 'deposits:*', 'webhooks:*', 'keys:*'],
@@ -464,7 +463,7 @@ if (!checkPermission(user, 'orders:create')) {
 
 ### Multi-Factor Authentication (MFA)
 
-For PayIn Open, protect operator access with your identity provider, VPN, or deployment platform MFA. If you use PayIn Cloud, enable dashboard MFA from **Settings** → **Security**.
+For PayIn Open, protect operator access with your identity provider, VPN, or deployment platform MFA. If you use PayIn Cloud, enable dashboard MFA in the Cloud security settings.
 
 **Enforce MFA for:**
 - ✅ All Owner accounts
@@ -673,7 +672,7 @@ aws s3 cp backup_*.enc s3://payinbackups/ --sse AES256
 ### Preparation
 
 1. **Create Incident Response Plan**
-   - Define roles and responsibilities
+   - Define incident-response responsibilities
    - Document escalation procedures
    - Establish communication channels
    - Prepare runbooks for common scenarios

@@ -11,7 +11,7 @@ Deposit Service binds a permanent payment address to each user. Once bound, the 
 - 🌐 **Multi-chain monitoring** - Single address monitors entire protocol family
 - ∞ **No expiration** - Address remains bound indefinitely
 - ♻️ **Recurring deposits** - Support unlimited deposits to same address
-- 🏢 **Multi-tenant** - Complete organization isolation
+- 🏢 **Open merchant scope** - Uses the internal default Open merchant/business scope
 
 ## Deposit vs Order
 
@@ -818,7 +818,7 @@ user                   // Not unique
 ```
 
 ::: tip Uniqueness is Critical
-Deposit references must be unique within your organization. Each depositReference can only have one binding per protocol.
+Deposit references must be unique within your Open merchant/business scope. Each depositReference can only have one binding per protocol.
 :::
 
 ### Multi-Currency Strategy
@@ -895,7 +895,7 @@ Configure where users go after deposit confirmation:
 ```
 
 ::: tip Configuration-Level Only
-Unlike orders, deposits don't support per-transaction redirect URLs. Configure the organization-wide redirect through the Open operator API/CLI or self-hosted console.
+Unlike orders, deposits don't support per-transaction redirect URLs. Configure the merchant/business-scope redirect through the Open operator API/CLI or self-hosted console.
 :::
 
 ## Best Practices
@@ -1119,7 +1119,7 @@ async handleDeposit(event: PayInWebhookEvent) {
 
 ### Related Services
 - [Order Payment Service](/en/guide/order-payment) - One-time payment addresses
-- [Payment Links](/en/guide/payment-links) - No-code payment collection
+- [Payment Links](/en/guide/payment-links) - Cloud-only hosted links, or build an Open link flow with the Order Payment API
 
 ### Technical References
 - [Supported Networks](/en/guide/supported-networks) - Available blockchains

@@ -11,7 +11,7 @@
 - 🌐 **多链监控** - 单个地址监控整个协议族
 - ∞ **永不过期** - 地址永久绑定
 - ♻️ **重复充值** - 支持同一地址的无限次充值
-- 🏢 **多租户** - 完整的组织隔离
+- 🏢 **Open 商户范围** - 默认使用内部 Open 商户/业务范围
 
 ## 充值 vs 订单
 
@@ -818,7 +818,7 @@ user                   // 不唯一
 ```
 
 ::: tip 唯一性至关重要
-充值引用在您的组织内必须唯一。每个 depositReference 在每个协议上只能有一个绑定。
+充值引用在您的 Open 商户/业务范围内必须唯一。每个 depositReference 在每个协议上只能有一个绑定。
 :::
 
 ### 多币种策略
@@ -879,7 +879,7 @@ async handleDepositWebhook(event: PayInWebhookEvent) {
 配置充值确认后用户跳转的位置：
 
 ```typescript
-// 组织级别的充值跳转 URL
+// 商户/业务范围级别的充值跳转 URL
 // 通过 Open operator API/CLI 或自托管控制台设置
 
 // 充值确认后，PayIn 会附加参数：
@@ -895,7 +895,7 @@ async handleDepositWebhook(event: PayInWebhookEvent) {
 ```
 
 ::: tip 仅配置级别
-与订单不同，充值不支持单次交易的跳转 URL。请通过 Open operator API/CLI 或自托管控制台配置组织级别的跳转。
+与订单不同，充值不支持单次交易的跳转 URL。请通过 Open operator API/CLI 或自建控制台配置商户/业务范围级别的跳转。
 :::
 
 ## 最佳实践
