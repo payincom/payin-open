@@ -1,6 +1,6 @@
 # PayIn Open / Cloud Overlay Execution Plan
 
-Status: approved by JQ on 2026-05-17; refreshed after Phase 3 PR #15 and P4.A notification seam PR #16 on 2026-05-22.
+Status: approved by JQ on 2026-05-17; refreshed after Phase 4 completion through PR #18 on 2026-05-22.
 
 ## Strategic decision
 
@@ -34,11 +34,12 @@ Repository roles:
 - Order-create policy/event seam: allow-all Open policy and no-op/best-effort event sink for `POST /api/v1/orders`.
 - Payment-link policy/event seam: allow-all Open policy and no-op/best-effort event sink for create/update/publish operations.
 - Notification policy/event seam: allow-all Open policy and no-op/best-effort event sink for endpoint create/test and notification retry operations.
+- Notification delivery factory seam: webhook-only Open default plus injectable `NotificationNotifierFactory` for delivery construction.
 
 Still future and only if concretely needed:
 
 - Additional neutral policy/event seams for specific route operations, only if concretely needed.
-- Auth/config/storage provider interfaces beyond current route-level injection.
+- Auth/config/storage provider interfaces beyond current route-level injection; notification delivery construction already has a bounded factory seam.
 - Repository extraction, migrations, or private Cloud overlay code.
 
 ## Phased execution
@@ -96,16 +97,16 @@ Deliverables:
 
 ### Phase 4 — overlay readiness hardening
 
-Status: active; P4.A notification policy/event seam merged in PR #16 (`8bb3c10`).
+Status: complete through PR #18 (`1d0d432`).
 
-Deliverables should remain bounded:
+Completed bounded deliverables:
 
-- Add neutral policy/event ports only for specific operations that need overlay hooks; order, payment-link, and notification seams already exist.
-- Add provider interfaces only where a concrete overlay need exists.
-- Add tests for default Open behavior and no Cloud dependency leakage.
-- Document exact overlay extension points.
+- Neutral policy/event ports exist for the concrete operations identified so far: order create, payment-link create/update/publish, and notification endpoint create/test/retry.
+- Notification delivery construction has a bounded `NotificationNotifierFactory` seam while Open defaults remain webhook-only.
+- Tests cover default Open behavior, injected seams, best-effort/no-op behavior, and no Cloud dependency leakage.
+- Architecture/status docs identify exact overlay extension points and guardrails.
 
-Do not treat Phase 4 as permission for broad Cloud/SaaS implementation.
+Do not treat Phase 4 completion as permission for broad Cloud/SaaS implementation.
 
 ### Phase 5 — create private Cloud overlay repo
 
@@ -119,11 +120,12 @@ Only after Phases 1–4 exit criteria pass and the human explicitly approves:
 
 ## Immediate implementation queue
 
-1. Complete P4.B docs/status refresh so architecture docs no longer point workers at completed order/payment-link/notification seams.
-2. Run scoped docs validation: `npm run boundary:check`, `git diff --check`, and grep sanity checks for edited docs.
-3. If continuing Phase 4, run P4.C provider-interface discovery before any provider implementation.
-4. Keep Open defaults allow-all/no-op for any future bounded seam and preserve existing behavior.
-5. Do not start Cloud billing/subscription/plan/entitlement/member/role/admin implementation in Open.
+Phase 4 is complete. The next implementation queue is Phase 5 only after explicit human approval.
+
+1. Do not create the private Cloud overlay repo until explicitly approved.
+2. If a future overlay need exposes a missing Open seam, improve Open first through a separately scoped bounded PR.
+3. Keep Open defaults allow-all/no-op for future bounded seams and preserve existing behavior.
+4. Do not start Cloud billing/subscription/plan/entitlement/member/role/admin implementation in Open without moving to the approved Phase 5 overlay scope.
 
 ## Quality control checklist
 
