@@ -56,12 +56,11 @@ vi.mock('@payin/auth', () => ({
   },
 }));
 
-const { default: notificationRoutes, createNotificationsRoutes } =
-  await import('../src/routes/notifications.js');
+const { createNotificationsRoutes } = await import('../src/routes/notifications.js');
 
-function createNotificationsApp() {
+function createNotificationsApp(deps: Parameters<typeof createNotificationsRoutes>[0] = {}) {
   const app = new Hono();
-  app.route('/notifications', notificationRoutes);
+  app.route('/notifications', createNotificationsRoutes(deps));
   return app;
 }
 
@@ -262,6 +261,126 @@ describe('notifications route runtime context resolution', () => {
       );
       expect(mocks.notification.createEndpoint).not.toHaveBeenCalled();
     } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('prevents endpoint creation when injected notification policy denies it', async () => {
+    const restoreRuntime = setRuntime('open');
+    const notificationPolicy = {
+      check: vi.fn().mockResolvedValue({
+        allowed: false,
+        code: 'NOTIFICATION_CREATE_DENIED',
+        message: 'Endpoint creation denied by injected policy.',
+        status: 403,
+      }),
+    };
+    const notificationEventSink = { record: vi.fn() };
+
+    try {
+      const response = await createNotificationsApp({
+        notificationPolicy,
+        notificationEventSink,
+      }).request('/notifications/endpoints', {
+        method: 'POST',
+        body: JSON.stringify({
+          endpoint_name: 'Denied webhook',
+          endpoint_type: 'webhook',
+          config: { url: 'https://example.test/webhook' },
+          subscribed_events: ['order.created'],
+        }),
+      });
+      const body = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(body).toMatchObject({
+        success: false,
+        code: 'NOTIFICATION_CREATE_DENIED',
+        message: 'Endpoint creation denied by injected policy.',
+      });
+      expect(notificationPolicy.check).toHaveBeenCalledWith(
+        expect.objectContaining({
+          operation: 'create_endpoint',
+          runtimeContext: runtimeScope(DEFAULT_OPEN_ORGANIZATION_ID),
+          request: expect.objectContaining({ endpoint_name: 'Denied webhook' }),
+        })
+      );
+      expect(mocks.notification.createEndpointForRuntimeScope).not.toHaveBeenCalled();
+      expect(notificationEventSink.record).not.toHaveBeenCalled();
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('records a neutral event envelope after successful endpoint creation', async () => {
+    const restoreRuntime = setRuntime('open');
+    const notificationEventSink = { record: vi.fn() };
+    mocks.notification.createEndpointForRuntimeScope.mockResolvedValueOnce({
+      id: 'endpoint-created',
+      endpoint_name: 'Recorded webhook',
+      endpoint_type: 'webhook',
+    });
+
+    try {
+      const response = await createNotificationsApp({ notificationEventSink }).request(
+        '/notifications/endpoints',
+        {
+          method: 'POST',
+          headers: { 'x-request-id': 'request-123' },
+          body: JSON.stringify({
+            endpoint_name: 'Recorded webhook',
+            endpoint_type: 'webhook',
+            config: { url: 'https://example.test/webhook' },
+            subscribed_events: ['order.created'],
+          }),
+        }
+      );
+
+      expect(response.status).toBe(201);
+      expect(notificationEventSink.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'notification.endpoint.created',
+          operation: 'create_endpoint',
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+          actor: { type: 'operator', id: 'test-user' },
+          requestId: 'request-123',
+          source: 'apps/api',
+          endpoint: {
+            id: 'endpoint-created',
+            name: 'Recorded webhook',
+            type: 'webhook',
+          },
+        })
+      );
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('does not fail endpoint creation when injected event sink fails', async () => {
+    const restoreRuntime = setRuntime('open');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const notificationEventSink = { record: vi.fn().mockRejectedValue(new Error('sink failed')) };
+
+    try {
+      const response = await createNotificationsApp({ notificationEventSink }).request(
+        '/notifications/endpoints',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            endpoint_name: 'Best effort webhook',
+            endpoint_type: 'webhook',
+            config: { url: 'https://example.test/webhook' },
+            subscribed_events: ['order.created'],
+          }),
+        }
+      );
+
+      expect(response.status).toBe(201);
+      expect(mocks.notification.createEndpointForRuntimeScope).toHaveBeenCalledTimes(1);
+      expect(notificationEventSink.record).toHaveBeenCalledTimes(1);
+    } finally {
+      warnSpy.mockRestore();
       restoreRuntime();
     }
   });
@@ -546,6 +665,46 @@ describe('notifications route runtime context resolution', () => {
         runtimeScope(DEFAULT_OPEN_ORGANIZATION_ID)
       );
       expect(mocks.notification.testEndpoint).not.toHaveBeenCalled();
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('records endpoint test identifiers after a successful test operation', async () => {
+    const restoreRuntime = setRuntime('open');
+    const notificationEventSink = { record: vi.fn() };
+    mocks.notification.getEndpointForRuntimeScope.mockResolvedValueOnce({
+      id: 'endpoint-1',
+      endpoint_name: 'Tested webhook',
+      endpoint_type: 'webhook',
+    });
+
+    try {
+      const response = await createNotificationsApp({ notificationEventSink }).request(
+        '/notifications/endpoints/endpoint-1/test',
+        {
+          method: 'POST',
+          headers: { 'x-request-id': 'request-test-123' },
+        }
+      );
+
+      expect(response.status).toBe(200);
+      expect(notificationEventSink.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'notification.endpoint.tested',
+          operation: 'test_endpoint',
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+          actor: { type: 'operator', id: 'test-user' },
+          requestId: 'request-test-123',
+          source: 'apps/api',
+          endpoint: {
+            id: 'endpoint-1',
+            name: 'Tested webhook',
+            type: 'webhook',
+          },
+          test: { success: true },
+        })
+      );
     } finally {
       restoreRuntime();
     }

@@ -9,6 +9,13 @@ import { getManager } from '../manager-instance.js';
 import { getAuth } from '../auth-instance.js';
 import { createAuthMiddleware, requirePermission } from '@payin/auth';
 import {
+  allowAllNotificationPolicy,
+  noOpNotificationEventSink,
+  type NotificationEventSink,
+  type NotificationPolicy,
+  type NotificationPolicyRequest,
+} from '../notification-seam.js';
+import {
   organizationContextRequiredMessage,
   organizationContextRequiredPayload,
   resolveRuntimeContext as defaultResolveRuntimeContext,
@@ -26,6 +33,8 @@ export interface NotificationsRouteDependencies {
   requirePermission?: typeof requirePermission;
   resolveRuntimeContext?: typeof defaultResolveRuntimeContext;
   organizationContextRequiredMessage?: typeof organizationContextRequiredMessage;
+  notificationPolicy?: NotificationPolicy;
+  notificationEventSink?: NotificationEventSink;
 }
 
 export function createNotificationsRoutes(deps: NotificationsRouteDependencies = {}) {
@@ -39,6 +48,8 @@ export function createNotificationsRoutes(deps: NotificationsRouteDependencies =
   const resolveRuntimeContext = deps.resolveRuntimeContext ?? defaultResolveRuntimeContext;
   const getOrganizationContextRequiredMessage =
     deps.organizationContextRequiredMessage ?? organizationContextRequiredMessage;
+  const notificationPolicy = deps.notificationPolicy ?? allowAllNotificationPolicy;
+  const notificationEventSink = deps.notificationEventSink ?? noOpNotificationEventSink;
 
   // Lazy auth middleware - only gets Auth instance when request comes in
   const authMiddleware = () => {
@@ -55,6 +66,21 @@ export function createNotificationsRoutes(deps: NotificationsRouteDependencies =
         message: getOrganizationContextRequiredMessage(),
       },
       401
+    );
+
+  const policyDeniedResponse = (
+    c: Context,
+    decision: Awaited<ReturnType<NotificationPolicy['check']>>
+  ) =>
+    c.json(
+      {
+        success: false,
+        error: 'Notification operation not allowed',
+        code: decision.code ?? 'NOTIFICATION_OPERATION_NOT_ALLOWED',
+        message: decision.message ?? 'Notification operation is not allowed for this request.',
+        suggestions: ['Review the request context and try again if it is valid'],
+      },
+      decision.status ?? 403
     );
 
   // ==================== Endpoints CRUD ====================
@@ -99,7 +125,37 @@ export function createNotificationsRoutes(deps: NotificationsRouteDependencies =
         }
 
         const body = await c.req.json();
+        const policyDecision = await notificationPolicy.check({
+          runtimeContext,
+          operation: 'create_endpoint',
+          request: body as NotificationPolicyRequest,
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         const endpoint = await notification.createEndpointForRuntimeScope(runtimeContext, body);
+
+        try {
+          await notificationEventSink.record({
+            name: 'notification.endpoint.created',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'create_endpoint',
+            endpoint: {
+              id: endpoint?.id,
+              name: endpoint?.endpoint_name ?? body.endpoint_name,
+              type: endpoint?.endpoint_type ?? body.endpoint_type,
+            },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record notification-endpoint-created event:', eventError);
+        }
+
         return c.json(endpoint, 201);
       } catch (error) {
         return c.json(
@@ -317,7 +373,39 @@ export function createNotificationsRoutes(deps: NotificationsRouteDependencies =
           return c.json({ error: 'Endpoint not found' }, 404);
         }
 
+        const policyDecision = await notificationPolicy.check({
+          runtimeContext,
+          operation: 'test_endpoint',
+          endpointId: id,
+          request: {},
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         const success = await notification.testEndpointForRuntimeScope(id, runtimeContext);
+
+        try {
+          await notificationEventSink.record({
+            name: 'notification.endpoint.tested',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'test_endpoint',
+            endpoint: {
+              id,
+              name: existing?.endpoint_name,
+              type: existing?.endpoint_type,
+            },
+            test: { success },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record notification-endpoint-tested event:', eventError);
+        }
+
         return c.json({ success });
       } catch (error) {
         return c.json(
@@ -447,7 +535,37 @@ export function createNotificationsRoutes(deps: NotificationsRouteDependencies =
           return c.json({ error: 'Notification log not found' }, 404);
         }
 
+        const policyDecision = await notificationPolicy.check({
+          runtimeContext,
+          operation: 'retry_notification',
+          endpointId: log.endpoint_id,
+          request: { logId: id },
+        });
+
+        if (!policyDecision.allowed) {
+          return policyDeniedResponse(c, policyDecision);
+        }
+
         await notification.retryNotification(id);
+
+        try {
+          await notificationEventSink.record({
+            name: 'notification.retry.requested',
+            occurredAt: new Date().toISOString(),
+            paymentScope: runtimeContext.paymentScope,
+            actor: runtimeContext.actor,
+            requestId: runtimeContext.requestId,
+            source: runtimeContext.source,
+            operation: 'retry_notification',
+            endpoint: {
+              id: log.endpoint_id,
+            },
+            notificationLog: { id },
+          });
+        } catch (eventError) {
+          console.warn('Failed to record notification-retry-requested event:', eventError);
+        }
+
         return c.json({ success: true });
       } catch (error) {
         return c.json(
