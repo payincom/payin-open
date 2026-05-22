@@ -11,6 +11,7 @@ import { createAuthMiddleware, createAuditMiddleware, requirePermission } from '
 import { buildDepositPageUrl, getBaseUrl } from '../utils/url-builder.js';
 import {
   organizationContextRequiredMessage,
+  organizationContextRequiredPayload,
   resolveRuntimeContext as defaultResolveRuntimeContext,
 } from '../open-runtime.js';
 
@@ -53,14 +54,8 @@ export function createDepositsRoutes(deps: DepositsRouteDependencies = {}) {
   const organizationContextRequiredResponse = (c: Context) =>
     c.json(
       {
-        success: false,
-        error: 'Authorization failed',
-        code: 'ORGANIZATION_CONTEXT_REQUIRED',
+        ...organizationContextRequiredPayload(),
         message: getOrganizationContextRequiredMessage(),
-        suggestions: [
-          'In PayIn Open, verify the default merchant bootstrap completed successfully',
-          'In hosted Cloud mode, include the X-Organization-Id header or use an organization-scoped API key',
-        ],
       },
       401
     );

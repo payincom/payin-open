@@ -10,7 +10,7 @@ PayIn also has an external operator CLI (`payin`) maintained at https://github.c
 
 In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations` and `/api/v1/config-management` are intentionally hidden. Use the Open single-merchant API plus the Agent/operator commands below instead.
 
-API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open default merchant. Operators should not pass or choose an organization id.
+API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open default merchant. Business API-key calls should not pass `X-Organization-Id` or choose an organization id. JWT operator calls made after the first `/auth/register` bootstrap should pass the Open merchant id until the workflow switches to API keys.
 
 ## Safety Model
 
@@ -92,7 +92,7 @@ npm run open:init
 npm run open:init -- --demo-data
 ```
 
-Normal `open:init` is idempotent and does not drop Auth, Manager, or Processor data. It also does not create a default username/password; register the first local operator through `/auth/register` after init, then public registration locks.
+Normal `open:init` is idempotent and does not drop Auth, Manager, or Processor data. It prepares the default Open merchant scope but does not create a default username/password or implicit login; register the first local operator through `/auth/register` after init, then public registration locks.
 
 Destructive reset is guarded and should not be used in production without explicit human approval. It still uses the Open-safe path: schemas are reset, but no `admin` / `admin123` or implicit operator is created, so first-operator bootstrap remains `/auth/register`:
 

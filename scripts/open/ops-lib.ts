@@ -68,7 +68,7 @@ export function collectOpenRuntimePostureChecks(options: {
     {
       id: 'auth.api-key-scope',
       status: 'pass',
-      message: 'Business API key calls use the key-bound merchant scope; do not send X-Organization-ID.',
+      message: 'Business API key calls use the key-bound merchant scope; do not send X-Organization-Id.',
     },
     {
       id: 'auth.jwt-operator-caveat',

@@ -136,10 +136,39 @@ export function openRuntimeAuthContextMiddleware(env: NodeJS.ProcessEnv = proces
 
 export function organizationContextRequiredMessage(env: NodeJS.ProcessEnv = process.env): string {
   if (isOpenRuntime(env)) {
-    return 'Open runtime could not resolve the default merchant context. Check PAYIN_OPEN_ORGANIZATION_ID or database bootstrap.';
+    return 'PayIn Open could not resolve a verified merchant context for this request. Business API-key calls are scoped automatically; JWT operator calls must send the bootstrapped Open merchant id until you switch to API keys.';
   }
 
   return 'Organization context is required for hosted multi-tenant operations.';
+}
+
+export function organizationContextRequiredSuggestions(
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  if (isOpenRuntime(env)) {
+    const openMerchantId = getOpenRuntimeOrganizationId(env);
+
+    return [
+      'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
+      `For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: ${openMerchantId} until you switch to API-key auth.`,
+      'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
+    ];
+  }
+
+  return [
+    'In hosted Cloud mode, include X-Organization-Id for the target tenant or use an organization-scoped API key.',
+    'Confirm the authenticated user or API key belongs to that hosted organization.',
+  ];
+}
+
+export function organizationContextRequiredPayload(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    success: false,
+    error: 'Authorization failed',
+    code: 'ORGANIZATION_CONTEXT_REQUIRED',
+    message: organizationContextRequiredMessage(env),
+    suggestions: organizationContextRequiredSuggestions(env),
+  };
 }
 
 export function cloudOnlyRouteDisabledPayload(routeName: string) {

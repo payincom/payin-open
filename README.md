@@ -100,7 +100,7 @@ In another terminal, verify the live API:
 npm run open:smoke -- --url http://localhost:3000
 ```
 
-For a live order smoke test, register the first local Open operator, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator; JWT operator requests should include `X-Organization-Id: 00000000-0000-0000-0000-000000000001` (or your `PAYIN_OPEN_ORGANIZATION_ID`) until you switch to API-key auth:
+For a live order smoke test, first run `open:init` (it creates no default login), register the first local Open operator through `/auth/register`, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator. JWT operator requests should include `X-Organization-Id: 00000000-0000-0000-0000-000000000001` (or your `PAYIN_OPEN_ORGANIZATION_ID`) until you switch to API-key auth; business API-key calls should not send `X-Organization-Id` because API keys auto-scope to the Open merchant:
 
 ```bash
 npm run open:smoke -- \

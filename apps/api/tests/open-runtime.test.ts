@@ -6,6 +6,8 @@ import {
   injectOpenRuntimeAuthContext,
   isOpenRuntime,
   organizationContextRequiredMessage,
+  organizationContextRequiredPayload,
+  organizationContextRequiredSuggestions,
   resolveBusinessOrganizationId,
   resolveBusinessPaymentScope,
   resolveRuntimeContext,
@@ -89,15 +91,38 @@ describe('Open runtime API context', () => {
     });
   });
 
+  it('describes Open organization-context recovery without hosted organization management', () => {
+    const env = {
+      PAYIN_RUNTIME: 'open',
+      PAYIN_OPEN_ORGANIZATION_ID: '44444444-4444-4444-4444-444444444444',
+    } as any;
+
+    expect(organizationContextRequiredMessage(env)).toContain('Business API-key calls');
+    expect(organizationContextRequiredMessage(env)).toContain('JWT operator calls');
+    expect(organizationContextRequiredSuggestions(env)).toEqual([
+      'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
+      'For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: 44444444-4444-4444-4444-444444444444 until you switch to API-key auth.',
+      'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
+    ]);
+    expect(organizationContextRequiredPayload(env)).toMatchObject({
+      code: 'ORGANIZATION_CONTEXT_REQUIRED',
+      suggestions: expect.arrayContaining([expect.stringContaining('/auth/register')]),
+    });
+    expect(organizationContextRequiredPayload(env).message).not.toContain('hosted organization');
+  });
+
   it('does not inject default context in Cloud runtime', () => {
     const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), {
       PAYIN_RUNTIME: 'cloud',
     } as any);
 
     expect(org).toBeUndefined();
-    expect(organizationContextRequiredMessage({ PAYIN_RUNTIME: 'cloud' } as any)).toContain(
-      'hosted multi-tenant'
-    );
+    const cloudEnv = { PAYIN_RUNTIME: 'cloud' } as any;
+    expect(organizationContextRequiredMessage(cloudEnv)).toContain('hosted multi-tenant');
+    expect(organizationContextRequiredSuggestions(cloudEnv)).toEqual([
+      'In hosted Cloud mode, include X-Organization-Id for the target tenant or use an organization-scoped API key.',
+      'Confirm the authenticated user or API key belongs to that hosted organization.',
+    ]);
   });
 
   it('does not grant default owner authorization to arbitrary JWT users in Open runtime', () => {

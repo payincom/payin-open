@@ -128,7 +128,7 @@ describe('PayIn Open ops library', () => {
       expect.objectContaining({
         id: 'auth.api-key-scope',
         status: 'pass',
-        message: expect.stringContaining('do not send X-Organization-ID'),
+        message: expect.stringContaining('do not send X-Organization-Id'),
       }),
       expect.objectContaining({
         id: 'auth.jwt-operator-caveat',
