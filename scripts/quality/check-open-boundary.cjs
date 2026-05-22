@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = process.cwd();
-const ignoredDirs = new Set(['.git', 'node_modules', 'dist', '.vitepress/cache', '.vitepress/dist']);
+const ignoredDirs = new Set(['.git', '.apcp', 'node_modules', 'dist', '.vitepress/cache', '.vitepress/dist']);
 const textExtensions = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.cjs', '.mjs', '.json', '.md', '.yml', '.yaml', '.toml', '.env', '.example', '.sh', '.txt'
 ]);

@@ -150,10 +150,12 @@ echo "2. Initialize database schema:"
 if [ "$ENVIRONMENT" = "production" ]; then
     echo "   export DB_CONNECTION_STRING=\$(railway variables --service $SERVICE_NAME --json | grep -o '\"DATABASE_URL\":\"[^\"]*\"' | cut -d'\"' -f4)"
     echo "   export NODE_ENV=production"
-    echo "   npm run db:init"
+    echo "   export PAYIN_RUNTIME=open"
+    echo "   npm run open:init"
 else
     echo "   export DB_CONNECTION_STRING=\$(railway variables --service $SERVICE_NAME --json | grep -o '\"DATABASE_URL\":\"[^\"]*\"' | cut -d'\"' -f4)"
-    echo "   npm run db:init:demo"
+    echo "   export PAYIN_RUNTIME=open"
+    echo "   npm run open:init -- --demo-data"
 fi
 echo ""
 echo "3. Deploy your application:"

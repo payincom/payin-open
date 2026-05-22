@@ -36,15 +36,14 @@ Start with testnet to familiarize yourself with PayIn before handling real trans
 
 ### Authentication
 
-All API requests require authentication using an API key obtained from the PayIn Admin dashboard.
+All API requests require authentication using an API key created by your PayIn Open operator flow.
 
 #### Getting Your API Key
 
-1. Log in to [your-payin.example.com](https://your-payin.example.com) (or your-payin.example.com for mainnet)
-2. Navigate to **Settings** → **API Keys**
-3. Click **Create API Key**
-4. Enter a descriptive name (e.g., "Production Server Key")
-5. Copy the generated key (format: `pk_xxxxxxxxxxxxx`)
+1. Register the first local operator after `open:init`.
+2. Create an API key through the Open API or operator automation.
+3. Use a descriptive name such as `production-server-key`.
+4. Copy the generated key (format: `pk_xxxxxxxxxxxxx`).
 
 ::: warning Save Your API Key
 API keys are only shown once during creation. Store it securely - you cannot retrieve it later.
@@ -1068,10 +1067,7 @@ Webhooks are the recommended way to receive real-time payment notifications.
 
 ### Setting Up Webhooks
 
-1. Configure webhook URL in Admin dashboard: **Settings** → **Webhooks**
-2. Enter your endpoint URL (must be HTTPS)
-3. Copy the webhook secret for signature verification
-4. Select events to receive
+Register delivery endpoints through `POST /api/v1/notifications/endpoints` with `endpoint_type: "webhook"`, your HTTPS URL, webhook secret, and subscribed events. Manage them through `GET/PUT/DELETE /api/v1/notifications/endpoints/:id` and test delivery with `POST /api/v1/notifications/endpoints/:id/test`. The documented compatibility alias `/api/v1/notifications/webhooks` maps to the same endpoint records.
 
 ### Event Types
 
@@ -1386,7 +1382,7 @@ ngrok http 3000
 # Your webhook URL becomes:
 # https://abc123.ngrok.io/webhooks/payin
 
-# Configure this URL in PayIn Admin dashboard
+# Register this URL with /api/v1/notifications/endpoints
 ```
 
 ### Test Scenarios

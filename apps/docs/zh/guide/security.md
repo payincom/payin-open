@@ -58,7 +58,7 @@ PAYIN_MAINNET_KEY=pk_live_xyz789...
 **零停机轮换：**
 
 ```bash
-# 步骤 1：在 PayIn 管理后台创建新的 API 密钥
+# 步骤 1：通过 Open operator API/CLI 创建新的 API 密钥
 NEW_KEY=pk_live_new123...
 
 # 步骤 2：更新环境变量（暂时保留旧密钥）
@@ -71,7 +71,7 @@ PAYIN_API_KEY_OLD=$OLD_KEY
 # 步骤 4：24 小时后验证新密钥正常工作
 # 检查日志中是否有使用旧密钥的情况
 
-# 步骤 5：从 PayIn 管理后台删除旧密钥
+# 步骤 5：通过 Open operator API/CLI 删除旧密钥
 ```
 
 **实现代码：**
@@ -119,7 +119,7 @@ PayIn 使用基于角色的访问控制：
 - ✅ 创建具有最小必要权限的密钥
 - ✅ 为读取和写入操作使用单独的密钥
 - ✅ 每个服务/应用程序使用一个密钥
-- ✅ 在管理后台监控密钥使用情况
+- ✅ 通过日志、指标或自托管 operator 工具监控密钥使用情况
 
 ### 监控密钥使用
 
@@ -401,10 +401,10 @@ async function verifyAddress(address: string, protocol: string) {
 
 ```typescript
 // ❌ 错误：HTTP 端点
-const API_BASE = 'http://api.payin.com'; // 不安全
+const API_BASE = 'http://<your-payin-open-api>'; // 不安全
 
 // ✅ 正确：HTTPS 端点
-const API_BASE = 'https://api.payin.com'; // 安全
+const API_BASE = 'https://<your-payin-open-api>'; // 安全
 ```
 
 **要求：**
@@ -464,11 +464,7 @@ if (!checkPermission(user, 'orders:create')) {
 
 ### 多因素认证（MFA）
 
-为 PayIn 管理后台启用 MFA：
-1. 导航到 **设置** → **安全**
-2. 启用 **双因素认证**
-3. 使用身份验证应用扫描二维码（Google Authenticator、Authy）
-4. 安全保存备份代码
+对于 PayIn Open，请使用身份提供商、VPN 或部署平台 MFA 保护 operator 访问。如果使用 PayIn Cloud，请在 **设置** → **安全** 中启用仪表板 MFA。
 
 **强制执行 MFA：**
 - ✅ 所有所有者账户

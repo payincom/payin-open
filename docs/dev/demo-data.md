@@ -15,14 +15,14 @@ Demo data is useful for trying API examples, payment links, Agent-operated setup
 
 ```bash
 export DB_CONNECTION_STRING="postgresql://USER:PASSWORD@HOST:5432/DB_NAME"
-npm run db:init:demo
+npm run open:init -- --demo-data
 ```
 
 If you need to force reinitialization in a disposable environment only:
 
 ```bash
 export DB_CONNECTION_STRING="postgresql://USER:PASSWORD@HOST:5432/DB_NAME"
-npm run db:init:full
+npm run open:init -- --force --demo-data
 ```
 
 ## Verify Target Database
@@ -41,7 +41,7 @@ Example checklist:
 1. Initialize schema and demo data.
 2. Start the PayIn Open API service.
 3. Run `npm run open:doctor` and `npm run open:smoke -- --url <api-url>`.
-4. Confirm the default Open merchant scope and API key exist.
+4. Confirm the default Open merchant scope exists, then register the first local operator and create a sandbox API key.
 5. Import a small test address pool.
 6. Create a test order or payment link through the API or Agent workflow.
 7. Verify the payment page renders.

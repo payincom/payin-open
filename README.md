@@ -111,6 +111,22 @@ npm run open:smoke -- \
   --currency USDC
 ```
 
+
+## Docker Compose: Self-hosted Open
+
+`docker-compose.yml` starts PostgreSQL plus the API image built from the repository `Dockerfile`. Initialize the database explicitly before starting the API container:
+
+```bash
+export JWT_SECRET="$(openssl rand -base64 32)"
+export WEBHOOK_SECRET="$(openssl rand -base64 32)"
+docker compose up -d postgres
+DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" PAYIN_RUNTIME=open npm run open:init -- --check
+DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" PAYIN_RUNTIME=open npm run open:init
+docker compose up -d api
+```
+
+The compose API service sets `PAYIN_RUNTIME=open` and uses `DB_CONNECTION_STRING`, `JWT_SECRET`, and `WEBHOOK_SECRET`; do not use legacy `INIT_DB` container startup hooks.
+
 PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, the PayIn operator CLI, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
 
 The PayIn CLI is maintained separately at https://github.com/payincom/payin-cli. It is an operations client, not an installer. Use docs/templates/infra tools to deploy Open or Cloud, then use `payin` for diagnostics, smoke checks, API keys, address pools, webhooks, and runtime operations. Until the npm package is published, run it from GitHub:
@@ -130,7 +146,7 @@ npm exec --yes --package github:payincom/payin-cli -- payin --help # Run the Pay
 npm run build          # Build packages and apps
 npm run test           # Run tests
 npm run lint:check     # Check linting
-npm run db:migrate:up  # Run database migrations
+npm run open:init     # Initialize Open schema and default merchant scope
 ```
 
 ## RPC Defaults

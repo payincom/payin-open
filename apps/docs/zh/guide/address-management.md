@@ -131,7 +131,7 @@ PayIn 支持两种地址管理方式，以适应不同的安全模型和操作�
 1. 生成 BIP39 助记词（12 或 24 个单词）
 2. 使用 PayIn 地址工具从助记词派生地址
 3. 导出地址到 CSV（包括派生索引）
-4. 通过 Admin UI 将 CSV 导入 PayIn
+4. 通过操作员 API/CLI 或您自建的自托管控制台将 CSV 导入 PayIn
 5. PayIn 从池中分配地址
 
 **派生路径**：
@@ -171,7 +171,7 @@ Solana 使用带强化派生的 Ed25519 加密（SLIP-0010），这意味着：
 
 1. 使用钱包软件生成地址
 2. 导出为 CSV 格式
-3. 通过 Admin UI 或 API 将 CSV 导入 PayIn
+3. 通过操作员 API/CLI 或您自建的自托管控制台将 CSV 导入 PayIn
 4. PayIn 从池中分配地址
 
 **CSV 格式**：
@@ -352,40 +352,31 @@ Derivation Path: m/44'/60'/0'/0/0
 
 ## 将地址导入 PayIn
 
-生成地址后，通过 Admin UI 或 API 将其导入 PayIn 的地址池。
+生成地址后，通过操作员 API/CLI 将其导入 PayIn 的地址池，或通过您基于这些 API 自建的自托管控制台导入。
 
-### 通过 Admin UI 导入（推荐）
+### 通过操作员 API/CLI 导入（推荐）
 
-Admin UI 提供用户友好的界面，可进行验证导入。
+PayIn Open 不随附 `apps/admin` 控制台。请直接使用地址池导入 API/CLI，或将相同操作接入您自建的自托管控制台。
 
 **分步指南**：
 
-1. **登录 PayIn Admin**
-   - 导航到 [your-payin.example.com](https://your-payin.example.com) 或您的 PayIn 实例
-   - 使用您的账户登录
+1. **以操作员身份认证**
+   - 使用具有 `admin` 或 `owner` 角色的 API Key
+   - 将 CLI 或脚本指向您的 PayIn Open API 地址
 
-2. **导航到地址池**
-   - 点击侧边栏中的**"Address Pool"**
-   - 您将看到当前池统计信息
+2. **准备导入请求**
+   - 在请求或 CLI 参数中选择目标组织和协议
+   - 不要把协议选择写入 CSV 文件
 
-3. **开始导入**
-   - 点击**"Import Addresses"**按钮
-   - 导入对话框打开
+3. **选择导入模式**
+   - 如果 CSV 包含 `derivation_index` 和 `master_public_key`，使用 **HD Wallet Import**
+   - 对于来自外部钱包的地址，使用 **Self-Managed Import**
 
-4. **选择导入模式**
-   ```
-   ○ HD Wallet Import (Recommended)
-   ○ Self-Managed Import
-   ```
-   - 如果您的 CSV 包含 `derivation_index` 和 `master_public_key`，选择 **HD Wallet Import**
-   - 对于来自外部钱包的地址，选择 **Self-Managed Import**
+4. **提交 CSV 内容**
+   - 将导出的 CSV 发送到地址池导入端点或 CLI 命令
+   - 等待验证完成
 
-5. **上传 CSV 文件**
-   - 点击**"Choose File"**或拖放
-   - 选择您导出的 CSV 文件
-   - 等待文件验证
-
-6. **审查并确认**
+5. **查看结果**
    ```
    Import Summary:
    - Protocol: EVM
@@ -398,10 +389,9 @@ Admin UI 提供用户友好的界面，可进行验证导入。
    ✓ Format validation passed
    ```
 
-7. **开始导入**
-   - 点击**"Import"**
-   - 进度条显示导入状态
-   - 完成后接收确认
+6. **确认导入完成**
+   - 如果工作流返回导入任务/结果 ID，请保存它
+   - 确认已导入数量和重复跳过数量
 
 ::: tip 重复处理
 PayIn 在导入期间自动跳过重复地址。如果地址已存在于池中，则不会再次导入。
@@ -529,7 +519,7 @@ npm start
 # 生成：start=2000, count=1000
 # 导出：evm-batch-3.csv
 
-# 通过 Admin UI 导入每个批次
+# 通过操作员 API/CLI 导入每个批次
 ```
 
 ## 地址生命周期管理
@@ -764,13 +754,13 @@ console.log('Pool Status:', status);
 }
 ```
 
-### Admin UI 仪表板
+### 池监控
 
-Admin UI 提供可视化池监控：
+通过操作员 API/CLI、指标系统或您为操作员自建的控制台监控地址池：
 
-1. **导航到地址池**
-   - 查看实时统计信息
-   - 查看地址分配图表
+1. **查询地址池统计**
+   - 获取实时统计信息
+   - 将分配数据接入您的观测系统或控制台
 
 2. **池健康指标**
    ```
@@ -810,9 +800,9 @@ Admin UI 提供可视化池监控：
 
 配置警报，在池库存不足时通知您。
 
-**Admin UI 配置**：
+**操作员配置**：
 
-1. **导航到设置 → 地址池**
+1. **配置地址池设置**
 2. **设置警报阈值**：
    ```
    库存不足警报：
@@ -848,7 +838,7 @@ Admin UI 提供可视化池监控：
 
 建议操作：
 1. 使用 PayIn 地址工具生成 1,000+ 个新地址
-2. 通过 Admin UI 导入地址
+2. 通过操作员 API/CLI 导入地址
 3. 检查分配模式
 
 查看详情：https://your-payin.example.com/address-pool
@@ -1016,10 +1006,10 @@ if (errors === 0) {
 
 ### 导入流程
 
-**通过 Admin UI**：
+**通过操作员 API/CLI**：
 
-1. 导航到**地址池 → 导入地址**
-2. 选择**"Self-Managed Import"**
+1. 调用地址池导入端点或 CLI 命令
+2. 将导入模式设为 **"Self-Managed Import"**
 3. 上传 CSV 文件
 4. 审查导入摘要
 5. 确认导入
@@ -1480,9 +1470,9 @@ echo "your mnemonic words here" | wc -w
    - 检查 HTTP 状态码
    - 查找详细错误消息
 
-2. **Admin UI 诊断**：
-   - 导航到地址池
-   - 检查 "Pool Health" 选项卡
+2. **操作员诊断**：
+   - 通过 API/CLI 查询地址池状态
+   - 检查池健康指标
    - 审查最近的活动日志
 
 3. **联系支持**：
@@ -1505,7 +1495,7 @@ echo "your mnemonic words here" | wc -w
 
 ### API 参考
 
-- [地址池 API](/zh/api/address-pool) - 完整 API 文档
+- [API 概览](/zh/api/overview) - 可用 API surface，包括地址池端点
 - [订单 API](/zh/api/orders) - 订单如何分配地址
 - [充值 API](/zh/api/deposits) - 充值如何绑定地址
 
@@ -1517,7 +1507,7 @@ echo "your mnemonic words here" | wc -w
 
 ### 工具
 
-- [Admin 仪表板](/zh/guide/admin-dashboard) - 可视化地址池管理
+- [地址池设置](/zh/guide/address-pool-setup) - Headless 地址池准备与导入流程
 - [CLI 工具](/zh/guide/cli-tools) - 命令行地址管理
 
 ## 总结
@@ -1543,8 +1533,8 @@ echo "your mnemonic words here" | wc -w
 | 任务 | 工具/方法 | 所需时间 |
 |------|------------|---------------|
 | 生成 1000 个地址 | PayIn 地址工具 | ~2 分钟 |
-| 导入地址 | Admin UI 或 API | ~1 分钟 |
-| 检查池状态 | Admin UI 或 API | 即时 |
+| 导入地址 | 操作员 API/CLI | ~1 分钟 |
+| 检查池状态 | 操作员 API/CLI | 即时 |
 | 分配地址 | 自动（API 调用） | < 100ms |
 | 释放地址 | 自动（订单完成） | < 100ms |
 

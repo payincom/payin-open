@@ -131,7 +131,7 @@ We strongly recommend **HD Wallet Mode** for most use cases. It provides better 
 1. Generate a BIP39 mnemonic phrase (12 or 24 words)
 2. Use PayIn Address Tool to derive addresses from the mnemonic
 3. Export addresses to CSV (includes derivation index)
-4. Import CSV to PayIn via Admin UI
+4. Import CSV to PayIn via the operator API/CLI or your self-hosted console
 5. PayIn assigns addresses from the pool
 
 **Derivation Paths**:
@@ -171,7 +171,7 @@ This is a fundamental cryptographic property of Ed25519, not a limitation of Pay
 
 1. Generate addresses using your wallet software
 2. Export to CSV format
-3. Import CSV to PayIn via Admin UI or API
+3. Import CSV to PayIn via the operator API/CLI or your self-hosted console
 4. PayIn assigns addresses from the pool
 
 **CSV Format**:
@@ -352,40 +352,31 @@ Derivation Path: m/44'/60'/0'/0/0
 
 ## Importing Addresses to PayIn
 
-After generating addresses, import them into PayIn's address pool via the Admin UI or API.
+After generating addresses, import them into PayIn's address pool via the operator API/CLI, or through a self-hosted console you build on top of those APIs.
 
-### Import via Admin UI (Recommended)
+### Import via Operator API/CLI (Recommended)
 
-The Admin UI provides a user-friendly interface for importing addresses with validation.
+PayIn Open does not ship an `apps/admin` console. Use the address-pool import API/CLI directly, or wire these same operations into your own self-hosted console.
 
 **Step-by-Step**:
 
-1. **Login to PayIn Admin**
-   - Navigate to [your-payin.example.com](https://your-payin.example.com) or your PayIn instance
-   - Login with your account
+1. **Authenticate as an operator**
+   - Use an API key with `admin` or `owner` role
+   - Point your CLI or script at your PayIn Open API base URL
 
-2. **Navigate to Address Pool**
-   - Click **"Address Pool"** in the sidebar
-   - You'll see current pool statistics
+2. **Prepare the import request**
+   - Select the target organization and protocol in your request or CLI flags
+   - Keep protocol selection outside the CSV file
 
-3. **Start Import**
-   - Click **"Import Addresses"** button
-   - Import dialog opens
+3. **Select Import Mode**
+   - Use **HD Wallet Import** if your CSV includes `derivation_index` and `master_public_key`
+   - Use **Self-Managed Import** for addresses from external wallets
 
-4. **Select Import Mode**
-   ```
-   ○ HD Wallet Import (Recommended)
-   ○ Self-Managed Import
-   ```
-   - Choose **HD Wallet Import** if your CSV includes `derivation_index` and `master_public_key`
-   - Choose **Self-Managed Import** for addresses from external wallets
+4. **Submit CSV Content**
+   - Send the exported CSV to the address-pool import endpoint or CLI command
+   - Wait for validation to complete
 
-5. **Upload CSV File**
-   - Click **"Choose File"** or drag-and-drop
-   - Select your exported CSV file
-   - Wait for file validation
-
-6. **Review and Confirm**
+5. **Review the Result**
    ```
    Import Summary:
    - Protocol: EVM
@@ -398,10 +389,9 @@ The Admin UI provides a user-friendly interface for importing addresses with val
    ✓ Format validation passed
    ```
 
-7. **Start Import**
-   - Click **"Import"**
-   - Progress bar shows import status
-   - Receive confirmation when complete
+6. **Confirm Import Completion**
+   - Store the import job/result ID if your workflow returns one
+   - Confirm the imported address count and duplicate-skip count
 
 ::: tip Duplicate Handling
 PayIn automatically skips duplicate addresses during import. If an address already exists in the pool, it won't be imported again.
@@ -529,7 +519,7 @@ npm start
 # Generate: start=2000, count=1000
 # Export: evm-batch-3.csv
 
-# Import each batch via Admin UI
+# Import each batch via operator API/CLI
 ```
 
 ## Address Lifecycle Management
@@ -764,13 +754,13 @@ console.log('Pool Status:', status);
 }
 ```
 
-### Admin UI Dashboard
+### Pool Monitoring
 
-The Admin UI provides visual pool monitoring:
+Monitor the pool through the operator API/CLI, metrics, or a self-hosted console you build for your operators:
 
-1. **Navigate to Address Pool**
-   - See real-time statistics
-   - View address allocation chart
+1. **Query Address Pool Stats**
+   - Retrieve real-time statistics
+   - Feed allocation data into your observability stack or console
 
 2. **Pool Health Indicators**
    ```
@@ -810,10 +800,10 @@ The Admin UI provides visual pool monitoring:
 
 Configure alerts to notify you when pool inventory is low.
 
-**Admin UI Configuration**:
+**Operator Configuration**:
 
-1. **Navigate to Settings → Address Pool**
-2. **Set Alert Thresholds**:
+1. **Configure Address Pool Settings**
+2. **Set Alert Thresholds through config/API**:
    ```
    Low Inventory Alert:
    ┌─────────────────────────────────┐
@@ -848,7 +838,7 @@ Current Status:
 
 Recommended Actions:
 1. Generate 1,000+ new addresses using PayIn Address Tool
-2. Import addresses via Admin UI
+2. Import addresses via operator API/CLI
 3. Review allocation patterns
 
 View Details: https://your-payin.example.com/address-pool
@@ -1016,13 +1006,13 @@ if (errors === 0) {
 
 ### Import Process
 
-**Via Admin UI**:
+**Via Operator API/CLI**:
 
-1. Navigate to **Address Pool → Import Addresses**
-2. Select **"Self-Managed Import"**
-3. Upload CSV file
-4. Review import summary
-5. Confirm import
+1. Call the address-pool import endpoint or CLI command
+2. Set import mode to **"Self-Managed Import"**
+3. Submit the CSV file or CSV content
+4. Review the import summary
+5. Confirm imported and skipped counts
 
 **Via API**:
 
@@ -1480,9 +1470,9 @@ If you encounter issues not covered here:
    - Check HTTP status codes
    - Look for detailed error messages
 
-2. **Admin UI Diagnostics**:
-   - Navigate to Address Pool
-   - Check "Pool Health" tab
+2. **Operator Diagnostics**:
+   - Query address-pool status through the API/CLI
+   - Check pool-health metrics
    - Review recent activity logs
 
 3. **Contact Support**:
@@ -1505,7 +1495,7 @@ Now that you understand address management, explore these related topics:
 
 ### API References
 
-- [Address Pool API](/en/api/address-pool) - Complete API documentation
+- [API Overview](/en/api/overview) - Available API surface, including address-pool endpoints
 - [Orders API](/en/api/orders) - How orders allocate addresses
 - [Deposits API](/en/api/deposits) - How deposits bind addresses
 
@@ -1517,7 +1507,7 @@ Now that you understand address management, explore these related topics:
 
 ### Tools
 
-- [Admin Dashboard](/en/guide/admin-dashboard) - Visual address pool management
+- [Address Pool Setup](/en/guide/address-pool-setup) - Headless address pool preparation and import workflow
 - [CLI Tools](/en/guide/cli-tools) - Command-line address management
 
 ## Summary
@@ -1543,8 +1533,8 @@ Now that you understand address management, explore these related topics:
 | Task | Tool/Method | Time Required |
 |------|------------|---------------|
 | Generate 1000 addresses | PayIn Address Tool | ~2 minutes |
-| Import addresses | Admin UI or API | ~1 minute |
-| Check pool status | Admin UI or API | Instant |
+| Import addresses | Operator API/CLI | ~1 minute |
+| Check pool status | Operator API/CLI | Instant |
 | Allocate address | Automatic (API call) | < 100ms |
 | Release address | Automatic (order completion) | < 100ms |
 

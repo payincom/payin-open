@@ -39,7 +39,7 @@
 在创建订单之前，请确保您已：
 
 1. ✅ **PayIn 账户** - 在 [your-payin.example.com](https://your-payin.example.com) 或 [your-payin.example.com](https://your-payin.example.com) 注册
-2. ✅ **API 密钥** - 从管理后台生成
+2. ✅ **API 密钥** - 通过 Open operator API/CLI 或自托管控制台创建
 3. ✅ **地址池** - 至少导入几个地址（参见 [地址池设置](/zh/guide/address-pool-setup)）
 4. ✅ **支持的网络** - 从[支持的网络](/zh/guide/supported-networks)中选择
 
@@ -724,7 +724,7 @@ https://myshop.com/orders/ORDER-2025-001/success?order_reference=ORDER-2025-001&
 ```
 
 ::: tip 默认跳转 URL
-您可以在 PayIn 管理后台配置组织级别的默认跳转 URL。订单级 URL 优先于默认值。
+在 PayIn Open 中，请通过 operator API/CLI 或自托管控制台配置组织级别的默认跳转 URL。订单级 URL 优先于默认值。
 :::
 
 ### 订单元数据
@@ -852,7 +852,7 @@ try {
 **选项 1：Webhook（推荐）**
 
 ```typescript
-// 在管理后台配置 webhook 端点
+// 通过 /api/v1/notifications/endpoints 注册 webhook 端点
 // https://myshop.com/webhooks/payin
 
 app.post('/webhooks/payin', async (req, res) => {
@@ -953,7 +953,7 @@ const payin = new PayInClient({
 **问题：** 订单创建失败，提示地址池错误。
 
 **解决方案：**
-1. 在管理后台检查地址池状态
+1. 通过 operator API、CLI 或自托管控制台检查地址池状态
 2. 按照[地址池设置](/zh/guide/address-pool-setup)导入更多地址
 3. 确保地址适用于正确的协议（EVM/Tron）
 

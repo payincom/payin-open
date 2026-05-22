@@ -33,11 +33,22 @@ X-API-Key: your-api-key-here
 
 ### Generating API Keys
 
-1. Log in to [PayIn Admin Dashboard](https://your-payin.example.com)
-2. Navigate to **Settings → API Keys**
-3. Click **Create API Key**
-4. Give it a descriptive name
-5. Copy the key (shown only once!)
+PayIn Open is headless by default. Create the first operator during your self-hosted setup, then create business API keys through the Open operator API, your deployment's CLI wrapper, or a self-hosted console if you install one.
+
+Operator API flow:
+
+```bash
+curl -X POST https://your-payin.example.com/api/v1/api-keys \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <operator-jwt>" \
+  -H "X-Organization-Id: 00000000-0000-0000-0000-000000000001" \
+  -d '{
+    "name": "checkout-service",
+    "expiresAt": "2026-12-31T23:59:59Z"
+  }'
+```
+
+Copy the returned key immediately; secret values are shown only once. After switching to the business API key, send `X-API-Key` and do not send `X-Organization-Id`.
 
 ### API Key Permissions
 
@@ -249,13 +260,19 @@ PayIn sends real-time event notifications via webhooks. See [Webhooks Guide](/en
 
 **Webhook Configuration:**
 ```bash
-POST /api/v1/webhooks/endpoints
+POST /api/v1/notifications/endpoints
 {
-  "url": "https://your-api.com/webhooks/payin",
-  "events": ["order.completed", "deposit.completed"],
-  "secret": "webhook_secret_key"
+  "endpoint_name": "checkout-webhook",
+  "endpoint_type": "webhook",
+  "config": {
+    "url": "https://your-api.com/webhooks/payin",
+    "secret": "webhook_secret_key"
+  },
+  "subscribed_events": ["order.completed", "deposit.completed"]
 }
 ```
+
+The compatibility alias `/api/v1/notifications/webhooks` maps to the same webhook endpoint records when you need webhook-named paths.
 
 ## API Endpoints
 
@@ -287,63 +304,50 @@ Query blockchain transactions.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/transfers` | [List transfers](/en/api/transfers) |
-| GET | `/transfers/:id` | [Get transfer details](/en/api/transfers) |
+| GET | `/transfers` | List transfers with filters |
+| GET | `/transfers/by-reference` | List transfers for an order or deposit reference |
 
-### 📬 Webhooks API
+### 📬 Notifications API
 
-Configure webhook endpoints.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/webhooks/endpoints` | [Create endpoint](/en/api/webhooks) |
-| GET | `/webhooks/endpoints` | [List endpoints](/en/api/webhooks) |
-| PUT | `/webhooks/endpoints/:id` | [Update endpoint](/en/api/webhooks) |
-| DELETE | `/webhooks/endpoints/:id` | [Delete endpoint](/en/api/webhooks) |
-| GET | `/webhooks/events` | [List events](/en/api/webhooks) |
-
-### 💳 Payment Links API
-
-Create no-code payment links.
+Configure webhook notification endpoints. See [Webhooks Guide](/en/guide/webhooks).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/payment-links` | [Create link](/en/api/payment-links) |
-| GET | `/payment-links` | [List links](/en/api/payment-links) |
-| GET | `/payment-links/:id` | [Get link details](/en/api/payment-links) |
-| PUT | `/payment-links/:id` | [Update link](/en/api/payment-links) |
-| DELETE | `/payment-links/:id` | [Delete link](/en/api/payment-links) |
+| POST | `/notifications/endpoints` | Create endpoint |
+| GET | `/notifications/endpoints` | List endpoints |
+| GET | `/notifications/endpoints/:id` | Get endpoint details |
+| PUT | `/notifications/endpoints/:id` | Update endpoint |
+| DELETE | `/notifications/endpoints/:id` | Delete endpoint |
+| POST | `/notifications/endpoints/:id/test` | Send test delivery |
+
+### 💳 Payment Links
+
+No-code Payment Links are a hosted PayIn Cloud feature and are not advertised as part of the PayIn Open public API. In PayIn Open, create hosted checkout flows with the Orders API.
 
 ### 🏦 Address Pool API
 
-Manage address pool (admin only).
+Manage the self-hosted address pool. See [Address Pool Setup](/en/guide/address-pool-setup).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/address-pool/import` | [Import addresses](/en/api/address-pool) |
-| GET | `/address-pool/status` | [Get pool status](/en/api/address-pool) |
-| GET | `/address-pool/addresses` | [List addresses](/en/api/address-pool) |
+| GET | `/address-pool/availability` | Get pool availability |
+| GET | `/address-pool/summary` | Get pool summary |
+| GET | `/address-pool/addresses` | List addresses |
+| POST | `/address-pool/addresses` | Add addresses |
+| PATCH | `/address-pool/addresses/:address/archive` | Archive address |
+| PATCH | `/address-pool/addresses/:address/unarchive` | Unarchive address |
 
-### ⚙️ Configuration API
+### 🔐 Operator API Keys
 
-Manage organization settings (admin only).
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/config` | [Get all config](/en/api/config) |
-| GET | `/config/:key` | [Get config value](/en/api/config) |
-| PUT | `/config/:key` | [Update config](/en/api/config) |
-
-### 🔐 Organizations & API Keys
-
-Manage organizations and API keys (admin only).
+Create and manage API keys for the self-hosted Open business scope.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/organizations` | [List organizations](/en/api/organizations) |
-| POST | `/organizations/:id/api-keys` | [Create API key](/en/api/organizations) |
-| GET | `/organizations/:id/api-keys` | [List API keys](/en/api/organizations) |
-| DELETE | `/api-keys/:keyId` | [Delete API key](/en/api/organizations) |
+| POST | `/api-keys` | Create API key |
+| GET | `/api-keys` | List API keys |
+| GET | `/api-keys/:id` | Get API key details |
+| PUT | `/api-keys/:id` | Update API key |
+| DELETE | `/api-keys/:id` | Revoke API key |
 
 ## Error Handling
 
@@ -551,5 +555,5 @@ For enterprise usage with higher rate limits:
 
 - [Create your first order →](/en/api/orders)
 - [Set up deposit addresses →](/en/api/deposits)
-- [Configure webhooks →](/en/api/webhooks)
+- [Configure webhooks →](/en/guide/webhooks)
 - [Explore examples →](/en/examples/order-payment)

@@ -16,7 +16,7 @@ PayIn MCP Server provides an AI-powered interface to PayIn's payment infrastruct
 To get started, you need:
 
 1. **PayIn Account** - Register at [your-payin.example.com](https://your-payin.example.com) (for testing) or [your-payin.example.com](https://your-payin.example.com) (for production)
-2. **API Key** - Generate from the Admin dashboard
+2. **API Key** - Create through the Open operator API/CLI or self-hosted console
 
 ::: tip Testnet vs Mainnet
 We strongly recommend starting with **testnet** to familiarize yourself with PayIn before handling real transactions. See [Testnet vs Mainnet](/en/guide/testnet-vs-mainnet) for details.
@@ -35,11 +35,10 @@ After registration, PayIn automatically creates a personal organization for you.
 
 ### 1.2 Generate API Key
 
-1. Log in to PayIn Admin dashboard
-2. Navigate to **Settings** → **API Keys**
-3. Click **Create API Key**
-4. Enter a name (e.g., "MCP Server Key")
-5. Copy the generated API key (you won't see it again!)
+1. Use your PayIn Open operator flow to access the self-hosted API key tooling
+2. Create an API key through the Open API, CLI, or self-hosted console
+3. Enter a name (e.g., "MCP Server Key")
+4. Copy the generated API key (you won't see it again!)
 
 ::: warning Save Your API Key
 API keys are only shown once during creation. Store it securely - you'll need it for MCP configuration.
@@ -124,7 +123,7 @@ If you try to create an order without addresses, you'll get an error: "No availa
 **Quick Setup:**
 1. Install Address Tool: `npm install -g @payin/address-tool`
 2. Generate addresses: `payin-address-tool generate --mnemonic "..." --protocol evm --count 1000`
-3. Import via Admin UI: **Address Pool** → **Import Addresses**
+3. Import via the operator API/CLI or your self-hosted console
 
 **Detailed Guide:**
 - [Address Pool Setup →](/en/guide/address-pool-setup) - Complete step-by-step instructions
@@ -231,7 +230,7 @@ Once connected, your AI assistant can use these PayIn capabilities:
 
 ### "Authentication failed"
 
-1. Verify API key is active (check Admin dashboard)
+1. Verify API key is active with the operator API/CLI or self-hosted console
 2. Ensure API key hasn't expired
 3. Check for extra spaces in the API key string
 

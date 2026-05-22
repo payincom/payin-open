@@ -26,15 +26,10 @@ npm run open:init
 # 2. 初始化数据库 + 生成演示数据
 npm run open:init -- --demo-data
 
-# 3. 底层初始化脚本仍然可用：非 force 仅补齐 schema，不删除数据，不创建默认 admin
-npm run db:init
-npm run db:init:demo
-
-# 4. 强制重置数据库（删除所有数据；生产环境必须谨慎）
-#    Open 推荐仍使用 open:init -- --force，以避免 legacy admin/admin123。
+# 3. 强制重置数据库（删除所有数据；生产环境必须谨慎）
+#    Open-safe force 不创建 legacy admin/admin123。
 npm run open:init -- --force
-npm run db:init:force
-npm run db:init:full
+npm run open:init -- --force --demo-data
 ```
 
 ### 生产环境
@@ -47,8 +42,7 @@ export NODE_ENV="production"
 # 初始化数据库（仅创建表结构和默认 Open merchant scope；无默认账号）
 npm run open:init
 
-# 或使用 tsx 直接运行（generic non-force：schema-only、non-dropping、no default admin）
-tsx scripts/init-database.ts
+# 底层脚本仅供维护者调试；Open operators should use npm run open:init.
 ```
 
 ## 脚本说明
@@ -58,8 +52,8 @@ tsx scripts/init-database.ts
 独立的数据库初始化脚本，不依赖应用运行时。
 
 **功能**：
-- 非 `--force` 的 generic `db:init` / `tsx scripts/init-database.ts` 是 schema-only：不删除 Auth/Manager/Processor 数据，不创建 `admin` / `admin123` 或任何隐式 operator
-- `open:init` 始终通过 `--open-safe` 调用底层脚本；普通与 `--force` Open 初始化都保留 `/auth/register` 的 first-operator bootstrap
+- `open:init` 是 Open 自托管唯一推荐入口，始终通过 `--open-safe` 调用底层脚本
+- 普通与 `--force` Open 初始化都不创建 `admin` / `admin123` 或任何隐式 operator，并保留 `/auth/register` 的 first-operator bootstrap
 - 初始化 Auth 模块 schema（users, sessions, audit_logs）
 - 初始化 Manager 模块 schema（organizations, api_keys, config_values）
 - 初始化 Processor 模块 schema（orders, deposits, transfers, address_pool）
@@ -102,21 +96,22 @@ npm run open:init
 npm start
 ```
 
-#### Docker 部署
+#### Docker Compose 部署
 
-```dockerfile
-# Dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-COPY . .
-
-RUN npm ci --omit=dev
-RUN npm run build
-
-# 启动脚本
-CMD ["sh", "-c", "npm run open:init && npm start"]
+```bash
+export JWT_SECRET="$(openssl rand -base64 32)"
+export WEBHOOK_SECRET="$(openssl rand -base64 32)"
+docker compose up -d postgres
+DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" \
+  PAYIN_RUNTIME=open \
+  npm run open:init -- --check
+DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" \
+  PAYIN_RUNTIME=open \
+  npm run open:init
+docker compose up -d api
 ```
+
+`docker-compose.yml` uses the repository `Dockerfile` for the API container and keeps initialization as an explicit operator step instead of running it on every container start.
 
 ### 场景 2：本地开发环境
 
@@ -125,7 +120,7 @@ CMD ["sh", "-c", "npm run open:init && npm start"]
 npm run open:init -- --demo-data
 
 # 方式 2: 使用 tsx 直接运行
-tsx scripts/init-database.ts --demo-data
+npm run open:init -- --demo-data
 
 # 方式 3: 使用 INIT_DB 环境变量（已废弃）
 # INIT_DB=true npm run dev  # ❌ 不再支持
@@ -295,7 +290,7 @@ npm run deploy
 | **开发环境初始化** | `npm run open:init -- --demo-data` | 创建表 + 演示数据 |
 | **开发环境重置** | `npm run open:init -- --force --demo-data` | Open-safe 强制重置 + 演示数据；无默认 admin |
 | **生产环境初始化** | `npm run open:init` | 仅补齐 schema + 默认 Open merchant scope；无默认账号 |
-| **测试环境初始化** | `npm run db:init` | generic non-force schema-only；不删除数据、不创建默认 admin |
+| **测试环境初始化** | `npm run open:init -- --check` then `npm run open:init` | Open-safe 初始化；不删除数据、不创建默认 admin |
 | **CI/CD 部署** | `npm run open:init` | 作为 Open 部署步骤执行 |
 
 ---

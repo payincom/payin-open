@@ -33,11 +33,22 @@ X-API-Key: your-api-key-here
 
 ### 生成 API 密钥
 
-1. 登录 [PayIn 管理后台](https://your-payin.example.com)
-2. 导航至 **设置 → API 密钥**
-3. 点击 **创建 API 密钥**
-4. 给它一个描述性的名称
-5. 复制密钥（仅显示一次！）
+PayIn Open 默认以 headless 方式运行。请在自托管初始化期间创建第一个操作员，然后通过 Open 操作员 API、部署中的 CLI 包装命令，或你自行安装的自托管控制台创建业务 API 密钥。
+
+操作员 API 流程：
+
+```bash
+curl -X POST https://your-payin.example.com/api/v1/api-keys \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <operator-jwt>" \
+  -H "X-Organization-Id: 00000000-0000-0000-0000-000000000001" \
+  -d '{
+    "name": "checkout-service",
+    "expiresAt": "2026-12-31T23:59:59Z"
+  }'
+```
+
+请立即复制返回的密钥；密钥明文只显示一次。切换到业务 API 密钥后，仅发送 `X-API-Key`，不要再发送 `X-Organization-Id`。
 
 ### API 密钥权限
 
@@ -249,13 +260,19 @@ PayIn 通过 webhooks 发送实时事件通知。详见 [Webhooks 指南](/zh/gu
 
 **Webhook 配置：**
 ```bash
-POST /api/v1/webhooks/endpoints
+POST /api/v1/notifications/endpoints
 {
-  "url": "https://your-api.com/webhooks/payin",
-  "events": ["order.completed", "deposit.completed"],
-  "secret": "webhook_secret_key"
+  "endpoint_name": "checkout-webhook",
+  "endpoint_type": "webhook",
+  "config": {
+    "url": "https://your-api.com/webhooks/payin",
+    "secret": "webhook_secret_key"
+  },
+  "subscribed_events": ["order.completed", "deposit.completed"]
 }
 ```
+
+如需使用 webhook 命名路径，兼容别名 `/api/v1/notifications/webhooks` 会映射到同一组 webhook 端点记录。
 
 ## API 端点
 
@@ -287,63 +304,50 @@ POST /api/v1/webhooks/endpoints
 
 | 方法 | 端点 | 描述 |
 |------|------|------|
-| GET | `/transfers` | [列出转账](/zh/api/transfers) |
-| GET | `/transfers/:id` | [获取转账详情](/zh/api/transfers) |
+| GET | `/transfers` | 按过滤条件列出转账 |
+| GET | `/transfers/by-reference` | 按订单或充值引用列出转账 |
 
-### 📬 Webhooks API
+### 📬 通知 API
 
-配置 webhook 端点。
-
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| POST | `/webhooks/endpoints` | [创建端点](/zh/api/webhooks) |
-| GET | `/webhooks/endpoints` | [列出端点](/zh/api/webhooks) |
-| PUT | `/webhooks/endpoints/:id` | [更新端点](/zh/api/webhooks) |
-| DELETE | `/webhooks/endpoints/:id` | [删除端点](/zh/api/webhooks) |
-| GET | `/webhooks/events` | [列出事件](/zh/api/webhooks) |
-
-### 💳 支付链接 API
-
-创建无代码支付链接。
+配置 webhook 通知端点。详见 [Webhooks 指南](/zh/guide/webhooks)。
 
 | 方法 | 端点 | 描述 |
 |------|------|------|
-| POST | `/payment-links` | [创建链接](/zh/api/payment-links) |
-| GET | `/payment-links` | [列出链接](/zh/api/payment-links) |
-| GET | `/payment-links/:id` | [获取链接详情](/zh/api/payment-links) |
-| PUT | `/payment-links/:id` | [更新链接](/zh/api/payment-links) |
-| DELETE | `/payment-links/:id` | [删除链接](/zh/api/payment-links) |
+| POST | `/notifications/endpoints` | 创建端点 |
+| GET | `/notifications/endpoints` | 列出端点 |
+| GET | `/notifications/endpoints/:id` | 获取端点详情 |
+| PUT | `/notifications/endpoints/:id` | 更新端点 |
+| DELETE | `/notifications/endpoints/:id` | 删除端点 |
+| POST | `/notifications/endpoints/:id/test` | 发送测试投递 |
+
+### 💳 支付链接
+
+无代码支付链接是托管版 PayIn Cloud 功能，不作为 PayIn Open 公共 API 的已交付能力宣传。在 PayIn Open 中，请使用订单 API 构建托管收银流程。
 
 ### 🏦 地址池 API
 
-管理地址池（仅管理员）。
+管理自托管地址池。详见 [地址池设置](/zh/guide/address-pool-setup)。
 
 | 方法 | 端点 | 描述 |
 |------|------|------|
-| POST | `/address-pool/import` | [导入地址](/zh/api/address-pool) |
-| GET | `/address-pool/status` | [获取地址池状态](/zh/api/address-pool) |
-| GET | `/address-pool/addresses` | [列出地址](/zh/api/address-pool) |
+| GET | `/address-pool/availability` | 获取地址池可用性 |
+| GET | `/address-pool/summary` | 获取地址池摘要 |
+| GET | `/address-pool/addresses` | 列出地址 |
+| POST | `/address-pool/addresses` | 添加地址 |
+| PATCH | `/address-pool/addresses/:address/archive` | 归档地址 |
+| PATCH | `/address-pool/addresses/:address/unarchive` | 取消归档地址 |
 
-### ⚙️ 配置 API
+### 🔐 操作员 API 密钥
 
-管理组织设置（仅管理员）。
-
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| GET | `/config` | [获取所有配置](/zh/api/config) |
-| GET | `/config/:key` | [获取配置值](/zh/api/config) |
-| PUT | `/config/:key` | [更新配置](/zh/api/config) |
-
-### 🔐 组织和 API 密钥
-
-管理组织和 API 密钥（仅管理员）。
+为自托管 Open 业务范围创建和管理 API 密钥。
 
 | 方法 | 端点 | 描述 |
 |------|------|------|
-| GET | `/organizations` | [列出组织](/zh/api/organizations) |
-| POST | `/organizations/:id/api-keys` | [创建 API 密钥](/zh/api/organizations) |
-| GET | `/organizations/:id/api-keys` | [列出 API 密钥](/zh/api/organizations) |
-| DELETE | `/api-keys/:keyId` | [删除 API 密钥](/zh/api/organizations) |
+| POST | `/api-keys` | 创建 API 密钥 |
+| GET | `/api-keys` | 列出 API 密钥 |
+| GET | `/api-keys/:id` | 获取 API 密钥详情 |
+| PUT | `/api-keys/:id` | 更新 API 密钥 |
+| DELETE | `/api-keys/:id` | 撤销 API 密钥 |
 
 ## 错误处理
 
@@ -551,5 +555,5 @@ curl https://your-payin.example.com/api/v1/orders/ord_xxx \
 
 - [创建您的第一个订单 →](/zh/api/orders)
 - [设置充值地址 →](/zh/api/deposits)
-- [配置 webhooks →](/zh/api/webhooks)
+- [配置 webhooks →](/zh/guide/webhooks)
 - [探索示例 →](/zh/examples/order-payment)

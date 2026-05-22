@@ -41,7 +41,7 @@ Understanding the difference between Deposit and Order services:
 Before creating deposit references, ensure you have:
 
 1. ✅ **PayIn Account** - Registered at [your-payin.example.com](https://your-payin.example.com) or [your-payin.example.com](https://your-payin.example.com)
-2. ✅ **API Key** - Generated from Admin dashboard
+2. ✅ **API Key** - Created through the Open operator API/CLI or self-hosted console
 3. ✅ **Address Pool** - At least a few addresses imported (see [Address Pool Setup](/en/guide/address-pool-setup))
 4. ✅ **Supported Network** - Choose protocol family: EVM or Tron
 
@@ -880,7 +880,7 @@ Configure where users go after deposit confirmation:
 
 ```typescript
 // Organization-wide deposit redirect URL
-// Set in Admin dashboard or via API
+// Set through the Open operator API/CLI or self-hosted console
 
 // When deposit confirmed, PayIn appends parameters:
 // https://yourgame.com/wallet/success
@@ -895,7 +895,7 @@ Configure where users go after deposit confirmation:
 ```
 
 ::: tip Configuration-Level Only
-Unlike orders, deposits don't support per-transaction redirect URLs. Configure organization-wide redirect in Admin dashboard.
+Unlike orders, deposits don't support per-transaction redirect URLs. Configure the organization-wide redirect through the Open operator API/CLI or self-hosted console.
 :::
 
 ## Best Practices
@@ -1041,7 +1041,7 @@ const payin = new PayInClient({
 **Problem:** Binding fails with address pool error.
 
 **Solution:**
-1. Check address pool status in Admin dashboard
+1. Check address pool status with the operator API, CLI, or self-hosted console
 2. Import more addresses following [Address Pool Setup](/en/guide/address-pool-setup)
 3. Ensure addresses for the correct protocol (EVM/Tron)
 4. Check if existing addresses are already bound (deposits don't auto-release)
