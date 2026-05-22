@@ -211,7 +211,14 @@ export function createApp(options: CreateAppOptions = {}) {
   const api = app.basePath('/api/v1');
 
   // Authentication API
+  // Hosted OAuth signup/profile bootstrap is Cloud-only; Open uses local first-operator registration.
+  api.use('/auth/oauth/*', cloudOnlyGuard('OAuth API'));
+  api.use('/auth/oauth', cloudOnlyGuard('OAuth API'));
   api.route('/auth', authRoutes);
+
+  // Hosted user/admin management is Cloud-only; Open remains headless/operator-managed.
+  api.use('/users/*', cloudOnlyGuard('Users Management API'));
+  api.use('/users', cloudOnlyGuard('Users Management API'));
   api.route('/users', usersRoutes);
   api.route('/audit', auditRoutes);
   api.route('/api-keys', routeFactories.apiKeys(routeDependencies.apiKeys));
@@ -222,6 +229,9 @@ export function createApp(options: CreateAppOptions = {}) {
   api.route('/organizations', organizationsRoutes);
 
   // Configuration Management API (Phase 2)
+  // Super-admin diagnostics are Cloud-only; Open uses open:doctor/open:init checks.
+  api.use('/config/diagnostics/*', cloudOnlyGuard('Super Admin Diagnostics API'));
+  api.use('/config/diagnostics', cloudOnlyGuard('Super Admin Diagnostics API'));
   api.route('/config', configRoutes); // Legacy config API (backward compatibility)
   // Multi-tenant configuration management is Cloud-only; Open uses local/self-hosted config flows.
   api.use('/config-management/*', cloudOnlyGuard('Config Management API'));

@@ -83,7 +83,8 @@ PayIn 各子服务（Monitor → Processor → Manager → API）保持 **单向
 
 ## 配置诊断
 
-- `GET /api/v1/config/diagnostics`：仅限超级管理员调用，返回 Manager 合成的 runtime 配置（已屏蔽敏感信息），协助排查环境加载情况。
+- PayIn Open 使用 `npm run open:doctor`、`npm run open:init -- --check` 和配置文件审查来排查环境加载问题。
+- `GET /api/v1/config/diagnostics` 是托管 Cloud 的超级管理员诊断接口；在 Open runtime 中会被隐藏，避免暴露 Cloud 风格的 super-admin surface。
 
 ## 快速启动脚本
 

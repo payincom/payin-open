@@ -155,33 +155,51 @@ describe('Open runtime API context', () => {
     expect(context.get('organizationRole')).toBeUndefined();
   });
 
-  it('hides hosted organization and multi-tenant config routes in Open runtime', async () => {
+  it('hides hosted organization, admin, OAuth, and multi-tenant config routes in Open runtime', async () => {
     const previousRuntime = process.env.PAYIN_RUNTIME;
     process.env.PAYIN_RUNTIME = 'open';
     try {
       const app = createApp();
 
-      const orgResponse = await app.request('/api/v1/organizations');
-      const configResponse = await app.request('/api/v1/config-management');
+      for (const path of [
+        '/api/v1/organizations',
+        '/api/v1/organizations/open-default/members',
+        '/api/v1/config-management',
+        '/api/v1/config-management/values',
+        '/api/v1/config/diagnostics',
+        '/api/v1/users',
+        '/api/v1/users/operator-1',
+        '/api/v1/auth/oauth/config',
+        '/api/v1/auth/oauth/google',
+      ]) {
+        const response = await app.request(path);
 
-      expect(orgResponse.status).toBe(404);
-      expect(await orgResponse.json()).toMatchObject({ code: 'CLOUD_ONLY_ROUTE_DISABLED' });
-      expect(configResponse.status).toBe(404);
-      expect(await configResponse.json()).toMatchObject({ code: 'CLOUD_ONLY_ROUTE_DISABLED' });
+        expect(response.status, path).toBe(404);
+        expect(await response.json()).toMatchObject({ code: 'CLOUD_ONLY_ROUTE_DISABLED' });
+      }
     } finally {
       if (previousRuntime === undefined) delete process.env.PAYIN_RUNTIME;
       else process.env.PAYIN_RUNTIME = previousRuntime;
     }
   });
 
-  it('keeps hosted organization routes available in Cloud runtime', async () => {
+  it('keeps hosted organization, admin, OAuth, and config routes available in Cloud runtime', async () => {
     const previousRuntime = process.env.PAYIN_RUNTIME;
     process.env.PAYIN_RUNTIME = 'cloud';
     try {
       const app = createApp();
-      const response = await app.request('/api/v1/organizations');
 
-      expect(response.status).not.toBe(404);
+      for (const path of [
+        '/api/v1/organizations',
+        '/api/v1/config-management/values',
+        '/api/v1/config/diagnostics',
+        '/api/v1/users',
+        '/api/v1/auth/oauth/config',
+      ]) {
+        const response = await app.request(path);
+
+        expect(response.status, path).not.toBe(404);
+      }
     } finally {
       if (previousRuntime === undefined) delete process.env.PAYIN_RUNTIME;
       else process.env.PAYIN_RUNTIME = previousRuntime;
