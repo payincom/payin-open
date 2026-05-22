@@ -17,6 +17,18 @@ PayIn 各子服务（Monitor → Processor → Manager → API）保持 **单向
    - 保持对生产环境透明：线上直接通过系统环境变量即可。
 2. 若某服务还需要额外的 `.env.*`，在 `additionalFiles` 中显式传入，避免路径猜测。
 
+## Open runtime/profile baseline
+
+PayIn Open self-hosted deployments should run with the Open runtime profile:
+
+```bash
+PAYIN_RUNTIME=open
+```
+
+The Open profile is single-tenant by default. `open:init` prepares schemas and the internal default Open merchant scope, using `PAYIN_OPEN_ORGANIZATION_ID` only when an operator intentionally overrides the default scope id. It does not create `admin` / `admin123`, does not create an implicit operator, and does not bundle a Cloud Admin UI. After initialization, the first local operator bootstraps through `/auth/register`; public registration locks after that first operator.
+
+Keep local, sandbox, and production as separate profiles with separate databases, secrets, API keys, webhook endpoints, and RPC provider credentials. API-key business calls are scoped by the key and should not send `X-Organization-Id`. JWT operator calls may need `X-Organization-Id: ${PAYIN_OPEN_ORGANIZATION_ID}` or the default Open merchant id until the workflow switches to API-key auth. Hosted organization/user/OAuth/config-management/superadmin diagnostics surfaces are Cloud-only and hidden in Open runtime.
+
 ## 各层配置来源与优先级
 
 | 服务 | 默认值 | 文件配置 | 动态数据 | 环境变量 | 说明 |
