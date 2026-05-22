@@ -1,7 +1,7 @@
 # Open overlay seams implementation plan
 
-Date: 2026-05-17; refreshed after Phase 2 PR #7 and order-create seam PR #8 on 2026-05-20
-Status: Open route/app composition merged; first order-create policy/event seam merged.
+Date: 2026-05-17; refreshed after Phase 3 PR #15 and P4.A notification seam PR #16 on 2026-05-22
+Status: Open route/app composition, order-create, payment-link, self-hosted runtime profile, and notification policy/event seams are merged.
 
 ## Current structure and flow inventory
 
@@ -58,26 +58,49 @@ Merged in PR #8.
 - Successful order creation records a neutral `order.created` envelope on a best-effort/no-throw basis.
 - The seam is not a Cloud billing, plan-limit, entitlement, or usage-metering implementation.
 
+### PR #10 — payment-link policy/event seam
+
+Merged in PR #10.
+
+- `apps/api/src/payment-link-seam.ts` defines neutral payment-link policy and event contracts.
+- `apps/api/src/routes/payment-links.ts` wires `paymentLinkPolicy` and `paymentLinkEventSink` for create/update/publish operations.
+- Open defaults are allow-all policy and no-op event sink.
+- Successful covered operations record neutral `payment_link.created`, `payment_link.updated`, or `payment_link.published` envelopes on a best-effort/no-throw basis.
+- The seam is not a Cloud billing, plan-limit, entitlement, or usage-metering implementation.
+
+### Phase 3 — Open self-hosted runtime profile
+
+Completed in PR #15 (`d1fe87f`).
+
+- Open local setup, operator/admin posture, API-key/auth guidance, hosted admin hiding, and local configuration profile are documented.
+- Phase 3 exit verification passed in `.apcp/reports/p3f-phase3-exit-verification.md`.
+
+### PR #16 / P4.A — notification policy/event seam
+
+Merged in PR #16 (`8bb3c10`).
+
+- `apps/api/src/notification-seam.ts` defines neutral notification policy and event contracts.
+- `apps/api/src/routes/notifications.ts` wires `notificationPolicy` and `notificationEventSink` for endpoint create, endpoint test, and notification retry operations.
+- Open defaults are allow-all policy and no-op event sink.
+- Successful covered operations record neutral `notification.endpoint.created`, `notification.endpoint.tested`, or `notification.retry.requested` envelopes on a best-effort/no-throw basis.
+- The seam is not hosted webhook SLA, billing, plan-limit, entitlement, usage-metering, member/role, admin, or Cloud overlay implementation.
+
 ## Ordered next implementation candidates
 
-1. **Payment-link policy/event seam**
-   - Add a narrow seam only around create/update/publish operations if an overlay needs policy/audit hooks.
-   - Defaults must be allow-all/no-op and preserve Open behavior.
+1. **P4.B docs/status refresh**
+   - Keep architecture/status docs aligned with merged Phase 3, order, payment-link, and notification seams.
+   - Preserve exact seam identifiers so future workers do not duplicate completed work.
 
-2. **Notification/webhook policy/event seam**
-   - Add bounded hooks for webhook create/retry or delivery audit.
-   - Keep Open notification behavior local/self-hosted; no hosted SLA, billing, or metering logic.
+2. **P4.C provider interface discovery spike**
+   - Audit exact concrete provider bottlenecks before any provider implementation.
+   - Recommend one bounded provider-port candidate or no-op, with controller/human gate.
 
-3. **Open self-hosted runtime profile**
-   - Clarify local operator bootstrap/admin semantics.
-   - Ensure org/member/billing/superadmin SaaS concepts stay hidden from Open product UX.
-
-4. **Targeted service/facade scope hardening**
+3. **Targeted service/facade scope hardening**
    - Promote `RuntimeContext` / `PaymentScope` where it removes route/service coupling.
    - Keep repository `organization_id` persistence unchanged until a concrete extraction need exists.
 
-5. **Repository/provider extraction discovery**
-   - Audit exact repository seams needed for future overlay composition.
+4. **Optional bounded provider/operation seam**
+   - Implement only after P4.C identifies a concrete need and the controller approves scope.
    - Do not implement broad storage extraction or migrations as speculative Cloud prep.
 
 ## Non-goals and guardrails
