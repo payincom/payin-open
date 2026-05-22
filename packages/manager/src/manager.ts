@@ -218,6 +218,21 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Create or reset Manager schema/config defaults without using legacy INIT_DB branching.
+   */
+  async initializeSchemaOnly(options: { dropExisting?: boolean } = {}): Promise<void> {
+    if (options.dropExisting) {
+      console.log('🗑️  Dropping existing Manager tables...');
+      await this.dropTables();
+    }
+
+    await this.createTables([]);
+    await this.initializeConfigMetadata();
+    await this.initializeDefaultSystemSettings();
+    await this.loadRedirectConfig();
+  }
+
+  /**
    * Check database schema completeness
    * Returns information about missing tables and schema status
    */

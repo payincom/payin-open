@@ -118,6 +118,19 @@ export class AuthManager {
   }
 
   /**
+   * Create or update Auth schema objects without dropping data or creating users.
+   */
+  async initializeSchemaOnly(options: { dropExisting?: boolean } = {}): Promise<void> {
+    console.log('🔐 Initializing Auth schema only (no default users)...');
+    if (options.dropExisting) {
+      console.log('🗑️  Dropping existing Auth tables without creating default admin...');
+      await this.dropTables();
+    }
+    await this.createTables();
+    console.log('✅ Auth schema-only initialization completed');
+  }
+
+  /**
    * Check database schema completeness
    */
   async checkDatabaseSchema(): Promise<{

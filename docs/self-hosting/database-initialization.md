@@ -20,16 +20,19 @@
 npm run open:init -- --check
 
 # 1. PayIn Open 初始化数据库（推荐入口）
+#    只准备 schema 和默认 Open merchant scope；不会创建默认用户名/密码。
 npm run open:init
 
 # 2. 初始化数据库 + 生成演示数据
 npm run open:init -- --demo-data
 
-# 3. 底层初始化脚本仍然可用
+# 3. 底层初始化脚本仍然可用：非 force 仅补齐 schema，不删除数据，不创建默认 admin
 npm run db:init
 npm run db:init:demo
 
 # 4. 强制重置数据库（删除所有数据；生产环境必须谨慎）
+#    Open 推荐仍使用 open:init -- --force，以避免 legacy admin/admin123。
+npm run open:init -- --force
 npm run db:init:force
 npm run db:init:full
 ```
@@ -41,10 +44,10 @@ npm run db:init:full
 export DB_CONNECTION_STRING="postgresql://user:pass@host:5432/payin"
 export NODE_ENV="production"
 
-# 初始化数据库（仅创建表结构，无演示数据）
+# 初始化数据库（仅创建表结构和默认 Open merchant scope；无默认账号）
 npm run open:init
 
-# 或使用 tsx 直接运行
+# 或使用 tsx 直接运行（generic non-force：schema-only、non-dropping、no default admin）
 tsx scripts/init-database.ts
 ```
 
@@ -55,9 +58,12 @@ tsx scripts/init-database.ts
 独立的数据库初始化脚本，不依赖应用运行时。
 
 **功能**：
+- 非 `--force` 的 generic `db:init` / `tsx scripts/init-database.ts` 是 schema-only：不删除 Auth/Manager/Processor 数据，不创建 `admin` / `admin123` 或任何隐式 operator
+- `open:init` 始终通过 `--open-safe` 调用底层脚本；普通与 `--force` Open 初始化都保留 `/auth/register` 的 first-operator bootstrap
 - 初始化 Auth 模块 schema（users, sessions, audit_logs）
 - 初始化 Manager 模块 schema（organizations, api_keys, config_values）
 - 初始化 Processor 模块 schema（orders, deposits, transfers, address_pool）
+- 确保默认 PayIn Open merchant scope 存在
 - 可选生成演示数据（仅非生产环境）
 
 **用法**：
@@ -67,7 +73,8 @@ tsx scripts/init-database.ts [options]
 
 **选项**：
 - `--demo-data` - 生成演示数据
-- `--force` - 强制重置（删除现有表）
+- `--force` - 强制重置（删除现有表）；generic force 保留 legacy Auth 行为，可能创建历史默认 `admin` / `admin123`，不要用于 Open 安全路径
+- `--open-safe` - Open wrapper 使用的安全模式；即使与 `--force` 组合，也重建 schema 但不创建默认登录，保留 `/auth/register` first-operator bootstrap
 - `--help` - 显示帮助信息
 
 **环境变量**：
@@ -89,7 +96,7 @@ export NODE_ENV="production"
 npm run build
 
 # 3. 初始化数据库
-npm run db:init
+npm run open:init
 
 # 4. 启动应用
 npm start
@@ -108,14 +115,14 @@ RUN npm ci --omit=dev
 RUN npm run build
 
 # 启动脚本
-CMD ["sh", "-c", "npm run db:init && npm start"]
+CMD ["sh", "-c", "npm run open:init && npm start"]
 ```
 
 ### 场景 2：本地开发环境
 
 ```bash
 # 方式 1: 使用 npm 脚本（推荐）
-npm run db:init:demo
+npm run open:init -- --demo-data
 
 # 方式 2: 使用 tsx 直接运行
 tsx scripts/init-database.ts --demo-data
@@ -156,7 +163,7 @@ jobs:
         env:
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           NODE_ENV: production
-        run: npm run db:init
+        run: npm run open:init
 
       - name: Deploy
         run: npm run deploy
@@ -230,7 +237,7 @@ async function main() {
 INIT_DB=true DEMO_DATA=true npm run dev
 
 # 新方式
-npm run db:init:demo && npm run dev
+npm run open:init -- --demo-data && npm run dev
 ```
 
 ### Q: 能否在应用启动时自动初始化？
@@ -246,13 +253,13 @@ npm run db:init:demo && npm run dev
 
 ```bash
 # 首次设置
-npm run db:init:demo
+npm run open:init -- --demo-data
 
 # 日常开发
 npm run dev
 
-# 重置数据库
-npm run db:init:full
+# 重置数据库（Open-safe：删除数据但不创建 admin/admin123）
+npm run open:init -- --force --demo-data
 ```
 
 ### 2. 生产环境
@@ -260,7 +267,7 @@ npm run db:init:full
 ```bash
 # 部署前
 npm run build
-npm run db:init
+npm run open:init
 
 # 部署后
 npm start
@@ -271,7 +278,7 @@ npm start
 ```bash
 # 在 CI/CD 流水线中
 npm run build
-npm run db:init  # 作为部署步骤的一部分
+npm run open:init  # 作为部署步骤的一部分
 npm run deploy
 ```
 
@@ -285,11 +292,11 @@ npm run deploy
 
 | 场景 | 命令 | 说明 |
 |------|------|------|
-| **开发环境初始化** | `npm run db:init:demo` | 创建表 + 演示数据 |
-| **开发环境重置** | `npm run db:init:full` | 强制重置 + 演示数据 |
-| **生产环境初始化** | `npm run db:init` | 仅创建表结构 |
-| **测试环境初始化** | `npm run db:init` | 仅创建表结构 |
-| **CI/CD 部署** | `npm run db:init` | 作为部署步骤执行 |
+| **开发环境初始化** | `npm run open:init -- --demo-data` | 创建表 + 演示数据 |
+| **开发环境重置** | `npm run open:init -- --force --demo-data` | Open-safe 强制重置 + 演示数据；无默认 admin |
+| **生产环境初始化** | `npm run open:init` | 仅补齐 schema + 默认 Open merchant scope；无默认账号 |
+| **测试环境初始化** | `npm run db:init` | generic non-force schema-only；不删除数据、不创建默认 admin |
+| **CI/CD 部署** | `npm run open:init` | 作为 Open 部署步骤执行 |
 
 ---
 

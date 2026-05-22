@@ -28,10 +28,12 @@
  */
 
 import { parseArgs } from 'node:util';
+import { buildInitDatabasePlan, type InitModulePlan, type ProcessorInitPlan } from './init-database-plan.js';
 
 interface InitOptions {
   demoData: boolean;
   force: boolean;
+  openSafe: boolean;
   connectionString: string;
 }
 
@@ -43,6 +45,7 @@ function parseArguments(): InitOptions {
     options: {
       'demo-data': { type: 'boolean', default: false },
       'force': { type: 'boolean', default: false },
+      'open-safe': { type: 'boolean', default: false },
       'help': { type: 'boolean', default: false },
     },
     allowPositionals: false,
@@ -57,7 +60,8 @@ Usage:
 
 Options:
   --demo-data    Generate demo data after initialization
-  --force        Force re-initialization (drop existing tables)
+  --force        Force re-initialization (drop existing tables); generic force keeps legacy admin behavior
+  --open-safe    Use Open-safe schema init/reset without creating default users
   --help         Show this help message
 
 Environment Variables:
@@ -87,6 +91,7 @@ Examples:
   return {
     demoData: values['demo-data'] as boolean,
     force: values['force'] as boolean,
+    openSafe: values['open-safe'] as boolean,
     connectionString,
   };
 }
@@ -94,7 +99,7 @@ Examples:
 /**
  * Initialize Auth module schema
  */
-async function initializeAuthSchema(connectionString: string, force: boolean): Promise<void> {
+async function initializeAuthSchema(connectionString: string, plan: InitModulePlan): Promise<void> {
   console.log('🔐 Initializing Auth schema...');
 
   const { AuthManager } = await import('@payin/auth');
@@ -120,7 +125,17 @@ async function initializeAuthSchema(connectionString: string, force: boolean): P
     baseUrl: process.env.BASE_URL || 'http://localhost:3000',
   });
 
-  // Set INIT_DB flag to trigger schema creation
+  if (plan.mode === 'schema-only') {
+    try {
+      await authManager.initializeSchemaOnly({ dropExisting: plan.dropExisting });
+      console.log('   ✅ Auth schema initialized without default users');
+    } finally {
+      await authManager.close();
+    }
+    return;
+  }
+
+  // Legacy aggressive path: force reset only. This drops Auth tables and creates default admin.
   const originalInitDb = process.env.INIT_DB;
   process.env.INIT_DB = 'true';
 
@@ -128,7 +143,7 @@ async function initializeAuthSchema(connectionString: string, force: boolean): P
     await authManager.initialize();
     console.log('   ✅ Auth schema initialized');
   } finally {
-    // Restore original INIT_DB value
+    await authManager.close();
     if (originalInitDb !== undefined) {
       process.env.INIT_DB = originalInitDb;
     } else {
@@ -140,29 +155,36 @@ async function initializeAuthSchema(connectionString: string, force: boolean): P
 /**
  * Initialize Manager module schema
  */
-async function initializeManagerSchema(connectionString: string, force: boolean): Promise<void> {
+async function initializeManagerSchema(connectionString: string, plan: InitModulePlan): Promise<void> {
   console.log('🏗️  Initializing Manager schema...');
 
   const { ConfigurationManager } = await import('@payin/manager');
 
-  // Set INIT_DB flag to trigger schema creation
+  const manager = new ConfigurationManager({
+    connectionString,
+    autoInit: true,
+  });
+
+  if (plan.mode === 'schema-only') {
+    try {
+      await manager.initializeSchemaOnly({ dropExisting: plan.dropExisting });
+      console.log(`   ✅ Manager schema initialized ${plan.dropExisting ? 'after reset' : 'without dropping data'}`);
+    } finally {
+      await manager.close();
+    }
+    return;
+  }
+
+  // Legacy aggressive path: force reset only. This drops Manager tables.
   const originalInitDb = process.env.INIT_DB;
   process.env.INIT_DB = 'true';
 
   try {
-    const manager = new ConfigurationManager({
-      connectionString,
-      autoInit: true,
-    });
-
     await manager.initialize();
 
     console.log('   ✅ Manager schema initialized');
-
-    // Cleanup
-    await manager.close();
   } finally {
-    // Restore original INIT_DB value
+    await manager.close();
     if (originalInitDb !== undefined) {
       process.env.INIT_DB = originalInitDb;
     } else {
@@ -174,7 +196,7 @@ async function initializeManagerSchema(connectionString: string, force: boolean)
 /**
  * Initialize Processor module schema
  */
-async function initializeProcessorSchema(connectionString: string, force: boolean): Promise<void> {
+async function initializeProcessorSchema(connectionString: string, plan: ProcessorInitPlan): Promise<void> {
   console.log('⚙️  Initializing Processor schema...');
 
   const { PostgreSQLDatabase, DEFAULT_OPEN_ORGANIZATION_ID } = await import('@payin/processor');
@@ -184,8 +206,9 @@ async function initializeProcessorSchema(connectionString: string, force: boolea
 
   try {
     await database.initializeDatabaseSchema({
-      dropExisting: force,
-      onlyMissing: !force,
+      dropExisting: plan.dropExisting,
+      onlyMissing: plan.onlyMissing,
+      force: plan.force,
     });
 
     await database.query(
@@ -234,6 +257,7 @@ async function main() {
   console.log(`  Environment:    ${process.env.NODE_ENV || 'development'}`);
   console.log(`  Database:       ${options.connectionString.replace(/:[^:@]+@/, ':****@')}`);
   console.log(`  Force Reset:    ${options.force ? 'Yes' : 'No'}`);
+  console.log(`  Open Safe:      ${options.openSafe ? 'Yes' : 'No'}`);
   console.log(`  Demo Data:      ${options.demoData ? 'Yes' : 'No'}`);
   console.log('');
 
@@ -246,19 +270,20 @@ async function main() {
     await new Promise(resolve => setTimeout(resolve, 5000));
   }
 
+  const plan = buildInitDatabasePlan({ force: options.force, openSafe: options.openSafe });
   const startTime = Date.now();
 
   try {
     // Step 1: Initialize Auth schema
-    await initializeAuthSchema(options.connectionString, options.force);
+    await initializeAuthSchema(options.connectionString, plan.auth);
     console.log('');
 
     // Step 2: Initialize Manager schema
-    await initializeManagerSchema(options.connectionString, options.force);
+    await initializeManagerSchema(options.connectionString, plan.manager);
     console.log('');
 
     // Step 3: Initialize Processor schema
-    await initializeProcessorSchema(options.connectionString, options.force);
+    await initializeProcessorSchema(options.connectionString, plan.processor);
     console.log('');
 
     // Step 4: Generate demo data (optional)

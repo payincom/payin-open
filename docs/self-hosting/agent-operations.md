@@ -19,7 +19,7 @@ API keys remain available for merchant integrations in Open runtime, but they ar
 | `npm run open:doctor` | Local/readiness warnings | No | No, unless `--url` | Fast diagnostic |
 | `npm run open:init -- --check` | Preflight + optional read-only DB check | No | No | DB bootstrap readiness |
 | `npm run open:init -- --dry-run` | Shows bootstrap plan | No | No | Change preview |
-| `npm run open:init` | Initializes schemas and default Open merchant scope | Yes | No | Initial bootstrap |
+| `npm run open:init` | Safely prepares schemas and default Open merchant scope; no default login | Yes | No | Initial bootstrap |
 | `npm run open:smoke` | Dry-run smoke checklist | No | No | CI-safe smoke contract |
 | `npm run open:smoke -- --url <api-url>` | Public live health/config checks | No | Yes | Deployed API sanity check |
 | `npm run open:smoke -- --require-live ...` | Full live readiness gate | Creates test order | Yes | Sandbox/release gate |
@@ -85,19 +85,22 @@ npm run open:init -- --check --strict --json
 npm run open:init -- --dry-run --json
 
 # Actual bootstrap: creates schemas and ensures the default Open merchant scope
+# No admin/admin123 or implicit operator is created.
 npm run open:init
 
 # Development/demo only
 npm run open:init -- --demo-data
 ```
 
-Destructive reset is guarded and should not be used in production without explicit human approval:
+Normal `open:init` is idempotent and does not drop Auth, Manager, or Processor data. It also does not create a default username/password; register the first local operator through `/auth/register` after init, then public registration locks.
+
+Destructive reset is guarded and should not be used in production without explicit human approval. It still uses the Open-safe path: schemas are reset, but no `admin` / `admin123` or implicit operator is created, so first-operator bootstrap remains `/auth/register`:
 
 ```bash
 npm run open:init -- --force --confirm-reset
 ```
 
-`open:init -- --check` performs real read-only DB checks when `DB_CONNECTION_STRING` is configured. If the DB is missing schema tables or the default Open merchant scope, run `npm run open:init` against the confirmed target database.
+`open:init -- --check` performs real read-only DB checks when `DB_CONNECTION_STRING` is configured. If the DB is missing schema tables or the default Open merchant scope, run `npm run open:init` against the confirmed target database, then register the first local operator through `/auth/register`.
 
 ## 3. Runtime Smoke: `open:smoke`
 

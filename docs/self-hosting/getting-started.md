@@ -6,7 +6,7 @@
 
 1. **部署 API 服务**：准备 PostgreSQL、RPC provider、域名、Webhook endpoint，并启动 PayIn Open API。
 2. **运行 Agent 预检**：使用 `npm run open:doctor`、`npm run open:init -- --check`、`npm run open:smoke` 验证本地配置和部署状态。
-3. **初始化 Open merchant scope**：配置 `DB_CONNECTION_STRING` 后运行 `npm run open:init`。初始化脚本会创建内部默认 Open merchant scope；调用方不需要选择 organization。
+3. **初始化 Open merchant scope**：配置 `DB_CONNECTION_STRING` 后运行 `npm run open:init`。初始化脚本只准备 Auth/Manager/Processor schemas 和内部默认 Open merchant scope；不会创建 `admin` / `admin123`，也不会创建隐式 operator。
 4. **用 sandbox/testnet 验证**：在进入 production/mainnet 前，使用 `open:doctor --strict` 和 `open:smoke --require-live` 跑完整 sandbox gate。
 
 ## API Key 申请/创建流程 <a id="api-authentication"></a>
@@ -15,7 +15,7 @@ PayIn Open 不通过 Admin UI 创建 API Key。使用 Open Agent/Skill、API，�
 
 建议流程：
 
-1. 先注册第一个本地 Open operator。Open runtime 只允许首个 operator 通过公开 `/auth/register` bootstrap；创建后公开注册会锁定。
+1. `open:init` 完成后，通过公开 `/auth/register` 注册第一个本地 Open operator。Open runtime 只允许首个 operator 使用该 bootstrap；创建后公开注册会锁定。
 2. 用该 operator 创建一个最小权限 API Key，例如 `backend-orders-service`。使用 JWT 调用 operator API 时传入 `X-Organization-Id: 00000000-0000-0000-0000-000000000001`（或你的 `PAYIN_OPEN_ORGANIZATION_ID`）；切换到 API Key 后 scope 会自动携带。
 3. 只授予所需权限，例如：
    - 订单读写：`orders:read`、`orders:write`
