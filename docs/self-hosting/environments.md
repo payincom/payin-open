@@ -29,6 +29,7 @@ Never point sandbox services at a production database. Never reuse production se
 Use placeholders in documentation and commits. Store real values only in your hosting provider or secret manager.
 
 ```bash
+PAYIN_RUNTIME=open
 NODE_ENV=production
 APP_ENV=production
 DB_CONNECTION_STRING=postgresql://USER:PASSWORD@HOST:5432/DB_NAME
@@ -43,16 +44,20 @@ TRONGRID_API_KEY=<secret>
 HELIUS_API_KEY=<secret>
 ```
 
+`PAYIN_OPEN_ORGANIZATION_ID` is optional. Leave it unset unless you intentionally need a stable custom Open merchant scope id; otherwise `open:init` uses the built-in default merchant scope. API-key calls do not pass `X-Organization-Id`; JWT operator calls may need the Open merchant id while creating or rotating API keys.
+
 ## Local
 
 Local is for development only.
 
 Suggested defaults:
 
+- `PAYIN_RUNTIME=open`
 - Local PostgreSQL or a disposable managed database
 - Testnet chains only
 - Mock or development webhook endpoints
 - Short-lived API keys
+- First operator registered through `/auth/register` after `open:init`
 
 ## Sandbox
 
@@ -61,9 +66,11 @@ Sandbox is for merchant integration and QA.
 Checklist:
 
 - Uses a sandbox database, not production
+- Runs `PAYIN_RUNTIME=open`
 - Uses testnet chain configuration
 - Uses sandbox webhook endpoints
 - Has realistic API authentication enabled
+- Uses sandbox-only operators and API keys
 - Can create test orders and payment pages
 - Can verify monitoring and webhook delivery without real funds
 
@@ -74,9 +81,11 @@ Production is for real mainnet payments.
 Checklist before launch:
 
 - Separate production database
+- `PAYIN_RUNTIME=open` set explicitly
 - Strong production secrets generated and stored outside git
 - Mainnet RPC providers configured with sufficient rate limits
 - Address pools imported and verified
+- Production operator/API-key rotation process documented
 - Webhook signature verification implemented by merchant systems
 - Backups and restore procedure tested
 - Monitoring and alerting enabled

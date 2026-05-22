@@ -15,7 +15,7 @@
 
 - **症状**：返回 `PERMISSION_DENIED` 或错误信息包含 `Insufficient permissions`。
 - **排查**：
-  1. 在 Admin → API Keys 中确认已勾选目标权限。
+  1. 通过 operator API/CLI 确认 API Key 已授予目标权限。PayIn Open 不内置 Admin UI。
   2. 对运营侧查询，可考虑单独生成只读 Key。
   3. 若提示 `requiredPermission: unknown`，说明服务被关闭，参考后文“订单服务关闭”章节。
 
@@ -42,21 +42,21 @@
 - **排查**：
   1. 查看返回的 `suggestions`，通常包含恢复步骤。
   2. 如遇地址池耗尽或服务关闭，请参考对应章节。
-  3. 记录报错时间、组织 ID，方便支持团队追踪。
+  3. 记录报错时间和 Open merchant scope，方便本地 operator 排查；API-key 调用不要额外传 `X-Organization-Id`。
 
 ## 地址池耗尽 <a id="address-pool-exhausted"></a>
 
 - **症状**：`ADDRESS_POOL_EXHAUSTED`。
 - **解决**：
-  1. 执行 `POST /api/v1/address-pool/allocate` 或在 Admin → Address Pool 导入新地址。
+  1. 执行 `POST /api/v1/address-pool/allocate` 或通过 operator CLI/API 导入新地址。
   2. 复用 AI 提示词：`请指导我如何补充 EVM 地址池，并检查补充后的可用数量。`
 
 ## 订单服务关闭 <a id="order-service-disabled"></a>
 
 - **症状**：`ORDER_SERVICE_DISABLED`。
 - **解决**：
-  1. 在 Admin → Services 启用 `orders`。
-  2. 若操作受限，联系 PayIn 支持开启。
+  1. 检查本地 Manager/Processor 配置和数据库配置值，确认 `orders` 服务在 Open profile 中启用。
+  2. 若操作受限，使用本地 operator API/CLI 或部署配置修正；不要依赖 Cloud Admin UI。
 
 ## 充值参数校验 <a id="deposits-validation"></a>
 
@@ -77,7 +77,7 @@
 - **症状**：`DEPOSIT_BIND_FAILED`、`DEPOSIT_UNBIND_FAILED`、`DEPOSIT_GET_FAILED`、`DEPOSIT_LIST_FAILED`、`DEPOSIT_REFERENCES_FAILED`、`DEPOSIT_STATS_FAILED`。
 - **排查**：
   1. 关注返回的 `suggestions`；大多与地址池容量、过滤条件或服务状态相关。
-  2. 记录组织 ID 与报错时间；必要时附上 `depositReference`。
+  2. 记录 Open merchant scope 与报错时间；必要时附上 `depositReference`。
 
 ## 充值筛选与统计 <a id="deposits-filters"></a>
 
@@ -107,4 +107,3 @@
 
 - **症状**：`API_ERROR`、`CONFLICT` 等未分类错误。
 - **建议**：详细阅读 `details.apiMessage`、`suggestions`；必要时附带响应体与请求参数递交支持工单。
-
