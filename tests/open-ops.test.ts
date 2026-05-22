@@ -10,8 +10,87 @@ import {
   isOpenRuntime,
   redactConnectionString,
 } from '../scripts/open/ops-lib.js';
+import { buildInitDatabasePlan } from '../scripts/init-database-plan.js';
+import { buildOpenInitInvocation } from '../scripts/open/init-plan.js';
 
 describe('PayIn Open ops library', () => {
+
+  it('builds normal Open init without legacy INIT_DB or default-admin path', () => {
+    const invocation = buildOpenInitInvocation({
+      env: {
+        INIT_DB: 'true',
+        PAYIN_RUNTIME: 'open',
+        DB_CONNECTION_STRING: 'postgresql://user:pw@localhost/db',
+      },
+    });
+
+    expect(invocation.command).toBe('npx');
+    expect(invocation.args).toEqual(['tsx', 'scripts/init-database.ts', '--open-safe']);
+    expect(invocation.env.PAYIN_RUNTIME).toBe('open');
+    expect(invocation.env.INIT_DB).toBeUndefined();
+  });
+
+  it('keeps Open force explicit while still isolating legacy INIT_DB', () => {
+    const invocation = buildOpenInitInvocation({
+      force: true,
+      demoData: true,
+      env: { INIT_DB: 'true' },
+    });
+
+    expect(invocation.args).toEqual([
+      'tsx',
+      'scripts/init-database.ts',
+      '--open-safe',
+      '--demo-data',
+      '--force',
+    ]);
+    expect(invocation.env.PAYIN_RUNTIME).toBe('open');
+    expect(invocation.env.INIT_DB).toBeUndefined();
+  });
+
+  it('plans generic non-force db:init as schema-only without default admin', () => {
+    const plan = buildInitDatabasePlan({ force: false, openSafe: false });
+
+    expect(plan.auth).toEqual({
+      mode: 'schema-only',
+      dropExisting: false,
+      createsDefaultAdmin: false,
+    });
+    expect(plan.manager).toMatchObject({
+      mode: 'schema-only',
+      dropExisting: false,
+      createsDefaultAdmin: false,
+    });
+    expect(plan.processor).toMatchObject({
+      dropExisting: false,
+      onlyMissing: true,
+      force: false,
+      ensuresDefaultOpenMerchant: true,
+    });
+  });
+
+  it('plans Open force as destructive but still no default admin', () => {
+    const plan = buildInitDatabasePlan({ force: true, openSafe: true });
+
+    expect(plan.auth).toEqual({
+      mode: 'schema-only',
+      dropExisting: true,
+      createsDefaultAdmin: false,
+    });
+    expect(plan.manager).toMatchObject({ mode: 'schema-only', dropExisting: true });
+    expect(plan.processor).toMatchObject({ dropExisting: true, onlyMissing: false, force: true });
+  });
+
+  it('keeps generic force on the legacy branch outside Open safe mode', () => {
+    const plan = buildInitDatabasePlan({ force: true, openSafe: false });
+
+    expect(plan.auth).toEqual({
+      mode: 'legacy-force-reset',
+      dropExisting: true,
+      createsDefaultAdmin: true,
+    });
+    expect(plan.manager).toMatchObject({ mode: 'legacy-force-reset', dropExisting: true });
+  });
   it('defaults to open runtime', () => {
     expect(isOpenRuntime({})).toBe(true);
     expect(isOpenRuntime({ PAYIN_RUNTIME: 'open' })).toBe(true);

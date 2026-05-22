@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
 import { collectOpenDatabaseChecks, collectOpenDoctorChecks, formatChecks } from './ops-lib.js';
+import { buildOpenInitInvocation } from './init-plan.js';
 
 const { values } = parseArgs({
   options: {
@@ -19,7 +20,7 @@ const { values } = parseArgs({
 });
 
 if (values.help) {
-  console.log(`PayIn Open initialization\n\nUsage:\n  npm run open:init -- --check\n  npm run open:init -- --dry-run\n  npm run open:init\n  npm run open:init -- --demo-data\n\n--check       Validate repository/env readiness without mutating the database.\n--dry-run     Print the initialization plan without mutating the database.\n--strict      Make missing DB_CONNECTION_STRING fail preflight.\n--json        Emit machine-readable summary for Agent workflows.\n--demo-data   Seed demo data after schema initialization.\n--force       Reset database schema; requires --confirm-reset in production.`);
+  console.log(`PayIn Open initialization\n\nUsage:\n  npm run open:init -- --check\n  npm run open:init -- --dry-run\n  npm run open:init\n  npm run open:init -- --demo-data\n  npm run open:init -- --force\n  NODE_ENV=production npm run open:init -- --force --confirm-reset\n\n--check       Validate repository/env readiness without mutating the database.\n--dry-run     Print the initialization plan without mutating the database.\n--strict      Make missing DB_CONNECTION_STRING fail preflight.\n--json        Emit machine-readable summary for Agent workflows.\n--demo-data   Seed demo data after schema initialization.\n--force       Reset database schema through the Open-safe path; requires --confirm-reset in production.`);
   process.exit(0);
 }
 
@@ -46,7 +47,8 @@ if (values.json) {
 if (!summary.ok) process.exit(1);
 if (values.check || values['dry-run']) {
   if (values['dry-run'] && !values.json) {
-    console.log('Dry-run plan: initialize Auth schema, Manager schema, Processor schema, ensure PayIn Open default merchant scope, optionally seed demo data.');
+    const resetText = values.force ? 'reset schemas/data without creating default users' : 'initialize schemas without dropping data or creating default users';
+    console.log(`Dry-run plan: ${resetText}, ensure PayIn Open default merchant scope, optionally seed demo data.`);
   }
   process.exit(0);
 }
@@ -61,9 +63,10 @@ if (!process.env.DB_CONNECTION_STRING) {
   process.exit(1);
 }
 
-const args = ['tsx', 'scripts/init-database.ts'];
-if (values['demo-data']) args.push('--demo-data');
-if (values.force) args.push('--force');
+const invocation = buildOpenInitInvocation({
+  demoData: Boolean(values['demo-data']),
+  force: Boolean(values.force),
+});
 
-const result = spawnSync('npx', args, { stdio: 'inherit', env: { ...process.env, PAYIN_RUNTIME: process.env.PAYIN_RUNTIME || 'open' } });
+const result = spawnSync(invocation.command, invocation.args, { stdio: 'inherit', env: invocation.env });
 process.exit(result.status ?? 1);
