@@ -1,7 +1,7 @@
 # Open overlay seams implementation plan
 
-Date: 2026-05-17; refreshed after Phase 3 PR #15 and P4.A notification seam PR #16 on 2026-05-22
-Status: Open route/app composition, order-create, payment-link, self-hosted runtime profile, and notification policy/event seams are merged.
+Date: 2026-05-17; refreshed after Phase 4 completion through PR #18 on 2026-05-22
+Status: Phase 4 overlay readiness hardening is complete; Open route/app composition, order-create, payment-link, self-hosted runtime profile, notification policy/event, and notification delivery factory seams are merged.
 
 ## Current structure and flow inventory
 
@@ -85,23 +85,26 @@ Merged in PR #16 (`8bb3c10`).
 - Successful covered operations record neutral `notification.endpoint.created`, `notification.endpoint.tested`, or `notification.retry.requested` envelopes on a best-effort/no-throw basis.
 - The seam is not hosted webhook SLA, billing, plan-limit, entitlement, usage-metering, member/role, admin, or Cloud overlay implementation.
 
+### PR #18 / P4.D — notification delivery factory seam
+
+Merged in PR #18 (`1d0d432`).
+
+- `packages/notification/src/queue/notification-queue.ts` defines `NotificationNotifierFactory = (endpoint: Endpoint) => BaseNotifier`.
+- `NotificationQueue` and `NotificationService` can accept an injected notifier factory.
+- Open default remains webhook-only and constructs `WebhookNotifier` with the existing endpoint config mapping.
+- Unsupported non-webhook endpoints still throw `Unsupported endpoint type: ${endpoint.endpoint_type}` by default.
+- Focused tests cover default webhook delivery, injected factory use, service-level config threading, and unchanged unsupported endpoint behavior.
+- The seam is not an email/telegram provider implementation, hosted notification SLA, broad provider extraction, storage abstraction, DB migration, or Cloud overlay implementation.
+
 ## Ordered next implementation candidates
 
-1. **P4.B docs/status refresh**
-   - Keep architecture/status docs aligned with merged Phase 3, order, payment-link, and notification seams.
-   - Preserve exact seam identifiers so future workers do not duplicate completed work.
+Phase 4 is complete. Do not continue adding Open seams speculatively.
 
-2. **P4.C provider interface discovery spike**
-   - Audit exact concrete provider bottlenecks before any provider implementation.
-   - Recommend one bounded provider-port candidate or no-op, with controller/human gate.
+1. **Phase 5 Cloud overlay repo creation** — start only after explicit human approval.
+2. **Future missing Open seam** — if Phase 5 discovers an Open gap, improve Open first through a separately scoped bounded PR.
+3. **Targeted service/facade scope hardening** — only when it removes a concrete composition blocker; keep repository `organization_id` persistence unchanged until separately approved.
 
-3. **Targeted service/facade scope hardening**
-   - Promote `RuntimeContext` / `PaymentScope` where it removes route/service coupling.
-   - Keep repository `organization_id` persistence unchanged until a concrete extraction need exists.
-
-4. **Optional bounded provider/operation seam**
-   - Implement only after P4.C identifies a concrete need and the controller approves scope.
-   - Do not implement broad storage extraction or migrations as speculative Cloud prep.
+Do not implement broad storage extraction or migrations as speculative Cloud prep.
 
 ## Non-goals and guardrails
 
