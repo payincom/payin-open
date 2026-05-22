@@ -92,7 +92,7 @@ PayIn 通过四种状态管理地址：
 4. **监控清理**：确保监控任务正确完成
 
 ::: tip 可配置的冷却期
-冷却期可以通过 `address_pool.cooldown_minutes` 配置参数按组织调整。
+冷却期可以通过 `address_pool.cooldown_minutes` 配置参数按 Open 商户/业务范围调整。
 :::
 
 ## 地址管理模式
@@ -361,11 +361,11 @@ PayIn Open 不随附 `apps/admin` 控制台。请直接使用地址池导入 API
 **分步指南**：
 
 1. **以操作员身份认证**
-   - 使用具有 `admin` 或 `owner` 角色的 API Key
+   - 使用当前部署的 operator API key 或 CLI 凭据
    - 将 CLI 或脚本指向您的 PayIn Open API 地址
 
 2. **准备导入请求**
-   - 在请求或 CLI 参数中选择目标组织和协议
+   - 在请求或 CLI 参数中选择目标 Open 商户/业务范围和协议
    - 不要把协议选择写入 CSV 文件
 
 3. **选择导入模式**
@@ -403,7 +403,7 @@ PayIn 在导入期间自动跳过重复地址。如果地址已存在于池中�
 
 **端点**：`POST /api/v1/address-pool/import`
 
-**认证**：需要具有 `admin` 或 `owner` 角色的 API 密钥
+**认证**：需要当前部署的 operator API key 或 CLI 凭据
 
 **请求**：
 

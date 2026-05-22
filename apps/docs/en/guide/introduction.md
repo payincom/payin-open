@@ -38,9 +38,9 @@ Use AI to integrate PayIn through natural conversation.
 
 [Quick Start with MCP →](/en/guide/quick-start-mcp)
 
-### Option 2: Payment Links (No-Code)
+### Option 2: Cloud Payment Links or Open Link Flow
 
-Create shareable payment links in PayIn Cloud, or build an equivalent flow on PayIn Open with the Order Payment API.
+PayIn Cloud includes hosted Payment Links. PayIn Open does not ship a hosted dashboard or no-code link builder; self-hosted users can create the same customer experience with the Order Payment API and their own UI.
 
 **Best For:**
 - Small businesses
@@ -49,10 +49,10 @@ Create shareable payment links in PayIn Cloud, or build an equivalent flow on Pa
 - Non-technical users
 
 **What You Get:**
-- Zero coding required
-- Create links in minutes
-- Share via URL or QR code
-- Track payments in dashboard
+- Cloud-only hosted link creation
+- Open-compatible API building blocks
+- Shareable URL or QR-code flows
+- Payment tracking through API queries and webhooks
 
 [Payment Links Guide →](/en/guide/payment-links)
 
@@ -116,16 +116,16 @@ Permanent addresses for recurring user payments.
 
 [Learn more →](/en/guide/deposit-service)
 
-### 3. Payment Links
+### 3. Cloud Payment Links or Open Link Flow
 
-Shareable payment links without integration.
+Shareable payment flows. Hosted Payment Links are a PayIn Cloud feature; PayIn Open users should build links on top of the Order Payment API.
 
 **How It Works:**
-- Create a payment link in PayIn Cloud, or create an order-payment flow through the API in PayIn Open
+- Create a hosted Payment Link in PayIn Cloud, or create an order-payment flow through the API in PayIn Open
 - Set amount and details
 - Share link or QR code
 - User pays via link
-- Track in dashboard
+- Track with API queries and webhooks, or in your own console
 
 **Use Cases:**
 - Event registration
@@ -174,7 +174,7 @@ Your Application → PayIn API/MCP → Payment Address (Your Wallet)
 ### Integration Methods
 - **MCP Server** - AI-powered integration assistant
 - **REST API** - Traditional HTTP API
-- **Payment Links** - No-code web interface
+- **Payment Links** - Cloud-only hosted links; use the Order Payment API for Open-built link flows
 - **SDKs** - TypeScript, Python, PHP, Go 
 
 ## Use Cases
@@ -189,10 +189,10 @@ Allow players to top up in-game currency using stablecoins from any supported bl
 Process subscription payments in cryptocurrency with recurring deposit addresses.
 
 ### Freelancing
-Send payment links to clients for services rendered, no integration needed.
+Send Cloud Payment Links to clients, or generate your own Open payment pages with the Order Payment API.
 
 ### Events
-Sell tickets or registrations using shareable payment links with QR codes.
+Sell tickets or registrations using Cloud Payment Links or a self-built Open checkout page with QR codes.
 
 ### Web3 Apps
 Native cryptocurrency payment processing for decentralized applications.

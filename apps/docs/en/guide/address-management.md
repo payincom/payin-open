@@ -92,7 +92,7 @@ PayIn manages addresses through four states:
 4. **Monitoring Cleanup**: Ensures monitoring tasks complete properly
 
 ::: tip Configurable Cooldown
-The cooldown period can be adjusted per organization via the `address_pool.cooldown_minutes` configuration parameter.
+The cooldown period can be adjusted for the Open merchant/business scope via the `address_pool.cooldown_minutes` configuration parameter.
 :::
 
 ## Address Management Modes
@@ -361,11 +361,11 @@ PayIn Open does not ship an `apps/admin` console. Use the address-pool import AP
 **Step-by-Step**:
 
 1. **Authenticate as an operator**
-   - Use an API key with `admin` or `owner` role
+   - Use an operator API key or CLI credentials for your deployment
    - Point your CLI or script at your PayIn Open API base URL
 
 2. **Prepare the import request**
-   - Select the target organization and protocol in your request or CLI flags
+   - Select the target Open merchant/business scope and protocol in your request or CLI flags
    - Keep protocol selection outside the CSV file
 
 3. **Select Import Mode**
@@ -403,7 +403,7 @@ For automation or programmatic imports, use the Address Pool API.
 
 **Endpoint**: `POST /api/v1/address-pool/import`
 
-**Authentication**: Requires API Key with `admin` or `owner` role
+**Authentication**: Requires an operator API key or CLI credentials for your deployment
 
 **Request**:
 
