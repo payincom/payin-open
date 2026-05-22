@@ -181,9 +181,48 @@ describe('deposits route runtime context resolution', () => {
         success: false,
         code: 'ORGANIZATION_CONTEXT_REQUIRED',
         message: 'Organization context is required for hosted multi-tenant operations.',
+        suggestions: [
+          'In hosted Cloud mode, include X-Organization-Id for the target tenant or use an organization-scoped API key.',
+          'Confirm the authenticated user or API key belongs to that hosted organization.',
+        ],
       });
       expect(mocks.manager.bindDepositAddressForRuntimeScope).not.toHaveBeenCalled();
       expect(mocks.manager.bindDepositAddress).not.toHaveBeenCalled();
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('returns Open-specific organization-context guidance when an Open route cannot resolve context', async () => {
+    const restoreRuntime = setRuntime('open');
+    try {
+      const app = new Hono();
+      app.route(
+        '/deposits',
+        createDepositsRoutes({
+          resolveRuntimeContext: () => undefined,
+        })
+      );
+
+      const response = await app.request('/deposits/bind', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(validBindDepositBody),
+      });
+      const body = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(body).toMatchObject({
+        code: 'ORGANIZATION_CONTEXT_REQUIRED',
+        message: expect.stringContaining('Business API-key calls'),
+        suggestions: [
+          'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
+          'For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: ' +
+            DEFAULT_OPEN_ORGANIZATION_ID +
+            ' until you switch to API-key auth.',
+          'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
+        ],
+      });
     } finally {
       restoreRuntime();
     }
