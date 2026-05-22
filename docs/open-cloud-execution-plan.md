@@ -1,6 +1,6 @@
 # PayIn Open / Cloud Overlay Execution Plan
 
-Status: approved by JQ on 2026-05-17; refreshed after Phase 2 PR #7 and order-create seam PR #8 on 2026-05-20.
+Status: approved by JQ on 2026-05-17; refreshed after Phase 3 PR #15 and P4.A notification seam PR #16 on 2026-05-22.
 
 ## Strategic decision
 
@@ -32,11 +32,13 @@ Repository roles:
 - `createApp(options)`: Open app composition with route factories/dependencies, infrastructure/guard overrides, and extension hooks.
 - Business route factories: `api-keys`, `orders`, `payment-links`, `deposits`, `address-pool`, `transfers`, and `notifications`.
 - Order-create policy/event seam: allow-all Open policy and no-op/best-effort event sink for `POST /api/v1/orders`.
+- Payment-link policy/event seam: allow-all Open policy and no-op/best-effort event sink for create/update/publish operations.
+- Notification policy/event seam: allow-all Open policy and no-op/best-effort event sink for endpoint create/test and notification retry operations.
 
 Still future and only if concretely needed:
 
-- Additional neutral policy/event seams for specific route operations.
-- Auth/config/notification/storage provider interfaces beyond current route-level injection.
+- Additional neutral policy/event seams for specific route operations, only if concretely needed.
+- Auth/config/storage provider interfaces beyond current route-level injection.
 - Repository extraction, migrations, or private Cloud overlay code.
 
 ## Phased execution
@@ -82,23 +84,23 @@ This is a seam only. It is not a Cloud entitlement, billing, plan, subscription,
 
 ### Phase 3 — Open self-hosted runtime profile
 
-Status: not complete.
+Status: complete in PR #15 (`d1fe87f`).
 
 Deliverables:
 
-- Explicit local setup/admin/operator semantics.
-- Local API-key/auth semantics suitable for self-hosting.
+- Explicit local setup/admin/operator semantics are documented.
+- Local API-key/auth semantics are suitable for self-hosting.
 - Open admin/UI/profile hides org/member/role/billing/superadmin SaaS concepts.
 - Local config profile is clear and self-hostable.
 - No unsafe default production admin behavior.
 
 ### Phase 4 — overlay readiness hardening
 
-Status: not complete.
+Status: active; P4.A notification policy/event seam merged in PR #16 (`8bb3c10`).
 
 Deliverables should remain bounded:
 
-- Add neutral policy/event ports only for specific operations that need overlay hooks.
+- Add neutral policy/event ports only for specific operations that need overlay hooks; order, payment-link, and notification seams already exist.
 - Add provider interfaces only where a concrete overlay need exists.
 - Add tests for default Open behavior and no Cloud dependency leakage.
 - Document exact overlay extension points.
@@ -117,11 +119,11 @@ Only after Phases 1–4 exit criteria pass and the human explicitly approves:
 
 ## Immediate implementation queue
 
-1. Pick one bounded Open-owned seam, preferably payment-link or notification/webhook policy/event if there is a clear overlay integration need.
-2. Keep Open defaults allow-all/no-op and preserve existing behavior.
-3. Add focused tests for default behavior, injected denial/recording, and best-effort event failure if applicable.
-4. Run focused validation only; avoid long full builds unless explicitly requested.
-5. Write evidence with E1–E7 style headings and explicit RATP context-budget fields when using agent workflow.
+1. Complete P4.B docs/status refresh so architecture docs no longer point workers at completed order/payment-link/notification seams.
+2. Run scoped docs validation: `npm run boundary:check`, `git diff --check`, and grep sanity checks for edited docs.
+3. If continuing Phase 4, run P4.C provider-interface discovery before any provider implementation.
+4. Keep Open defaults allow-all/no-op for any future bounded seam and preserve existing behavior.
+5. Do not start Cloud billing/subscription/plan/entitlement/member/role/admin implementation in Open.
 
 ## Quality control checklist
 
