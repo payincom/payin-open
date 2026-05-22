@@ -39,7 +39,7 @@ Understanding the difference between Order and Deposit services:
 Before creating orders, ensure you have:
 
 1. ✅ **PayIn Account** - Registered at [your-payin.example.com](https://your-payin.example.com) or [your-payin.example.com](https://your-payin.example.com)
-2. ✅ **API Key** - Generated from Admin dashboard
+2. ✅ **API Key** - Created through the Open operator API/CLI or self-hosted console
 3. ✅ **Address Pool** - At least a few addresses imported (see [Address Pool Setup](/en/guide/address-pool-setup))
 4. ✅ **Supported Network** - Choose from [supported networks](/en/guide/supported-networks)
 
@@ -724,7 +724,7 @@ https://myshop.com/orders/ORDER-2025-001/success?order_reference=ORDER-2025-001&
 ```
 
 ::: tip Default Redirect URLs
-You can configure organization-wide default redirect URLs in PayIn Admin dashboard. Order-level URLs take precedence over defaults.
+In PayIn Open, configure organization-wide default redirect URLs through the operator API/CLI or self-hosted console. Order-level URLs take precedence over defaults.
 :::
 
 ### Order Metadata
@@ -852,7 +852,7 @@ try {
 **Option 1: Webhooks (Recommended)**
 
 ```typescript
-// Configure webhook endpoint in Admin dashboard
+// Register webhook endpoint through /api/v1/notifications/endpoints
 // https://myshop.com/webhooks/payin
 
 app.post('/webhooks/payin', async (req, res) => {
@@ -953,7 +953,7 @@ const payin = new PayInClient({
 **Problem:** Order creation fails with address pool error.
 
 **Solution:**
-1. Check address pool status in Admin dashboard
+1. Check address pool status with the operator API, CLI, or self-hosted console
 2. Import more addresses following [Address Pool Setup](/en/guide/address-pool-setup)
 3. Ensure addresses for the correct protocol (EVM/Tron)
 

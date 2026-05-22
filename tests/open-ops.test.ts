@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildAuthHeaders,
@@ -238,5 +239,56 @@ describe('PayIn Open ops library', () => {
       'database.schema',
       'database.default-merchant',
     ]));
+  });
+});
+
+
+describe('PayIn Open release-readiness static checks', () => {
+  it('keeps docker compose on existing Dockerfile and documented Open env', () => {
+    const compose = readFileSync('docker-compose.yml', 'utf8');
+
+    expect(compose).toContain('dockerfile: Dockerfile');
+    expect(compose).not.toContain('Dockerfile.full-api');
+    expect(compose).not.toContain('Dockerfile.webhook-receiver');
+    expect(compose).toContain('condition: service_healthy');
+    expect(compose).toContain('pg_isready');
+    expect(compose).toContain('PAYIN_RUNTIME: open');
+    expect(compose).toContain('DB_CONNECTION_STRING:');
+    expect(compose).toContain('JWT_SECRET:');
+    expect(compose).toContain('WEBHOOK_SECRET:');
+  });
+
+  it('keeps package scripts off absent database migration tooling', () => {
+    const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: Record<string, string> };
+
+    expect(packageJson.scripts['open:init']).toBe('tsx scripts/open/open-init.ts');
+    expect(Object.keys(packageJson.scripts)).not.toEqual(expect.arrayContaining([
+      'db:migrate:up',
+      'db:migrate:down',
+      'db:migrate:status',
+      'db:seed',
+      'db:reset',
+    ]));
+  });
+
+  it('keeps deployment and public docs on Open-safe placeholders', () => {
+    const deployScript = readFileSync('scripts/deployment/deploy-to-railway.sh', 'utf8');
+    const buildScript = readFileSync('scripts/deployment/build-for-railway.sh', 'utf8');
+    const docs = [
+      'README.md',
+      'docs/self-hosting/database-initialization.md',
+      'apps/docs/en/guide/webhooks.md',
+      'apps/docs/zh/guide/webhooks.md',
+      'apps/docs/en/guide/security.md',
+      'apps/docs/zh/guide/security.md',
+    ].map(path => readFileSync(path, 'utf8')).join('\n');
+
+    expect(deployScript).toContain('railway.production.api.toml');
+    expect(deployScript).toContain('railway.test.api.toml');
+    expect(buildScript).toContain('npm run open:init -- --check');
+    expect(docs).toContain('/api/v1/notifications/endpoints');
+    expect(docs).toContain('<your-payin-open-api>');
+    expect(docs).not.toContain('api.payin.com');
+    expect(docs).not.toContain('npm run db:migrate');
   });
 });

@@ -16,7 +16,7 @@ PayIn MCP 服务器为 PayIn 的支付基础设施提供了 AI 驱动的接口�
 开始之前，您需要：
 
 1. **PayIn 账户** - 在 [your-payin.example.com](https://your-payin.example.com)（测试环境）或 [your-payin.example.com](https://your-payin.example.com)（生产环境）注册
-2. **API 密钥** - 从管理后台生成
+2. **API 密钥** - 通过 Open operator API/CLI 或自托管控制台创建
 
 ::: tip 测试网 vs 主网
 我们强烈建议先使用**测试网**熟悉 PayIn，然后再处理真实交易。详见 [测试网 vs 主网](/zh/guide/testnet-vs-mainnet)。
@@ -35,11 +35,10 @@ PayIn MCP 服务器为 PayIn 的支付基础设施提供了 AI 驱动的接口�
 
 ### 1.2 生成 API 密钥
 
-1. 登录 PayIn 管理后台
-2. 导航到 **设置** → **API 密钥**
-3. 点击 **创建 API 密钥**
-4. 输入名称（例如 "MCP 服务器密钥"）
-5. 复制生成的 API 密钥（只会显示一次！）
+1. 使用 PayIn Open operator 流程访问自托管 API 密钥工具
+2. 通过 Open API、CLI 或自托管控制台创建 API 密钥
+3. 输入名称（例如 "MCP 服务器密钥"）
+4. 复制生成的 API 密钥（只会显示一次！）
 
 ::: warning 保存您的 API 密钥
 API 密钥在创建时只显示一次。请安全保存 - 配置 MCP 时需要使用。
@@ -124,7 +123,7 @@ API 密钥在创建时只显示一次。请安全保存 - 配置 MCP 时需要�
 **快速设置：**
 1. 安装地址工具：`npm install -g @payin/address-tool`
 2. 生成地址：`payin-address-tool generate --mnemonic "..." --protocol evm --count 1000`
-3. 通过管理界面导入：**地址池** → **导入地址**
+3. 通过操作员 API/CLI 或您自建的自托管控制台导入
 
 **详细指南：**
 - [地址池设置 →](/zh/guide/address-pool-setup) - 完整的分步说明
@@ -231,7 +230,7 @@ AI 将通过代码示例指导您完成集成过程。
 
 ### "身份验证失败"
 
-1. 验证 API 密钥是否活跃（检查管理后台）
+1. 通过 operator API/CLI 或自托管控制台验证 API 密钥是否活跃
 2. 确保 API 密钥未过期
 3. 检查 API 密钥字符串中是否有额外空格
 

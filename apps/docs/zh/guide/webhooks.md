@@ -100,14 +100,27 @@ app.listen(3000);
 - ✅ 应在处理前验证签名
 - ✅ 必须处理幂等交付（可能多次接收同一事件）
 
-### 步骤 2：在管理后台配置
+### 步骤 2：在 PayIn Open 中注册端点
 
-1. 登录 PayIn 管理后台：[your-payin.example.com](https://your-payin.example.com)
-2. 导航至 **设置** → **Webhooks**
-3. 点击 **创建 Webhook 端点**
-4. 输入您的端点 URL（例如：`https://yourapp.com/webhooks/payin`）
-5. 选择要订阅的事件
-6. 保存并复制 **Webhook 密钥**
+PayIn Open 是 headless。请通过 notification endpoint API 注册和管理 webhook 投递端点：
+
+```bash
+curl -X POST https://<your-payin-open-api>/api/v1/notifications/endpoints \
+  -H "Authorization: Bearer <operator-jwt-or-api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint_name": "orders-webhook",
+    "endpoint_type": "webhook",
+    "config": {
+      "url": "https://yourapp.com/webhooks/payin",
+      "secret": "whsec_replace_with_random_secret"
+    },
+    "subscribed_events": ["order.completed", "order.expired"],
+    "is_enabled": true
+  }'
+```
+
+管理路径为 `POST/GET /api/v1/notifications/endpoints`、`GET/PUT/DELETE /api/v1/notifications/endpoints/:id` 和 `POST /api/v1/notifications/endpoints/:id/test`。兼容别名 `/api/v1/notifications/webhooks` 映射到同一组 endpoint records。
 
 ### 步骤 3：存储 Webhook 密钥
 
@@ -124,12 +137,14 @@ Webhook 密钥用于验证签名。切勿将其提交到版本控制或在客户
 
 ### 步骤 4：测试您的端点
 
-使用 PayIn 的测试工具验证您的端点是否正常工作：
+使用 notification endpoint test API 验证您的端点是否正常工作：
 
-1. 在管理后台，前往 **设置** → **Webhooks**
-2. 点击 **发送测试事件**
-3. 检查您的服务器日志以确认收到
-4. 验证签名验证通过
+```bash
+curl -X POST https://<your-payin-open-api>/api/v1/notifications/endpoints/<endpoint-id>/test \
+  -H "Authorization: Bearer <operator-jwt-or-api-key>"
+```
+
+然后检查服务器日志并确认签名验证通过。
 
 ## Webhook 载荷结构
 
@@ -551,7 +566,7 @@ app.post('/webhooks/payin', async (req, res) => {
 
 ### 手动重试
 
-如果所有自动重试都失败，您可以从管理后台手动重试：
+如果所有自动重试都失败，可以通过 notification logs/API 重试：
 
 1. 前往 **设置** → **Webhooks** → **交付历史**
 2. 找到失败的交付
@@ -705,7 +720,7 @@ ngrok http 3000
 
 # 3. 复制 HTTPS URL（例如：https://abc123.ngrok.io）
 
-# 4. 在 PayIn 管理后台配置 Webhook
+# 4. 通过 /api/v1/notifications/endpoints 配置 Webhook
 # URL: https://abc123.ngrok.io/webhooks/payin
 ```
 
@@ -846,7 +861,7 @@ describe('Webhook Handler', () => {
 
 ### Webhook 仪表板
 
-在管理后台监控 Webhook 交付：
+通过 notification logs/API 监控 Webhook 交付：
 
 1. 前往 **设置** → **Webhooks** → **交付历史**
 2. 查看最近的交付及其状态：
@@ -947,9 +962,9 @@ setInterval(checkWebhookHealth, 5 * 60 * 1000);
 1. ✅ 端点使用 HTTPS（不是 HTTP）
 2. ✅ 端点可公开访问（不是 localhost）
 3. ✅ 防火墙允许传入 HTTPS 流量
-4. ✅ 端点在管理后台中正确配置
-5. ✅ 在管理后台中订阅了事件
-6. ✅ 检查管理后台中的 Webhook 交付历史是否有错误
+4. ✅ 端点已通过 `/api/v1/notifications/endpoints` 正确配置
+5. ✅ 已在 endpoint 的 `subscribed_events` 中订阅事件
+6. ✅ 检查 notification delivery logs 是否有错误
 
 **测试：**
 ```bash
@@ -1116,7 +1131,7 @@ webhookQueue.process(async (job) => {
 
 ## 获取帮助
 
-- **Webhook 问题**：检查管理后台中的交付历史
+- **Webhook 问题**：检查 notification delivery logs
 - **社区支持**：[Discord 社区](https://discord.gg/payin)
 
 ---

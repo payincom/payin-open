@@ -141,7 +141,7 @@ For detailed instructions, refer to hardware wallet official documentation.
 
 ## Import Addresses to PayIn
 
-Regardless of which method you use to generate addresses, you need to import them to PayIn Admin:
+Regardless of which method you use to generate addresses, import them into PayIn Open through the operator API/CLI, or through a self-hosted console you build on top of those APIs:
 
 ### Step 1: Prepare Address List
 
@@ -186,13 +186,13 @@ TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t,1
 **Other Notes**:
 - If using CSV format, first line must be header (`address` or `address,derivation_index`)
 - Starting from second line, one address per line
-- Protocol is selected in Admin UI, not in CSV file
+- Protocol is selected in the import request or CLI flags, not in the CSV file
 - PayIn automatically validates address formats
 :::
 
 #### Method B: Copy and Paste
 
-You can also paste address list directly in Admin UI, one address per line:
+If you build a self-hosted console, you can also support pasting an address list, one address per line:
 
 ```
 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0
@@ -202,10 +202,10 @@ You can also paste address list directly in Admin UI, one address per line:
 
 No header needed, just paste addresses directly. Addresses imported this way will not include derivation index information.
 
-### Step 2: Log in to PayIn Admin
+### Step 2: Authenticate as an Operator
 
-1. Visit your PayIn Admin dashboard
-2. Log in with your account
+1. Open your self-hosted console, or use the address-pool import API/CLI
+2. Authenticate with an API key or operator session
 3. Select the corresponding organization
 
 ### Step 3: Import Addresses

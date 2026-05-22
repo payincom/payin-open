@@ -40,7 +40,7 @@ Use AI to integrate PayIn through natural conversation.
 
 ### Option 2: Payment Links (No-Code)
 
-Create shareable payment links via Admin UI.
+Create shareable payment links in PayIn Cloud, or build an equivalent flow on PayIn Open with the Order Payment API.
 
 **Best For:**
 - Small businesses
@@ -121,7 +121,7 @@ Permanent addresses for recurring user payments.
 Shareable payment links without integration.
 
 **How It Works:**
-- Create payment link via Admin UI
+- Create a payment link in PayIn Cloud, or create an order-payment flow through the API in PayIn Open
 - Set amount and details
 - Share link or QR code
 - User pays via link

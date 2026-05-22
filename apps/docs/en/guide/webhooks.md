@@ -100,14 +100,27 @@ app.listen(3000);
 - ✅ Should verify signature before processing
 - ✅ Must handle idempotent delivery (may receive same event multiple times)
 
-### Step 2: Configure in Admin Dashboard
+### Step 2: Register the Endpoint in PayIn Open
 
-1. Log in to PayIn Admin: [your-payin.example.com](https://your-payin.example.com)
-2. Navigate to **Settings** → **Webhooks**
-3. Click **Create Webhook Endpoint**
-4. Enter your endpoint URL (e.g., `https://yourapp.com/webhooks/payin`)
-5. Select events to subscribe to
-6. Save and copy the **Webhook Secret**
+PayIn Open is headless. Register and manage webhook delivery endpoints through the notification endpoint API:
+
+```bash
+curl -X POST https://<your-payin-open-api>/api/v1/notifications/endpoints \
+  -H "Authorization: Bearer <operator-jwt-or-api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint_name": "orders-webhook",
+    "endpoint_type": "webhook",
+    "config": {
+      "url": "https://yourapp.com/webhooks/payin",
+      "secret": "whsec_replace_with_random_secret"
+    },
+    "subscribed_events": ["order.completed", "order.expired"],
+    "is_enabled": true
+  }'
+```
+
+Management paths are `POST/GET /api/v1/notifications/endpoints`, `GET/PUT/DELETE /api/v1/notifications/endpoints/:id`, and `POST /api/v1/notifications/endpoints/:id/test`. The compatibility alias `/api/v1/notifications/webhooks` maps to the same endpoint records.
 
 ### Step 3: Store Webhook Secret
 
@@ -124,12 +137,14 @@ The webhook secret is used to verify signatures. Never commit it to version cont
 
 ### Step 4: Test Your Endpoint
 
-Use PayIn's test tool to verify your endpoint works:
+Use the notification endpoint test API to verify your endpoint works:
 
-1. In Admin dashboard, go to **Settings** → **Webhooks**
-2. Click **Send Test Event**
-3. Check your server logs to confirm receipt
-4. Verify signature validation passed
+```bash
+curl -X POST https://<your-payin-open-api>/api/v1/notifications/endpoints/<endpoint-id>/test \
+  -H "Authorization: Bearer <operator-jwt-or-api-key>"
+```
+
+Then check your server logs and confirm signature validation passed.
 
 ## Webhook Payload Structure
 
@@ -551,12 +566,11 @@ app.post('/webhooks/payin', async (req, res) => {
 
 ### Manual Retry
 
-If all automatic retries fail, you can manually retry from the Admin dashboard:
+If all automatic retries fail, retry through the notification delivery API/log workflow:
 
-1. Go to **Settings** → **Webhooks** → **Delivery History**
-2. Find the failed delivery
-3. Click **Retry**
-4. PayIn sends the webhook again immediately
+1. Inspect notification delivery logs for the failed delivery
+2. Retry the failed notification through the notification retry API
+3. Confirm PayIn sends the webhook again
 
 ## Event Handling Patterns
 
@@ -705,7 +719,7 @@ ngrok http 3000
 
 # 3. Copy the HTTPS URL (e.g., https://abc123.ngrok.io)
 
-# 4. Configure webhook in PayIn Admin
+# 4. Configure webhook through the operator API/CLI or your self-hosted console
 # URL: https://abc123.ngrok.io/webhooks/payin
 ```
 
@@ -849,12 +863,12 @@ describe('Webhook Handler', () => {
 
 ## Monitoring and Debugging
 
-### Webhook Dashboard
+### Webhook Delivery Logs
 
-Monitor webhook delivery in the Admin dashboard:
+Monitor webhook delivery through notification logs/API:
 
-1. Go to **Settings** → **Webhooks** → **Delivery History**
-2. View recent deliveries with status:
+1. Query notification logs for recent deliveries
+2. View delivery status:
    - ✅ **Success**: HTTP 200-299 returned
    - ⏳ **Pending**: Scheduled for delivery
    - 🔄 **Retrying**: Failed, will retry
@@ -952,9 +966,9 @@ setInterval(checkWebhookHealth, 5 * 60 * 1000);
 1. ✅ Endpoint uses HTTPS (not HTTP)
 2. ✅ Endpoint is publicly accessible (not localhost)
 3. ✅ Firewall allows incoming HTTPS traffic
-4. ✅ Endpoint configured correctly in Admin dashboard
-5. ✅ Events subscribed to in Admin dashboard
-6. ✅ Check webhook delivery history in Admin for errors
+4. ✅ Endpoint configured through `/api/v1/notifications/endpoints`
+5. ✅ Events listed in the endpoint `subscribed_events`
+6. ✅ Check notification delivery logs for errors
 
 **Testing:**
 ```bash
@@ -1121,7 +1135,7 @@ webhookQueue.process(async (job) => {
 
 ## Getting Help
 
-- **Webhook Issues**: Check delivery history in Admin dashboard
+- **Webhook Issues**: Check notification delivery logs
 - **Community Support**: [Discord Community](https://discord.gg/payin) 
 
 ---

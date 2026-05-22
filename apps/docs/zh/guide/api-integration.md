@@ -36,15 +36,14 @@ PayIn 为测试和生产提供独立的环境：
 
 ### 身份验证
 
-所有 API 请求都需要使用从 PayIn 管理后台获取的 API 密钥进行身份验证。
+所有 API 请求都需要使用通过 PayIn Open operator 流程创建的 API 密钥进行身份验证。
 
 #### 获取 API 密钥
 
-1. 登录 [your-payin.example.com](https://your-payin.example.com)（主网使用 your-payin.example.com）
-2. 导航到 **设置** → **API 密钥**
-3. 点击 **创建 API 密钥**
-4. 输入描述性名称（例如 "生产服务器密钥"）
-5. 复制生成的密钥（格式：`pk_xxxxxxxxxxxxx`）
+1. `open:init` 后注册第一个本地 operator。
+2. 通过 Open API 或 operator automation 创建 API key。
+3. 使用描述性名称，例如 `production-server-key`。
+4. 复制生成的密钥（格式：`pk_xxxxxxxxxxxxx`）。
 
 ::: warning 保存你的 API 密钥
 API 密钥仅在创建时显示一次。请安全保存 - 之后无法再次获取。
@@ -1068,10 +1067,7 @@ Webhooks 是接收实时支付通知的推荐方式。
 
 ### 设置 Webhooks
 
-1. 在管理后台配置 webhook URL：**设置** → **Webhooks**
-2. 输入你的端点 URL（必须是 HTTPS）
-3. 复制 webhook 密钥用于签名验证
-4. 选择要接收的事件
+通过 `POST /api/v1/notifications/endpoints` 注册投递端点，设置 `endpoint_type: "webhook"`、HTTPS URL、webhook secret 和订阅事件。使用 `GET/PUT/DELETE /api/v1/notifications/endpoints/:id` 管理端点，并用 `POST /api/v1/notifications/endpoints/:id/test` 测试投递。文档化兼容别名 `/api/v1/notifications/webhooks` 映射到同一组 endpoint records。
 
 ### 事件类型
 
@@ -1386,7 +1382,7 @@ ngrok http 3000
 # 你的 webhook URL 变为：
 # https://abc123.ngrok.io/webhooks/payin
 
-# 在 PayIn 管理后台配置此 URL
+# Register this URL with /api/v1/notifications/endpoints
 ```
 
 ### 测试场景

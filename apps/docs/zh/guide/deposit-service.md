@@ -41,7 +41,7 @@
 创建充值引用前，请确保您已：
 
 1. ✅ **PayIn账户** - 在 [your-payin.example.com](https://your-payin.example.com) 或 [your-payin.example.com](https://your-payin.example.com) 注册
-2. ✅ **API密钥** - 从管理后台生成
+2. ✅ **API密钥** - 通过 Open operator API/CLI 或自托管控制台创建
 3. ✅ **地址池** - 至少导入几个地址（参见 [地址池设置](/zh/guide/address-pool-setup)）
 4. ✅ **支持的网络** - 选择协议族：EVM 或 Tron
 
@@ -880,7 +880,7 @@ async handleDepositWebhook(event: PayInWebhookEvent) {
 
 ```typescript
 // 组织级别的充值跳转 URL
-// 在管理后台设置或通过 API 设置
+// 通过 Open operator API/CLI 或自托管控制台设置
 
 // 充值确认后，PayIn 会附加参数：
 // https://yourgame.com/wallet/success
@@ -895,7 +895,7 @@ async handleDepositWebhook(event: PayInWebhookEvent) {
 ```
 
 ::: tip 仅配置级别
-与订单不同，充值不支持单次交易的跳转 URL。在管理后台配置组织级别的跳转。
+与订单不同，充值不支持单次交易的跳转 URL。请通过 Open operator API/CLI 或自托管控制台配置组织级别的跳转。
 :::
 
 ## 最佳实践
@@ -1041,7 +1041,7 @@ const payin = new PayInClient({
 **问题：** 绑定失败，地址池错误。
 
 **解决方案：**
-1. 在管理后台检查地址池状态
+1. 通过 operator API、CLI 或自托管控制台检查地址池状态
 2. 按照 [地址池设置](/zh/guide/address-pool-setup) 导入更多地址
 3. 确保为正确的协议（EVM/Tron）准备地址
 4. 检查现有地址是否已绑定（充值不会自动释放）

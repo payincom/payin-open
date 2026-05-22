@@ -1,34 +1,55 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: payin-postgres
+    container_name: payin-open-postgres
     environment:
-      POSTGRES_DB: payin_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-payin_open}
+      POSTGRES_USER: ${POSTGRES_USER:-payin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-payin_local_password}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./tools/database/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d payin_dev"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - payin-network
     restart: unless-stopped
 
-  # Test Database (separate from development)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payin-open-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PAYIN_RUNTIME: open
+      HOST: 0.0.0.0
+      PORT: 3000
+      DB_CONNECTION_STRING: postgresql://${POSTGRES_USER:-payin}:${POSTGRES_PASSWORD:-payin_local_password}@postgres:5432/${POSTGRES_DB:-payin_open}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET before starting PayIn Open}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?Set WEBHOOK_SECRET before starting PayIn Open}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
   postgres-test:
     image: postgres:15-alpine
-    container_name: payin-postgres-test
+    container_name: payin-open-postgres-test
+    profiles:
+      - test
     environment:
       POSTGRES_DB: payin_test
       POSTGRES_USER: postgres
@@ -38,91 +59,14 @@ services:
       - "5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
-      - ./tools/database/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d payin_test"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - payin-network
     restart: unless-stopped
-    profiles:
-      - test
-
-
-
-  # Full API Server with Monitoring
-  full-api:
-    build:
-      context: .
-      dockerfile: Dockerfile.full-api
-    container_name: payin-full-api
-    environment:
-      NODE_ENV: development
-      PORT: 3002
-      HOST: 0.0.0.0
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: payin_dev
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      INFURA_API_KEY: your_infura_key
-      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-your_alchemy_key}
-      TRONGRID_API_KEY: your_trongrid_key
-      WEBHOOK_URL: http://webhook-receiver:3333/webhook
-    ports:
-      - "3002:3002"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - payin-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3002/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  # Webhook Receiver for testing
-  webhook-receiver:
-    build:
-      context: .
-      dockerfile: Dockerfile.webhook-receiver
-    container_name: payin-webhook-receiver
-    environment:
-      NODE_ENV: development
-      PORT: 3333
-      HOST: 0.0.0.0
-    ports:
-      - "3333:3333"
-    volumes:
-      - webhook_logs:/app/webhook-logs
-    networks:
-      - payin-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3333/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-
 
 volumes:
   postgres_data:
-    driver: local
   postgres_test_data:
-    driver: local
-  node_modules:
-    driver: local
-  webhook_logs:
-    driver: local
-
-networks:
-  payin-network:
-    driver: bridge
-    name: payin-network

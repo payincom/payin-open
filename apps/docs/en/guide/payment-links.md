@@ -1,13 +1,13 @@
 # Payment Links
 
-Payment Links allow you to accept cryptocurrency payments without writing any code. Create a shareable link, send it to your customers, and get paid - it's that simple.
+Payment Links are a PayIn Cloud no-code feature for accepting cryptocurrency payments with shareable links. PayIn Open does not ship this no-code feature or a dashboard app; self-hosted deployments should use the Order Payment API or build their own console-backed link flow.
 
 ## What are Payment Links?
 
-Payment Links are no-code payment URLs that you create through the PayIn Admin dashboard. Share the link via email, messaging apps, or social media, and customers can pay instantly with cryptocurrency.
+Payment Links are PayIn Cloud no-code dashboard features. PayIn Open does not ship a no-code dashboard app; for self-hosted deployments, create equivalent payment flows through the Order Payment API or your own console.
 
 **Key Characteristics:**
-- 🚫 **No code required** - Create links through Admin UI
+- 🚫 **Cloud-only no-code flow** - Not shipped in PayIn Open
 - 🔗 **Share anywhere** - Email, WhatsApp, social media, QR code
 - 💰 **Flexible pricing** - Fixed amount or custom amount
 - 🌐 **Multi-chain** - Support multiple networks and tokens
@@ -20,7 +20,7 @@ Understanding when to use Payment Links:
 
 | Feature | Payment Links | Order Payment API |
 |---------|---------------|-------------------|
-| **Setup** | No code - Admin UI only | Requires development |
+| **Setup** | PayIn Cloud no-code flow | Requires development |
 | **Sharing** | Public URL/QR code | Programmatic integration |
 | **Use Case** | Manual sharing, simple needs | Automated systems, e-commerce |
 | **Customization** | Limited (via UI) | Full control (via code) |
@@ -40,7 +40,7 @@ Understanding when to use Payment Links:
 
 ### Step 1: Create Your First Payment Link
 
-1. Log in to [PayIn Admin](https://your-payin.example.com)
+1. Log in to PayIn Cloud (Cloud-only feature)
 2. Navigate to **Payment Links** in the sidebar
 3. Click **Create Payment Link**
 4. Fill in the details:
@@ -805,4 +805,4 @@ Need help with Payment Links?
 
 - 📧 **Email**: support@payin.com
 - 💬 **Discord**: [Join our community](https://discord.gg/payin) 
-- 📚 **Admin Dashboard**: Built-in help and tutorials
+- 📚 **PayIn Cloud dashboard**: Built-in help and tutorials for Cloud-only Payment Links

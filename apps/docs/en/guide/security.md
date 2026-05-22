@@ -58,7 +58,7 @@ Rotate API keys regularly to minimize risk if a key is compromised.
 **Zero-Downtime Rotation:**
 
 ```bash
-# Step 1: Create new API key in PayIn Admin
+# Step 1: Create new API key through the Open operator API/CLI
 NEW_KEY=pk_live_new123...
 
 # Step 2: Update environment variables (keep old key temporarily)
@@ -71,7 +71,7 @@ PAYIN_API_KEY_OLD=$OLD_KEY
 # Step 4: After 24 hours, verify new key works
 # Check logs for any old key usage
 
-# Step 5: Delete old key from PayIn Admin
+# Step 5: Delete old key through the Open operator API/CLI
 ```
 
 **Implementation:**
@@ -119,7 +119,7 @@ PayIn uses role-based access control:
 - ✅ Create keys with minimum necessary permissions
 - ✅ Use separate keys for read vs. write operations
 - ✅ One key per service/application
-- ✅ Monitor key usage in Admin dashboard
+- ✅ Monitor key usage through logs, metrics, or self-hosted operator tooling
 
 ### Monitoring Key Usage
 
@@ -297,7 +297,7 @@ payin-address-tool generate \
   --output addresses.json
 
 # Transfer addresses.json to online machine
-# Import to PayIn via Admin UI or API
+# Import to PayIn via operator API/CLI
 
 # ⚠️ NEVER upload mnemonic to any online service
 ```
@@ -401,10 +401,10 @@ All communication must use HTTPS:
 
 ```typescript
 // ❌ BAD: HTTP endpoint
-const API_BASE = 'http://api.payin.com'; // INSECURE
+const API_BASE = 'http://<your-payin-open-api>'; // INSECURE
 
 // ✅ GOOD: HTTPS endpoint
-const API_BASE = 'https://api.payin.com'; // SECURE
+const API_BASE = 'https://<your-payin-open-api>'; // SECURE
 ```
 
 **Requirements:**
@@ -464,11 +464,7 @@ if (!checkPermission(user, 'orders:create')) {
 
 ### Multi-Factor Authentication (MFA)
 
-Enable MFA for PayIn Admin dashboard:
-1. Navigate to **Settings** → **Security**
-2. Enable **Two-Factor Authentication**
-3. Scan QR code with authenticator app (Google Authenticator, Authy)
-4. Save backup codes securely
+For PayIn Open, protect operator access with your identity provider, VPN, or deployment platform MFA. If you use PayIn Cloud, enable dashboard MFA from **Settings** → **Security**.
 
 **Enforce MFA for:**
 - ✅ All Owner accounts
