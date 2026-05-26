@@ -68,7 +68,7 @@ describe('transfers route runtime context resolution', () => {
     );
   });
 
-  it('uses the default single-merchant scope for transfer listing in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for transfer listing in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createTransfersApp().request('/transfers?businessType=order');
@@ -145,7 +145,7 @@ describe('transfers route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope for transfer lookup by reference in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for transfer lookup by reference in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createTransfersApp().request(

@@ -182,7 +182,7 @@ npm run build -w apps/docs
 
 Before deeper Processor refactoring, add tests that describe the desired behavior:
 
-1. Processor can run in single-merchant mode with a default merchant/organization context.
+1. Processor can run in single-merchant mode with a merchant organization context.
 2. Open API operations do not require callers to understand `organizationId`.
 3. Cloud adapter can still pass explicit organization context.
 4. Monitor events are mapped to payment context by an adapter, not by Monitor itself.
@@ -202,7 +202,7 @@ Before deeper Processor refactoring, add tests that describe the desired behavio
 ### Phase 2 — Open single-merchant facade
 
 - Add an Open runtime facade that hides organization/multi-tenant concepts.
-- Create default merchant/organization during setup.
+- Create the merchant organization during setup.
 - Ensure API/Skill flows use self-hosting language and do not require tenant management.
 - Add smoke tests for the self-hosted lifecycle.
 

@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_org_members_active ON organization_members(organi
 CREATE INDEX IF NOT EXISTS idx_org_members_role ON organization_members(organization_id, role);
 
 -- ============================================
--- Step 3: Create default organization
+-- Step 3: Create merchant organization
 -- ============================================
 INSERT INTO organizations (id, name, slug, plan_type)
 VALUES (
@@ -72,9 +72,9 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- Step 4: Migrate existing users to default organization
+-- Step 4: Migrate existing users to merchant organization
 -- ============================================
--- Set all existing users as owners of the default organization
+-- Set all existing users as owners of the merchant organization
 INSERT INTO organization_members (organization_id, user_id, role, status)
 SELECT
   '00000000-0000-0000-0000-000000000001' AS organization_id,
@@ -94,7 +94,7 @@ ON CONFLICT (organization_id, user_id) DO NOTHING;
 ALTER TABLE api_keys
   ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
 
--- Migrate existing API keys to default organization
+-- Migrate existing API keys to merchant organization
 UPDATE api_keys
 SET organization_id = '00000000-0000-0000-0000-000000000001'
 WHERE organization_id IS NULL;

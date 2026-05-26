@@ -6,7 +6,7 @@
 
 1. **部署 API 服务**：准备 PostgreSQL、RPC provider、域名、Webhook endpoint，并启动 PayIn Open API。
 2. **运行 Agent 预检**：使用 `npm run open:doctor`、`npm run open:init -- --check`、`npm run open:smoke` 验证本地配置和部署状态。
-3. **初始化 Open merchant scope**：配置 `DB_CONNECTION_STRING` 后运行 `npm run open:init`。初始化脚本只准备 Auth/Manager/Processor schemas 和内部默认 Open merchant scope；不会创建 `admin` / `admin123`，也不会创建隐式 operator。
+3. **初始化 Open merchant organization**：配置 `DB_CONNECTION_STRING` 后运行 `npm run open:init`。初始化脚本只准备 Auth/Manager/Processor schemas 和内部 Open merchant organization；不会创建 `admin` / `admin123`，也不会创建隐式 operator。
 4. **用 sandbox/testnet 验证**：在进入 production/mainnet 前，使用 `open:doctor --strict` 和 `open:smoke --require-live` 跑完整 sandbox gate。
 
 ## API Key 申请/创建流程 <a id="api-authentication"></a>
@@ -29,9 +29,9 @@ PayIn Open 不通过 Admin UI 创建 API Key。使用 Open Agent/Skill、API，�
 
 **常见问题提醒**
 
-- PayIn Open API Key 会自动绑定内部默认 Open merchant scope；API Key 调用不需要传 `X-Organization-Id`。
-- 使用 JWT 登录态直接调用 operator API 时，需要传 `X-Organization-Id`，且用户必须是该 Open merchant scope 的 operator/owner。PayIn Open 不会把任意 JWT 用户自动提升为默认 merchant owner。
-- 如果返回 `ORGANIZATION_CONTEXT_REQUIRED`，先检查 `open:init` 是否已完成默认 merchant bootstrap，以及 JWT 请求是否传入正确的 Open merchant id。
+- PayIn Open API Key 会自动绑定内部 Open merchant organization；API Key 调用不需要传 `X-Organization-Id`。
+- 使用 JWT 登录态直接调用 operator API 时，需要传 `X-Organization-Id`，且用户必须是该 Open merchant organization 的 operator/owner。PayIn Open 不会把任意 JWT 用户自动提升为merchant organization owner。
+- 如果返回 `ORGANIZATION_CONTEXT_REQUIRED`，先检查 `open:init` 是否已完成merchant-organization bootstrap，以及 JWT 请求是否传入正确的 Open merchant organization id。
 - 不要在聊天、日志、工单或文档中粘贴真实 API Key。
 
 ## 角色视角速览

@@ -20,7 +20,7 @@
 npm run open:init -- --check
 
 # 1. PayIn Open 初始化数据库（推荐入口）
-#    只准备 schema 和默认 Open merchant scope；不会创建默认用户名/密码。
+#    只准备 schema 和Open merchant organization；不会创建默认用户名/密码。
 npm run open:init
 
 # 2. 初始化数据库 + 生成演示数据
@@ -39,7 +39,7 @@ npm run open:init -- --force --demo-data
 export DB_CONNECTION_STRING="postgresql://user:pass@host:5432/payin"
 export NODE_ENV="production"
 
-# 初始化数据库（仅创建表结构和默认 Open merchant scope；无默认账号）
+# 初始化数据库（仅创建表结构和Open merchant organization；无默认账号）
 npm run open:init
 
 # 底层脚本仅供维护者调试；Open operators should use npm run open:init.
@@ -57,7 +57,7 @@ npm run open:init
 - 初始化 Auth 模块 schema（users, sessions, audit_logs）
 - 初始化 Manager 模块 schema（organizations, api_keys, config_values）
 - 初始化 Processor 模块 schema（orders, deposits, transfers, address_pool）
-- 确保默认 PayIn Open merchant scope 存在
+- 确保PayIn Open merchant organization 存在
 - 可选生成演示数据（仅非生产环境）
 
 **用法**：
@@ -289,7 +289,7 @@ npm run deploy
 |------|------|------|
 | **开发环境初始化** | `npm run open:init -- --demo-data` | 创建表 + 演示数据 |
 | **开发环境重置** | `npm run open:init -- --force --demo-data` | Open-safe 强制重置 + 演示数据；无默认 admin |
-| **生产环境初始化** | `npm run open:init` | 仅补齐 schema + 默认 Open merchant scope；无默认账号 |
+| **生产环境初始化** | `npm run open:init` | 仅补齐 schema + Open merchant organization；无默认账号 |
 | **测试环境初始化** | `npm run open:init -- --check` then `npm run open:init` | Open-safe 初始化；不删除数据、不创建默认 admin |
 | **CI/CD 部署** | `npm run open:init` | 作为 Open 部署步骤执行 |
 

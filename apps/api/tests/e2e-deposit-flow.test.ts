@@ -26,7 +26,7 @@
  * ```
  *
  * Test flow:
- * 1. Login with credentials; Open auto-resolves the default merchant, Cloud selects an organization
+ * 1. Login with credentials; Open auto-resolves the merchant organization, Cloud selects an organization
  * 2. Initialize address pool via API
  * 3. Bind deposit address for a user via API
  * 4. Send real testnet payments from multiple chains
@@ -71,7 +71,7 @@ describe('E2E Deposit Flow (via Web Server API)', () => {
 
     // Set organization ID only when explicitly provided, or when testing Cloud/multi-tenant runtime.
     // In PayIn Open, omitted X-Organization-Id lets the API verify the operator and resolve
-    // the default Open merchant automatically.
+    // the Open merchant organization automatically.
     let organizationId = process.env.TEST_ORGANIZATION_ID;
     const runtime = (process.env.PAYIN_RUNTIME || process.env.PAYIN_EDITION || 'open').toLowerCase();
     const isOpenRuntime = runtime === 'open' || runtime === 'payin-open';
@@ -90,7 +90,7 @@ describe('E2E Deposit Flow (via Web Server API)', () => {
       if (organizationId) {
         console.log(`📋 Using provided organization ID: ${organizationId}`);
       } else {
-        console.log('📋 PayIn Open runtime: omitting X-Organization-Id; API will resolve default merchant');
+        console.log('📋 PayIn Open runtime: omitting X-Organization-Id; API will resolve the merchant organization');
       }
     }
 

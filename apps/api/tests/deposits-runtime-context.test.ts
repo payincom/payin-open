@@ -146,7 +146,7 @@ describe('deposits route runtime context resolution', () => {
     });
   });
 
-  it('uses the default single-merchant scope for deposit binding in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for deposit binding in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createDepositsApp().request('/deposits/bind', {
@@ -225,7 +225,7 @@ describe('deposits route runtime context resolution', () => {
           'For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: ' +
             DEFAULT_OPEN_ORGANIZATION_ID +
             ' until you switch to API-key auth.',
-          'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
+          'If this persists, run npm run open:init -- --check and confirm the Open merchant-organization bootstrap completed.',
         ],
       });
     } finally {

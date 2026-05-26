@@ -126,7 +126,7 @@ describe('payment-links route runtime context resolution', () => {
     mocks.manager.listPaymentLinkOrdersForRuntimeScope.mockResolvedValue([]);
   });
 
-  it('uses the default single-merchant scope for payment-link creation in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for payment-link creation in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createPaymentLinksApp().request('/payment-links', {
@@ -145,7 +145,7 @@ describe('payment-links route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope for listing payment links in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for listing payment links in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createPaymentLinksApp().request('/payment-links');
@@ -200,7 +200,7 @@ describe('payment-links route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope for getting a payment link in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for getting a payment link in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createPaymentLinksApp().request(

@@ -38,7 +38,7 @@ describe('AuthManager initialization with INIT_DB=true', () => {
     }
   });
 
-  test('creates default organization and associates admin user', async () => {
+  test('creates merchant organization and associates admin user', async () => {
     const orgResult = await pool.query(
       `SELECT id, name, slug, plan_type FROM organizations WHERE id = $1`,
       [DEFAULT_ORGANIZATION_ID]

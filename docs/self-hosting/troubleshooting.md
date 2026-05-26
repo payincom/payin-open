@@ -42,7 +42,7 @@
 - **排查**：
   1. 查看返回的 `suggestions`，通常包含恢复步骤。
   2. 如遇地址池耗尽或服务关闭，请参考对应章节。
-  3. 记录报错时间和 Open merchant scope，方便本地 operator 排查；API-key 调用不要额外传 `X-Organization-Id`。
+  3. 记录报错时间和 Open merchant organization，方便本地 operator 排查；API-key 调用不要额外传 `X-Organization-Id`。
 
 ## 地址池耗尽 <a id="address-pool-exhausted"></a>
 
@@ -77,7 +77,7 @@
 - **症状**：`DEPOSIT_BIND_FAILED`、`DEPOSIT_UNBIND_FAILED`、`DEPOSIT_GET_FAILED`、`DEPOSIT_LIST_FAILED`、`DEPOSIT_REFERENCES_FAILED`、`DEPOSIT_STATS_FAILED`。
 - **排查**：
   1. 关注返回的 `suggestions`；大多与地址池容量、过滤条件或服务状态相关。
-  2. 记录 Open merchant scope 与报错时间；必要时附上 `depositReference`。
+  2. 记录 Open merchant organization 与报错时间；必要时附上 `depositReference`。
 
 ## 充值筛选与统计 <a id="deposits-filters"></a>
 

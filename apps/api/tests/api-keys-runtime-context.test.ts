@@ -93,7 +93,7 @@ describe('api-keys route runtime context resolution', () => {
     );
   });
 
-  it('uses the default single-merchant scope for API key listing in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for API key listing in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createApiKeysApp().request('/api-keys');
@@ -156,7 +156,7 @@ describe('api-keys route runtime context resolution', () => {
     }
   });
 
-  it('creates API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+  it('creates API keys with the Open merchant-organization scope in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createApiKeysApp().request('/api-keys', {
@@ -212,7 +212,7 @@ describe('api-keys route runtime context resolution', () => {
     }
   });
 
-  it('gets API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+  it('gets API keys with the Open merchant-organization scope in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createApiKeysApp().request('/api-keys/key-1');
@@ -245,7 +245,7 @@ describe('api-keys route runtime context resolution', () => {
     }
   });
 
-  it('updates API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+  it('updates API keys with the Open merchant-organization scope in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createApiKeysApp().request('/api-keys/key-1', {
@@ -273,7 +273,7 @@ describe('api-keys route runtime context resolution', () => {
     }
   });
 
-  it('revokes API keys with the default single-merchant scope in Open runtime without an authenticated organization id', async () => {
+  it('revokes API keys with the Open merchant-organization scope in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createApiKeysApp().request('/api-keys/key-1', {

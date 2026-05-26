@@ -19,10 +19,10 @@ async function testMultiTenancy() {
   });
 
   try {
-    // Test 1: Get default organization
-    console.log('📋 Test 1: Get default organization');
+    // Test 1: Get merchant organization
+    console.log('📋 Test 1: Get merchant organization');
     const defaultOrg = await authManager.organizations.getOrganizationBySlug('default');
-    console.log('✅ Default organization:', defaultOrg?.name);
+    console.log('✅ Single organization:', defaultOrg?.name);
     console.log(`   ID: ${defaultOrg?.id}\n`);
 
     // Test 2: Create a test user

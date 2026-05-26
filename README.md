@@ -100,7 +100,7 @@ In another terminal, verify the live API:
 npm run open:smoke -- --url http://localhost:3000
 ```
 
-For a live order smoke test, first run `open:init` (it creates no default login), register the first local Open operator through `/auth/register`, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator. In `PAYIN_RUNTIME=open`, JWT operator requests may omit `X-Organization-Id`; after the token is verified, the API checks active membership in the default Open merchant (`00000000-0000-0000-0000-000000000001` or your `PAYIN_OPEN_ORGANIZATION_ID`) before setting merchant context. Sending that same `X-Organization-Id` remains supported for compatibility. Business API-key calls should not send `X-Organization-Id` because API keys auto-scope to the Open merchant. In Cloud/multi-tenant runtime, callers must still provide explicit organization context or use an organization-scoped API key:
+For a live order smoke test, first run `open:init` (it creates no default login), register the first local Open operator through `/auth/register`, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator. In `PAYIN_RUNTIME=open`, JWT operator requests may omit `X-Organization-Id`; after the token is verified, the API checks active membership in the Open merchant organization (`00000000-0000-0000-0000-000000000001`, or `PAYIN_OPEN_ORGANIZATION_ID` when intentionally overridden) before setting organization context. Sending that same `X-Organization-Id` remains supported for compatibility. Business API-key calls should not send `X-Organization-Id` because API keys auto-scope to the Open merchant organization. In Cloud/multi-tenant runtime, callers must still provide explicit organization context or use an organization-scoped API key:
 
 ```bash
 npm run open:smoke -- \
@@ -148,7 +148,7 @@ npm run test             # Run tests
 npm run test:e2e:order   # Run the Order business E2E test against local testnet services
 npm run test:e2e:deposit # Run the Deposit business E2E test against local testnet services
 npm run lint:check       # Check linting
-npm run open:init        # Initialize Open schema and default merchant scope
+npm run open:init        # Initialize Open schema and merchant organization
 ```
 
 Railway-hosted sandbox/testnet E2E reproduction:
@@ -164,7 +164,7 @@ npm run test:e2e:order
 npm run test:e2e:deposit
 ```
 
-Use only a self-hosted PayIn Open sandbox/testnet deployment. Do not target mainnet RPCs, production databases, PayIn Cloud services, or print secrets in logs. In Open runtime, leave `TEST_ORGANIZATION_ID` unset by default so tests omit `X-Organization-Id` and exercise automatic default-merchant resolution; set it only when verifying explicit-header compatibility. In Cloud/multi-tenant runtime, set `TEST_ORGANIZATION_ID` because explicit organization context is required. Set `TEST_CHAIN` to a funded chain with available address-pool capacity for deterministic Railway verification.
+Use only a self-hosted PayIn Open sandbox/testnet deployment. Do not target mainnet RPCs, production databases, PayIn Cloud services, or print secrets in logs. In Open runtime, leave `TEST_ORGANIZATION_ID` unset by default so tests omit `X-Organization-Id` and exercise automatic merchant-organization resolution; set it only when verifying explicit-header compatibility. In Cloud/multi-tenant runtime, set `TEST_ORGANIZATION_ID` because explicit organization context is required. Set `TEST_CHAIN` to a funded chain with available address-pool capacity for deterministic Railway verification.
 
 ## RPC Defaults
 

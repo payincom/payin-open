@@ -113,7 +113,7 @@ describe('address-pool route runtime context resolution', () => {
     mocks.manager.unarchiveAddress.mockResolvedValue(undefined);
   });
 
-  it('uses the default single-merchant scope for availability in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for availability in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createAddressPoolApp().request(
@@ -211,7 +211,7 @@ describe('address-pool route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope for summary in Open runtime', async () => {
+  it('uses the Open merchant-organization scope for summary in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createAddressPoolApp().request('/address-pool/summary');
@@ -245,7 +245,7 @@ describe('address-pool route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when adding address-pool addresses in Open runtime', async () => {
+  it('uses the Open merchant-organization scope when adding address-pool addresses in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     const payload = {
       addresses: [
@@ -305,7 +305,7 @@ describe('address-pool route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when archiving and unarchiving in Open runtime', async () => {
+  it('uses the Open merchant-organization scope when archiving and unarchiving in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const archiveResponse = await createAddressPoolApp().request(

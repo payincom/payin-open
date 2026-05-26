@@ -41,7 +41,7 @@ Example checklist:
 1. Initialize schema and demo data.
 2. Start the PayIn Open API service.
 3. Run `npm run open:doctor` and `npm run open:smoke -- --url <api-url>`.
-4. Confirm the default Open merchant scope exists, then register the first local operator and create a sandbox API key.
+4. Confirm the Open merchant organization exists, then register the first local operator and create a sandbox API key.
 5. Import a small test address pool.
 6. Create a test order or payment link through the API or Agent workflow.
 7. Verify the payment page renders.

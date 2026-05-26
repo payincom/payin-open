@@ -200,6 +200,8 @@ async function initializeProcessorSchema(connectionString: string, plan: Process
   console.log('⚙️  Initializing Processor schema...');
 
   const { PostgreSQLDatabase, DEFAULT_OPEN_ORGANIZATION_ID } = await import('@payin/processor');
+  const openMerchantOrganizationId =
+    process.env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID;
 
   const database = new PostgreSQLDatabase(connectionString);
   await database.initialize();
@@ -218,11 +220,11 @@ async function initializeProcessorSchema(connectionString: string, plan: Process
          name = EXCLUDED.name,
          slug = EXCLUDED.slug,
          updated_at = NOW()`,
-      [DEFAULT_OPEN_ORGANIZATION_ID, 'PayIn Open Merchant', 'payin-open-merchant']
+      [openMerchantOrganizationId, 'PayIn Open Merchant', 'payin-open-merchant']
     );
 
     console.log('   ✅ Processor schema initialized');
-    console.log('   ✅ PayIn Open default merchant scope ensured');
+    console.log('   ✅ PayIn Open merchant organization ensured');
   } finally {
     await database.close();
   }

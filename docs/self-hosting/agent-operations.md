@@ -4,13 +4,13 @@ This runbook defines the PayIn Open command sequence an AI Agent or operator sho
 
 PayIn Open is headless by default. It intentionally does not include a bundled admin UI; if a lightweight console is needed later, it should be added as an optional Open-specific surface instead of reusing Cloud's multi-tenant admin dashboard.
 
-The commands below are designed to keep PayIn Open merchant-first: operators should not need to understand Cloud tenants or organizations. Internal compatibility concepts such as the default Open merchant scope are checked automatically.
+The commands below are designed to keep PayIn Open merchant-first: operators should not need to understand Cloud tenants or organizations. Internal compatibility concepts such as the Open merchant organization are checked automatically.
 
 PayIn also has an external operator CLI (`payin`) maintained at https://github.com/payincom/payin-cli. The CLI is an operations client for already-running PayIn Open or PayIn Cloud runtimes; it is not an installer or infrastructure deployment tool. Use deployment docs/templates for installation, then use the CLI for diagnostics, smoke checks, API keys, address pools, webhooks, and troubleshooting. Until npm publication, run it from GitHub with `npm exec --yes --package github:payincom/payin-cli -- payin ...`.
 
 In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations`, `/api/v1/users`, `/api/v1/auth/oauth/*`, `/api/v1/config-management`, and `/api/v1/config/diagnostics` are intentionally hidden. Use the Open single-merchant API plus the Agent/operator commands below instead.
 
-API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open default merchant. Business API-key calls should not pass `X-Organization-Id` or choose an organization id. JWT operator calls made after the first `/auth/register` bootstrap should pass the Open merchant id until the workflow switches to API keys.
+API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open merchant organization. Business API-key calls should not pass `X-Organization-Id` or choose an organization id. JWT operator calls made after the first `/auth/register` bootstrap should pass the Open merchant organization id until the workflow switches to API keys.
 
 ## Safety Model
 
@@ -19,7 +19,7 @@ API keys remain available for merchant integrations in Open runtime, but they ar
 | `npm run open:doctor` | Local/readiness warnings | No | No, unless `--url` | Fast diagnostic |
 | `npm run open:init -- --check` | Preflight + optional read-only DB check | No | No | DB bootstrap readiness |
 | `npm run open:init -- --dry-run` | Shows bootstrap plan | No | No | Change preview |
-| `npm run open:init` | Safely prepares schemas and default Open merchant scope; no default login | Yes | No | Initial bootstrap |
+| `npm run open:init` | Safely prepares schemas and Open merchant organization; no default login | Yes | No | Initial bootstrap |
 | `npm run open:smoke` | Dry-run smoke checklist | No | No | CI-safe smoke contract |
 | `npm run open:smoke -- --url <api-url>` | Public live health/config checks | No | Yes | Deployed API sanity check |
 | `npm run open:smoke -- --require-live ...` | Full live readiness gate | Creates test order | Yes | Sandbox/release gate |
@@ -56,14 +56,14 @@ npm run open:doctor -- --strict --json --url <api-url> --api-key <redacted>
 
 Checks include:
 
-- Runtime posture: Open single-tenant self-hosted profile, default local merchant scope, API-key scoping, JWT operator caveat, and production admin posture.
+- Runtime posture: Open single-tenant self-hosted profile, merchant organization, API-key scoping, JWT operator caveat, and production admin posture.
 - Open runtime detection.
 - Required repository files, self-hosting docs, and PayIn Open skill presence.
 - DB connection string presence with password redaction.
 - Optional live DB checks when `DB_CONNECTION_STRING` is configured:
   - database reachability;
   - processor schema completeness;
-  - PayIn Open default merchant scope presence.
+  - PayIn Open merchant organization scope presence.
 - Optional live API checks when `--url` is provided:
   - `/health`;
   - `/api/chains`;
@@ -84,7 +84,7 @@ npm run open:init -- --check --strict --json
 # Non-mutating plan preview
 npm run open:init -- --dry-run --json
 
-# Actual bootstrap: creates schemas and ensures the default Open merchant scope
+# Actual bootstrap: creates schemas and ensures the Open merchant organization
 # No admin/admin123 or implicit operator is created.
 npm run open:init
 
@@ -92,7 +92,7 @@ npm run open:init
 npm run open:init -- --demo-data
 ```
 
-Normal `open:init` is idempotent and does not drop Auth, Manager, or Processor data. It prepares the default Open merchant scope but does not create a default username/password or implicit login; register the first local operator through `/auth/register` after init, then public registration locks.
+Normal `open:init` is idempotent and does not drop Auth, Manager, or Processor data. It prepares the Open merchant organization but does not create a default username/password or implicit login; register the first local operator through `/auth/register` after init, then public registration locks.
 
 Destructive reset is guarded and should not be used in production without explicit human approval. It still uses the Open-safe path: schemas are reset, but no `admin` / `admin123` or implicit operator is created, so first-operator bootstrap remains `/auth/register`:
 
@@ -100,7 +100,7 @@ Destructive reset is guarded and should not be used in production without explic
 npm run open:init -- --force --confirm-reset
 ```
 
-`open:init -- --check` performs real read-only DB checks when `DB_CONNECTION_STRING` is configured. If the DB is missing schema tables or the default Open merchant scope, run `npm run open:init` against the confirmed target database, then register the first local operator through `/auth/register`.
+`open:init -- --check` performs real read-only DB checks when `DB_CONNECTION_STRING` is configured. If the DB is missing schema tables or the Open merchant organization, run `npm run open:init` against the confirmed target database, then register the first local operator through `/auth/register`.
 
 ## 3. Runtime Smoke: `open:smoke`
 

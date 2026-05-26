@@ -93,7 +93,7 @@ export function runtimeContextToLegacyOrganizationId(context: RuntimeContext): s
 /**
  * Resolve the business payment scope for API routes.
  *
- * In PayIn Open, business routes operate the single self-hosted merchant and
+ * In PayIn Open, business routes operate the self-hosted merchant organization and
  * should not require callers to choose or understand an organization. In Cloud
  * mode, routes must keep using the authenticated tenant context.
  */
@@ -107,9 +107,9 @@ export function resolveBusinessOrganizationId(
 /**
  * Preserve already verified Open authorization context.
  *
- * PayIn Open has a single merchant scope, but JWT users must still prove they
- * are operators for that scope. The shared auth middleware verifies active
- * membership in the default Open merchant when JWT callers omit
+ * PayIn Open has a merchant organization scope, but JWT users must still prove
+ * they are operators for that scope. The shared auth middleware verifies active
+ * membership in the Open merchant organization when JWT callers omit
  * X-Organization-Id, and API-key auth already carries a verified organization
  * context. This helper intentionally does not grant a default owner role to an
  * arbitrary JWT user, because public registration may be reachable during
@@ -144,7 +144,7 @@ export function openRuntimeAuthContextMiddleware(env: NodeJS.ProcessEnv = proces
 
 export function organizationContextRequiredMessage(env: NodeJS.ProcessEnv = process.env): string {
   if (isOpenRuntime(env)) {
-    return 'PayIn Open could not resolve a verified merchant context for this request. Business API-key calls are scoped automatically; JWT operator calls without X-Organization-Id are scoped to the default Open merchant only after active membership is verified.';
+    return 'PayIn Open could not resolve a verified merchant-organization context for this request. Business API-key calls are scoped automatically; JWT operator calls without X-Organization-Id are scoped to the Open merchant organization only after active membership is verified.';
   }
 
   return 'Organization context is required for hosted multi-tenant operations.';
@@ -154,12 +154,12 @@ export function organizationContextRequiredSuggestions(
   env: NodeJS.ProcessEnv = process.env
 ): string[] {
   if (isOpenRuntime(env)) {
-    const openMerchantId = getOpenRuntimeOrganizationId(env);
+    const openMerchantOrganizationId = getOpenRuntimeOrganizationId(env);
 
     return [
-      'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
-      `For PayIn Open JWT operator calls, omit X-Organization-Id to use the default merchant (${openMerchantId}) or send it explicitly for compatibility.`,
-      'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
+      'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant organization.',
+      `For PayIn Open JWT operator calls, omit X-Organization-Id to use the Open merchant organization (${openMerchantOrganizationId}) or send it explicitly for compatibility.`,
+      'If this persists, run npm run open:init -- --check and confirm the Open merchant-organization bootstrap completed.',
     ];
   }
 
@@ -184,7 +184,7 @@ export function cloudOnlyRouteDisabledPayload(routeName: string) {
     success: false,
     error: 'Not Found',
     code: 'CLOUD_ONLY_ROUTE_DISABLED',
-    message: `${routeName} is a hosted multi-tenant Cloud route and is not available in PayIn Open. Use the Open single-merchant API, CLI, or Agent operations instead.`,
+    message: `${routeName} is a hosted multi-tenant Cloud route and is not available in PayIn Open. Use the Open merchant-organization API, CLI, or Agent operations instead.`,
   };
 }
 

@@ -46,7 +46,7 @@ async function resolveDepositAddress(manager: any, identifier: string, protocol:
  * Historically this route accepted a globally unique deposit address. PayIn
  * Open public links are generated with the user-facing deposit reference plus a
  * protocol query (`/pay/deposit/:depositReference?protocol=evm`), so support
- * both forms: resolve by address first, then by Open default-merchant reference.
+ * both forms: resolve by address first, then by Open merchant-organization reference.
  */
 payDepositNew.get('/:identifier', async (c) => {
   try {

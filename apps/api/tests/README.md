@@ -35,7 +35,7 @@ export TEST_PASSWORD=admin123
 export TEST_CHAIN=ethereum-sepolia
 ```
 
-Use credentials from your Open sandbox. Do not use production or Cloud credentials. Do not print secrets in logs or shell history. In `PAYIN_RUNTIME=open`, leave `TEST_ORGANIZATION_ID` unset by default; JWT requests omit `X-Organization-Id`, and the API verifies the authenticated operator is an active member of the default Open merchant before resolving scope. Set `TEST_ORGANIZATION_ID` only when you want to confirm the explicit-header compatibility path. In Cloud/multi-tenant runtime, `TEST_ORGANIZATION_ID` remains required unless you use an organization-scoped API key.
+Use credentials from your Open sandbox. Do not use production or Cloud credentials. Do not print secrets in logs or shell history. In `PAYIN_RUNTIME=open`, leave `TEST_ORGANIZATION_ID` unset by default; JWT requests omit `X-Organization-Id`, and the API verifies the authenticated operator is an active member of the Open merchant organization before resolving scope. Set `TEST_ORGANIZATION_ID` only when you want to confirm the explicit-header compatibility path. In Cloud/multi-tenant runtime, `TEST_ORGANIZATION_ID` remains required unless you use an organization-scoped API key.
 
 ## Start Local Services
 
@@ -89,7 +89,7 @@ For PayIn Open, omit `TEST_ORGANIZATION_ID` by default so the tests cover organi
 
 ### `e2e-order-payment.test.ts`
 
-1. Logs in; Open auto-resolves the default merchant, while Cloud selects an organization.
+1. Logs in; Open auto-resolves the merchant organization, while Cloud selects an organization.
 2. Initializes address-pool capacity through the API when needed.
 3. Creates an order through the API.
 4. Sends a real testnet payment to the order address.
@@ -98,7 +98,7 @@ For PayIn Open, omit `TEST_ORGANIZATION_ID` by default so the tests cover organi
 
 ### `e2e-deposit-flow.test.ts`
 
-1. Logs in; Open auto-resolves the default merchant, while Cloud selects an organization.
+1. Logs in; Open auto-resolves the merchant organization, while Cloud selects an organization.
 2. Binds a deposit address through the API.
 3. Sends real testnet deposit payments.
 4. Polls the API for transfer detection.
@@ -123,7 +123,7 @@ curl http://localhost:3000/health
 
 ### Login fails
 
-Confirm `TEST_USERNAME` and `TEST_PASSWORD` match your local initialized Open database. For PayIn Open, an unset `TEST_ORGANIZATION_ID` is expected; if login succeeds but business calls return membership errors, run `npm run open:init -- --check` and confirm the operator is an active member of the default Open merchant. For Cloud/multi-tenant runtime, confirm `TEST_ORGANIZATION_ID` is set to a tenant the user belongs to.
+Confirm `TEST_USERNAME` and `TEST_PASSWORD` match your local initialized Open database. For PayIn Open, an unset `TEST_ORGANIZATION_ID` is expected; if login succeeds but business calls return membership errors, run `npm run open:init -- --check` and confirm the operator is an active member of the Open merchant organization. For Cloud/multi-tenant runtime, confirm `TEST_ORGANIZATION_ID` is set to a tenant the user belongs to.
 
 ### Address pool is empty
 

@@ -185,7 +185,7 @@ describe('notifications route runtime context resolution', () => {
     expect(organizationContextRequiredMessage).not.toHaveBeenCalled();
   });
 
-  it('uses the default single-merchant scope for endpoint listing in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope for endpoint listing in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request('/notifications/endpoints');
@@ -236,7 +236,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when creating an endpoint in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope when creating an endpoint in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request('/notifications/endpoints', {
@@ -440,7 +440,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when getting an endpoint in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope when getting an endpoint in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -498,7 +498,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when updating an endpoint in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope when updating an endpoint in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -575,7 +575,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when deleting an endpoint in Open runtime without an authenticated organization id', async () => {
+  it('uses the Open merchant-organization scope when deleting an endpoint in Open runtime without an authenticated organization id', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -647,7 +647,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when testing an endpoint in Open runtime', async () => {
+  it('uses the Open merchant-organization scope when testing an endpoint in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -710,7 +710,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('filters notification logs by the default single-merchant scope in Open runtime', async () => {
+  it('filters notification logs by the Open merchant-organization scope in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -751,7 +751,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when retrying failed notifications', async () => {
+  it('uses the Open merchant-organization scope when retrying failed notifications', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request('/notifications/retry-failed', {
@@ -773,7 +773,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope when reading notification statistics', async () => {
+  it('uses the Open merchant-organization scope when reading notification statistics', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request(
@@ -795,7 +795,7 @@ describe('notifications route runtime context resolution', () => {
     }
   });
 
-  it('uses the default single-merchant scope for webhook aliases in Open runtime', async () => {
+  it('uses the Open merchant-organization scope for webhook aliases in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createNotificationsApp().request('/notifications/webhooks', {

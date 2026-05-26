@@ -23,8 +23,8 @@ function getOpenRuntimeOrganizationId(env: NodeJS.ProcessEnv = process.env): str
  * Automatically detects the type based on the token format
  *
  * For API Keys: Automatically sets organization context from the key
- * For JWT: Verifies membership for X-Organization-ID, or for the default
- * Open merchant when PAYIN_RUNTIME=open and the header is omitted
+ * For JWT: Verifies membership for X-Organization-ID, or for the Open single
+ * organization when PAYIN_RUNTIME=open and the header is omitted
  */
 export function createAuthMiddleware(authManager: AuthManager) {
   return async (c: Context, next: Next): Promise<Response | void> => {
@@ -67,8 +67,8 @@ export function createAuthMiddleware(authManager: AuthManager) {
       }
 
       // X-Organization-ID header is optional for JWT authentication.
-      // In explicit PayIn Open runtime, omitted headers resolve to the default
-      // merchant only after active membership has been verified below.
+      // In explicit PayIn Open runtime, omitted headers resolve to the Open
+      // merchant organization only after active membership is verified below.
       const orgId = c.req.header('X-Organization-ID') ||
         (isExplicitOpenRuntime() ? getOpenRuntimeOrganizationId() : undefined);
 

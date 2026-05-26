@@ -136,7 +136,7 @@ auth.get('/oauth/google/callback', async (c) => {
       return errorUrl ? c.redirect(errorUrl) : c.json(result, 401);
     }
 
-    // If this is a new user, create default organization
+    // If this is a new user, create a personal organization
     if (result.isNewUser && result.user) {
       const authManager = getAuth();
       await authManager.organizations.createOrganization(result.user.id, {
@@ -336,7 +336,7 @@ auth.post('/register', async (c) => {
             role: 'owner'
           }
         },
-        message: 'First PayIn Open operator registered and bound to the default merchant scope. Use X-Organization-Id with JWT operator requests.'
+        message: 'First PayIn Open operator registered and bound to the Open merchant-organization scope. Use X-Organization-Id with JWT operator requests.'
       }, 201);
     }
 

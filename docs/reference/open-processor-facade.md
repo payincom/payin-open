@@ -54,7 +54,7 @@ For self-hosted setup flows, call:
 await processor.initializeDatabaseSchema({ onlyMissing: true });
 ```
 
-`OpenProcessor` delegates schema creation to the lower-level processor and then idempotently creates the internal default merchant organization row. This prevents self-hosted address-pool and order flows from failing on foreign-key constraints while keeping `organizationId` out of the Open-facing API.
+`OpenProcessor` delegates schema creation to the lower-level processor and then idempotently creates the internal merchant organization row. This prevents self-hosted address-pool and order flows from failing on foreign-key constraints while keeping `organizationId` out of the Open-facing API.
 
 ## Compatibility model
 

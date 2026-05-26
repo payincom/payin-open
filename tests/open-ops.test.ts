@@ -66,7 +66,7 @@ describe('PayIn Open ops library', () => {
       dropExisting: false,
       onlyMissing: true,
       force: false,
-      ensuresDefaultOpenMerchant: true,
+      ensuresOpenMerchantOrganization: true,
     });
   });
 
@@ -117,7 +117,7 @@ describe('PayIn Open ops library', () => {
   it('reports Open runtime profile and operator posture', () => {
     const checks = collectOpenRuntimePostureChecks({
       env: { PAYIN_RUNTIME: 'open' },
-      defaultMerchantId: '00000000-0000-0000-0000-000000000001',
+      merchantOrganizationId: '00000000-0000-0000-0000-000000000001',
     });
 
     expect(checks).toEqual(expect.arrayContaining([
@@ -202,14 +202,14 @@ describe('PayIn Open ops library', () => {
 
   it('skips live database checks as a warning when no DB is configured', async () => {
     const result = await collectOpenDatabaseChecks({
-      defaultMerchantId: '00000000-0000-0000-0000-000000000001',
+      merchantOrganizationId: '00000000-0000-0000-0000-000000000001',
     });
 
     expect(result.summary.configured).toBe(false);
     expect(result.checks.find((check) => check.id === 'database.live-check')?.status).toBe('warn');
   });
 
-  it('reports schema and default merchant status from a configured database', async () => {
+  it('reports schema and merchant-organization status from a configured database', async () => {
     const fakeDatabase = {
       initialize: vi.fn(async () => undefined),
       checkDatabaseSchema: vi.fn(async () => ({
@@ -224,7 +224,7 @@ describe('PayIn Open ops library', () => {
 
     const result = await collectOpenDatabaseChecks({
       connectionString: 'postgresql://user:pw@localhost/db',
-      defaultMerchantId: '00000000-0000-0000-0000-000000000001',
+      merchantOrganizationId: '00000000-0000-0000-0000-000000000001',
       databaseFactory: () => fakeDatabase,
     });
 
@@ -232,12 +232,12 @@ describe('PayIn Open ops library', () => {
       configured: true,
       reachable: true,
       schemaComplete: true,
-      defaultMerchantExists: true,
+      merchantOrganizationExists: true,
     });
     expect(result.checks.map((check) => check.id)).toEqual(expect.arrayContaining([
       'database.reachable',
       'database.schema',
-      'database.default-merchant',
+      'database.merchant-organization',
     ]));
   });
 });

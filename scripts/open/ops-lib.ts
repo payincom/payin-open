@@ -22,15 +22,15 @@ export interface OpenDatabaseCheckSummary {
   schemaComplete?: boolean;
   missingTables?: string[];
   existingTables?: string[];
-  defaultMerchantExists?: boolean;
-  defaultMerchantId?: string;
+  merchantOrganizationExists?: boolean;
+  merchantOrganizationId?: string;
 }
 
 export interface RuntimeEnv {
   [key: string]: string | undefined;
 }
 
-export const DEFAULT_OPEN_MERCHANT_SCOPE_ID = '00000000-0000-0000-0000-000000000001';
+export const DEFAULT_OPEN_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 
 export function redactConnectionString(value: string): string {
   return value.replace(/:[^:@/]+@/, ':****@');
@@ -45,36 +45,36 @@ export function isOpenRuntime(env: RuntimeEnv = process.env): boolean {
   return runtime === 'open' || runtime === 'payin-open';
 }
 
-export function resolveOpenMerchantScopeId(env: RuntimeEnv = process.env): string {
-  return env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_MERCHANT_SCOPE_ID;
+export function resolveOpenMerchantOrganizationId(env: RuntimeEnv = process.env): string {
+  return env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID;
 }
 
 export function collectOpenRuntimePostureChecks(options: {
   env?: RuntimeEnv;
-  defaultMerchantId?: string;
+  merchantOrganizationId?: string;
 } = {}): OpenOpsCheck[] {
   const env = options.env ?? process.env;
-  const defaultMerchantId = options.defaultMerchantId ?? resolveOpenMerchantScopeId(env);
+  const merchantOrganizationId = options.merchantOrganizationId ?? resolveOpenMerchantOrganizationId(env);
 
   return [
     {
       id: 'runtime.profile',
       status: isOpenRuntime(env) ? 'pass' : 'fail',
       message: isOpenRuntime(env)
-        ? `Open profile is single-tenant self-hosted with default local merchant scope ${defaultMerchantId}.`
+        ? `Open profile is single-tenant self-hosted with Open merchant organization ${merchantOrganizationId}.`
         : 'Open profile is not active; single-tenant self-hosted assumptions do not apply.',
       suggestion: 'Set PAYIN_RUNTIME=open before running Open self-hosted operations.',
     },
     {
       id: 'auth.api-key-scope',
       status: 'pass',
-      message: 'Business API key calls use the key-bound merchant scope; do not send X-Organization-Id.',
+      message: 'Business API key calls use the key-bound merchant organization; do not send X-Organization-Id.',
     },
     {
       id: 'auth.jwt-operator-caveat',
       status: 'pass',
-      message: 'JWT operator calls must still prove local operator membership for the Open merchant scope.',
-      detail: `Use X-Organization-Id: ${defaultMerchantId} with JWT operator requests until switching to a business API key.`,
+      message: 'JWT operator calls must still prove local operator membership for the Open merchant organization.',
+      detail: `Use X-Organization-Id: ${merchantOrganizationId} with JWT operator requests until switching to a business API key.`,
     },
     {
       id: 'admin.production-posture',
@@ -157,7 +157,7 @@ export function collectOpenDoctorChecks(options: {
 
 export async function collectOpenDatabaseChecks(options: {
   connectionString?: string;
-  defaultMerchantId: string;
+  merchantOrganizationId: string;
   strict?: boolean;
   databaseFactory?: (connectionString: string) => {
     initialize(): Promise<void>;
@@ -177,11 +177,11 @@ export async function collectOpenDatabaseChecks(options: {
 
   if (!connectionString) {
     return {
-      summary: { configured: false, defaultMerchantId: options.defaultMerchantId },
+      summary: { configured: false, merchantOrganizationId: options.merchantOrganizationId },
       checks: [{
         id: 'database.live-check',
         status: strict ? 'fail' : 'warn',
-        message: 'DB_CONNECTION_STRING is not set; live schema/default merchant checks were skipped.',
+        message: 'DB_CONNECTION_STRING is not set; live schema/merchant-organization checks were skipped.',
         suggestion: 'Set DB_CONNECTION_STRING and rerun open:init -- --check --strict before a real deployment.',
       }],
     };
@@ -205,15 +205,15 @@ export async function collectOpenDatabaseChecks(options: {
       suggestion: schema.isComplete ? undefined : 'Run npm run open:init against the target database.',
     });
 
-    const merchantRows = await database.query('SELECT id FROM organizations WHERE id = $1 LIMIT 1', [options.defaultMerchantId]);
-    const defaultMerchantExists = merchantRows.length > 0;
+    const organizationRows = await database.query('SELECT id FROM organizations WHERE id = $1 LIMIT 1', [options.merchantOrganizationId]);
+    const merchantOrganizationExists = organizationRows.length > 0;
     checks.push({
-      id: 'database.default-merchant',
-      status: defaultMerchantExists ? 'pass' : 'fail',
-      message: defaultMerchantExists
-        ? `PayIn Open default merchant scope exists (${options.defaultMerchantId}).`
-        : `PayIn Open default merchant scope is missing (${options.defaultMerchantId}).`,
-      suggestion: defaultMerchantExists ? undefined : 'Run npm run open:init to create the Open default merchant scope.',
+      id: 'database.merchant-organization',
+      status: merchantOrganizationExists ? 'pass' : 'fail',
+      message: merchantOrganizationExists
+        ? `PayIn Open merchant organization exists (${options.merchantOrganizationId}).`
+        : `PayIn Open merchant organization is missing (${options.merchantOrganizationId}).`,
+      suggestion: merchantOrganizationExists ? undefined : 'Run npm run open:init to create the Open merchant organization.',
     });
 
     return {
@@ -223,8 +223,8 @@ export async function collectOpenDatabaseChecks(options: {
         schemaComplete: schema.isComplete,
         missingTables: schema.missingTables,
         existingTables: schema.existingTables,
-        defaultMerchantExists,
-        defaultMerchantId: options.defaultMerchantId,
+        merchantOrganizationExists,
+        merchantOrganizationId: options.merchantOrganizationId,
       },
       checks,
     };
@@ -239,7 +239,7 @@ export async function collectOpenDatabaseChecks(options: {
       summary: {
         configured: true,
         reachable: false,
-        defaultMerchantId: options.defaultMerchantId,
+        merchantOrganizationId: options.merchantOrganizationId,
       },
       checks,
     };

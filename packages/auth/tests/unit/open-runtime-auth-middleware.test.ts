@@ -36,7 +36,7 @@ describe('Open runtime JWT organization context', () => {
     delete process.env.PAYIN_OPEN_ORGANIZATION_ID;
   });
 
-  it('verifies default Open merchant membership when JWT omits organization header', async () => {
+  it('verifies Open merchant-organization membership when JWT omits organization header', async () => {
     process.env.PAYIN_RUNTIME = 'open';
     const authManager = createAuthManager();
     const context = createContext({ Authorization: 'Bearer jwt-token' });
@@ -51,6 +51,21 @@ describe('Open runtime JWT organization context', () => {
     expect(context.get('organizationId')).toBe(DEFAULT_OPEN_ORGANIZATION_ID);
     expect(context.get('organizationRole')).toBe('owner');
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('uses PAYIN_OPEN_ORGANIZATION_ID for omitted Open JWT organization header', async () => {
+    process.env.PAYIN_RUNTIME = 'open';
+    process.env.PAYIN_OPEN_ORGANIZATION_ID = '55555555-5555-5555-5555-555555555555';
+    const authManager = createAuthManager();
+    const context = createContext({ Authorization: 'Bearer jwt-token' });
+
+    await createAuthMiddleware(authManager)(context, vi.fn());
+
+    expect(authManager.organizations.verifyMembership).toHaveBeenCalledWith(
+      'user-1',
+      '55555555-5555-5555-5555-555555555555'
+    );
+    expect(context.get('organizationId')).toBe('55555555-5555-5555-5555-555555555555');
   });
 
   it('preserves explicit organization header compatibility in Open runtime', async () => {

@@ -32,7 +32,9 @@ const summary = collectOpenDoctorChecks({ fileExists: existsSync, strict: values
 
 const db = await collectOpenDatabaseChecks({
   connectionString: process.env.DB_CONNECTION_STRING,
-  defaultMerchantId: process.env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID,
+  merchantOrganizationId:
+    process.env.PAYIN_OPEN_ORGANIZATION_ID ||
+    DEFAULT_OPEN_ORGANIZATION_ID,
   strict: Boolean(values.strict),
 });
 summary.database = db.summary;

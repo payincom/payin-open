@@ -31,7 +31,7 @@ function createFakeProcessor() {
 }
 
 describe('OpenProcessor', () => {
-  it('uses the default single-merchant organization id', async () => {
+  it('uses the Open merchant organization id', async () => {
     const fake = createFakeProcessor();
     const open = new OpenProcessor(fake);
 
@@ -91,7 +91,7 @@ describe('OpenProcessor', () => {
   });
 
 
-  it('initializes schema and ensures the default merchant organization', async () => {
+  it('initializes schema and ensures the Open merchant organization', async () => {
     const fake = createFakeProcessor();
     const db = { query: vi.fn(async () => []) };
     fake.getDatabase.mockReturnValue(db);

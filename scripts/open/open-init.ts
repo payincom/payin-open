@@ -30,7 +30,9 @@ const summary = collectOpenDoctorChecks({ fileExists: existsSync, strict: Boolea
 if (values.check || values['dry-run']) {
   const db = await collectOpenDatabaseChecks({
     connectionString: process.env.DB_CONNECTION_STRING,
-    defaultMerchantId: process.env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID,
+    merchantOrganizationId:
+      process.env.PAYIN_OPEN_ORGANIZATION_ID ||
+      DEFAULT_OPEN_ORGANIZATION_ID,
     strict: Boolean(values.strict),
   });
   summary.database = db.summary;
@@ -48,7 +50,7 @@ if (!summary.ok) process.exit(1);
 if (values.check || values['dry-run']) {
   if (values['dry-run'] && !values.json) {
     const resetText = values.force ? 'reset schemas/data without creating default users' : 'initialize schemas without dropping data or creating default users';
-    console.log(`Dry-run plan: ${resetText}, ensure PayIn Open default merchant scope, optionally seed demo data.`);
+    console.log(`Dry-run plan: ${resetText}, ensure PayIn Open merchant organization, optionally seed demo data.`);
   }
   process.exit(0);
 }

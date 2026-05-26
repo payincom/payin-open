@@ -127,7 +127,7 @@ if (values['create-order']) {
         ? `Created smoke order ${orderId}.`
         : `Order creation returned HTTP ${response.status}.`,
       detail: response.ok ? undefined : JSON.stringify(body).slice(0, 500),
-      suggestion: response.ok ? undefined : 'Check address pool capacity, chain/token config, auth permissions, and Open default merchant bootstrap.',
+      suggestion: response.ok ? undefined : 'Check address pool capacity, chain/token config, auth permissions, and Open merchant-organization bootstrap.',
     });
 
     if (paymentUrl) {
@@ -183,7 +183,7 @@ if (values['bind-deposit']) {
         ? `Bound smoke deposit address ${depositAddress}.`
         : `Deposit bind returned HTTP ${response.status}.`,
       detail: response.ok ? undefined : JSON.stringify(body).slice(0, 500),
-      suggestion: response.ok ? undefined : 'Check deposit address pool capacity, protocol support, auth permissions, and Open default merchant bootstrap.',
+      suggestion: response.ok ? undefined : 'Check deposit address pool capacity, protocol support, auth permissions, and Open merchant-organization bootstrap.',
     });
 
     if (depositUrl) {

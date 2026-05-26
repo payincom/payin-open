@@ -94,7 +94,7 @@ describe('orders route runtime context resolution', () => {
     mocks.manager.getOrder.mockResolvedValue({ id: '550e8400-e29b-41d4-a716-446655440001' });
   });
 
-  it('uses the default single-merchant scope in Open runtime when no organization id is authenticated', async () => {
+  it('uses the Open merchant-organization scope in Open runtime when no organization id is authenticated', async () => {
     const restoreRuntime = setRuntime('open');
     try {
       const response = await createOrdersApp().request('/orders', {

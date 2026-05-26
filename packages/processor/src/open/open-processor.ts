@@ -14,7 +14,7 @@ import {
 } from '../context/runtime-context.js';
 
 /**
- * Default single-merchant organization used by PayIn Open.
+ * Built-in merchant organization id used by PayIn Open.
  *
  * The current processor persistence layer still stores organization_id for
  * compatibility with PayIn Cloud. PayIn Open hides that detail behind this
@@ -23,11 +23,11 @@ import {
 export const DEFAULT_OPEN_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 
 export interface OpenProcessorOptions {
-  /** Internal compatibility organization id. Defaults to DEFAULT_OPEN_ORGANIZATION_ID. */
+  /** Internal compatibility organization id. Defaults to the built-in Open merchant organization id. */
   organizationId?: string;
   /** Display name for the compatibility organization row. */
   organizationName?: string;
-  /** Runtime context provider. Defaults to PayIn Open single-tenant provider. */
+  /** Runtime context provider. Defaults to the PayIn Open single-tenant provider. */
   contextProvider?: RuntimeContextProvider;
   /** Slug for the compatibility organization row. */
   organizationSlug?: string;
@@ -39,7 +39,7 @@ export type OpenBindAddressRequest = Omit<BindAddressRequest, 'organizationId'>;
 export type OpenUnbindAddressRequest = Omit<UnbindAddressRequest, 'organizationId'>;
 
 /**
- * Single-merchant facade over Processor.
+ * Single-organization facade over Processor.
  *
  * This is the intended PayIn Open public surface for operations that currently
  * require organizationId in the lower-level Processor API. Cloud can continue

@@ -19,7 +19,7 @@ describe('AuthManager API key runtime-scope compatibility seams', () => {
     expect(apiKeyRuntimeScopeToOrganizationId(runtimeContext)).toBe('tenant-org-api-keys');
   });
 
-  it('maps the Open single-merchant payment scope to the default organization id', () => {
+  it('maps the Open single-merchant payment scope to the merchant organization id', () => {
     const provider = new SingleTenantContextProvider();
 
     expect(apiKeyRuntimeScopeToOrganizationId(provider.getPaymentScope())).toBe(

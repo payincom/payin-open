@@ -272,7 +272,7 @@ export class AuthManager {
   }
 
   /**
-   * Ensure the default organization exists and the given user is a member
+   * Ensure the merchant organization exists and the given user is a member
    */
   async ensureDefaultOrganizationMembership(
     userId: string,

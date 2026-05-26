@@ -13,7 +13,7 @@ export interface ProcessorInitPlan {
   dropExisting: boolean;
   onlyMissing: boolean;
   force: boolean;
-  ensuresDefaultOpenMerchant: boolean;
+  ensuresOpenMerchantOrganization: boolean;
 }
 
 export interface InitDatabasePlan {
@@ -42,7 +42,7 @@ export function buildInitDatabasePlan(options: InitDatabasePlanOptions = {}): In
       dropExisting: force,
       onlyMissing: !force,
       force,
-      ensuresDefaultOpenMerchant: true,
+      ensuresOpenMerchantOrganization: true,
     },
   };
 }

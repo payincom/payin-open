@@ -50,13 +50,13 @@ async function runMigration() {
       console.warn('⚠️  Some tables may not have been created');
     }
 
-    // Check default organization
+    // Check merchant organization
     const orgResult = await pool.query(`
       SELECT id, name, slug FROM organizations WHERE slug = 'default'
     `);
 
     if (orgResult.rows.length > 0) {
-      console.log('\n✅ Default organization created:');
+      console.log('\n✅ Single organization created:');
       console.log(`  ID: ${orgResult.rows[0].id}`);
       console.log(`  Name: ${orgResult.rows[0].name}`);
       console.log(`  Slug: ${orgResult.rows[0].slug}`);
