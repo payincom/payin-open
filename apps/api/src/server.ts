@@ -20,30 +20,18 @@ const publicDir = resolve(__dirname, '../public');
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import auditRoutes from './routes/audit.js';
-import {
-  createApiKeysRoutes,
-  type ApiKeysRouteDependencies,
-} from './routes/api-keys.js';
+import { createApiKeysRoutes } from './routes/api-keys.js';
 import configRoutes from './routes/config.js';
 import configManagementRoutes from './routes/config-management.js';
 import configDiagnosticsRoutes from './routes/config-diagnostics.js';
 import chainsRoutes from './routes/chains.js';
 import tokensRoutes from './routes/tokens.js';
-import { createOrdersRoutes, type OrdersRouteDependencies } from './routes/orders.js';
-import { createDepositsRoutes, type DepositsRouteDependencies } from './routes/deposits.js';
-import { createTransfersRoutes, type TransfersRouteDependencies } from './routes/transfers.js';
-import {
-  createAddressPoolRoutes,
-  type AddressPoolRouteDependencies,
-} from './routes/address-pool.js';
-import {
-  createPaymentLinksRoutes,
-  type PaymentLinksRouteDependencies,
-} from './routes/payment-links.js';
-import {
-  createNotificationsRoutes,
-  type NotificationsRouteDependencies,
-} from './routes/notifications.js';
+import { createOrdersRoutes } from './routes/orders.js';
+import { createDepositsRoutes } from './routes/deposits.js';
+import { createTransfersRoutes } from './routes/transfers.js';
+import { createAddressPoolRoutes } from './routes/address-pool.js';
+import { createPaymentLinksRoutes } from './routes/payment-links.js';
+import { createNotificationsRoutes } from './routes/notifications.js';
 import organizationsRoutes from './routes/organizations.js';
 import payOrderRoutes from './routes/pay-order.js';
 import payDepositRoutes from './routes/pay-deposit.js';
@@ -55,48 +43,15 @@ import apiPaymentLinksRoutes from './routes/api-payment-links.js';
 import orderStatusRoutes from './routes/order-status.js';
 import transferStatusRoutes from './routes/transfer-status.js';
 import { cloudOnlyRouteGuard } from './open-runtime.js';
+import {
+  type OpenRuntimeCompositionOptions,
+  type OpenRuntimeRouteDependencies,
+  type OpenRuntimeRouteFactories,
+} from './runtime-contract.js';
 
-export interface BuiltInRouteFactories {
-  apiKeys?: typeof createApiKeysRoutes;
-  orders?: typeof createOrdersRoutes;
-  paymentLinks?: typeof createPaymentLinksRoutes;
-  deposits?: typeof createDepositsRoutes;
-  addressPool?: typeof createAddressPoolRoutes;
-  transfers?: typeof createTransfersRoutes;
-  notifications?: typeof createNotificationsRoutes;
-}
-
-export interface BuiltInRouteDependencies {
-  apiKeys?: ApiKeysRouteDependencies;
-  orders?: OrdersRouteDependencies;
-  paymentLinks?: PaymentLinksRouteDependencies;
-  deposits?: DepositsRouteDependencies;
-  addressPool?: AddressPoolRouteDependencies;
-  transfers?: TransfersRouteDependencies;
-  notifications?: NotificationsRouteDependencies;
-}
-
-export interface CreateAppOptions {
-  /**
-   * Compatibility seam for health checks and future composed runtimes.
-   * Defaults to the Open manager singleton wiring.
-   */
-  getManager?: typeof getManager;
-  /**
-   * Override Cloud-only route guard wiring. Open uses the default guard; a
-   * hosted overlay can provide its own guard/policy middleware without editing
-   * this app factory.
-   */
-  cloudOnlyRouteGuard?: typeof cloudOnlyRouteGuard;
-  /** Override built-in business route factories without changing route mount paths. */
-  routeFactories?: BuiltInRouteFactories;
-  /** Inject dependencies into built-in business route factories. */
-  routeDependencies?: BuiltInRouteDependencies;
-  /** Add public, unauthenticated routes after the built-in Open public routes. */
-  extendPublicRoutes?: (app: Hono) => void;
-  /** Add API v1 routes after the built-in Open API routes. */
-  extendApiRoutes?: (api: Hono) => void;
-}
+export type BuiltInRouteFactories = OpenRuntimeRouteFactories;
+export type BuiltInRouteDependencies = OpenRuntimeRouteDependencies;
+export type CreateAppOptions = OpenRuntimeCompositionOptions;
 
 /**
  * Create and configure Hono application

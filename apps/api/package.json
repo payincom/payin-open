@@ -68,6 +68,10 @@
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
     },
+    "./runtime-contract": {
+      "types": "./dist/runtime-contract.d.ts",
+      "import": "./dist/runtime-contract.js"
+    },
     "./package.json": "./package.json"
   }
 }
