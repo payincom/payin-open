@@ -26,13 +26,26 @@ const { values } = parseArgs({
     currency: { type: 'string' },
     'chain-id': { type: 'string' },
     'webhook-id': { type: 'string' },
+    'bind-deposit': { type: 'boolean', default: false },
+    'deposit-reference': { type: 'string' },
+    'deposit-protocol': { type: 'string', default: 'evm' },
     json: { type: 'boolean', default: false },
     help: { type: 'boolean', default: false },
   },
 });
 
 if (values.help) {
-  console.log(`PayIn Open smoke test\n\nUsage:\n  npm run open:smoke\n  npm run open:smoke -- --url http://localhost:3000\n  npm run open:smoke -- --url http://localhost:3000 --api-key <redacted> --create-order\n  npm run open:smoke -- --url http://localhost:3000 --api-key <redacted> --create-order --webhook-id <id>\n\nDefault mode is safe dry-run. Live order creation requires --url, --create-order, and --api-key or --token.\n--require-live fails if live order/monitor/webhook checks are skipped.`);
+  console.log(`PayIn Open smoke test
+
+Usage:
+  npm run open:smoke
+  npm run open:smoke -- --url http://localhost:3000
+  npm run open:smoke -- --url http://localhost:3000 --api-key <redacted> --create-order
+  npm run open:smoke -- --url http://localhost:3000 --api-key <redacted> --create-order --webhook-id <id>
+  npm run open:smoke -- --url http://localhost:3000 --api-key <redacted> --bind-deposit --deposit-reference <ref>
+
+Default mode is safe dry-run. Live order/deposit actions require --url plus --api-key or --token.
+--require-live fails if live order/deposit/monitor/webhook checks are skipped.`);
   process.exit(0);
 }
 
@@ -145,6 +158,55 @@ if (values['create-order']) {
     status: requireLive ? 'fail' : 'warn',
     message: 'Order creation smoke check skipped because --create-order was not provided.',
     suggestion: 'Run with --create-order plus --api-key/--token in sandbox/testnet.',
+  });
+}
+
+if (values['bind-deposit']) {
+  const depositReference = values['deposit-reference'] ?? `open-smoke-deposit-${Date.now()}`;
+  const protocol = values['deposit-protocol'] ?? 'evm';
+
+  try {
+    const response = await fetchWithTimeout(`${baseUrl}/api/v1/deposits/bind`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ depositReference, protocol }),
+    }, timeoutMs);
+    const body = await readJson(response);
+    const depositAddress = body?.data?.address ?? body?.data?.depositAddress ?? body?.address ?? body?.depositAddress;
+    const depositUrl = body?.data?.url ?? body?.data?.paymentUrl ?? body?.url ?? body?.paymentUrl
+      ?? (depositAddress ? `${baseUrl}/pay/deposit/${depositAddress}` : undefined);
+
+    checks.push({
+      id: 'smoke.deposit.bind',
+      status: response.ok && depositAddress ? 'pass' : 'fail',
+      message: response.ok && depositAddress
+        ? `Bound smoke deposit address ${depositAddress}.`
+        : `Deposit bind returned HTTP ${response.status}.`,
+      detail: response.ok ? undefined : JSON.stringify(body).slice(0, 500),
+      suggestion: response.ok ? undefined : 'Check deposit address pool capacity, protocol support, auth permissions, and Open default merchant bootstrap.',
+    });
+
+    if (depositUrl) {
+      checks.push(await checkHttpEndpoint(depositUrl, timeoutMs, { headers: { Accept: 'text/html' } }));
+    }
+    if (depositAddress) {
+      checks.push(await checkHttpEndpoint(`${baseUrl}/api/deposits/${depositAddress}`, timeoutMs));
+      checks.push(await checkHttpEndpoint(`${baseUrl}/api/tokens/deposit/${depositAddress}/available`, timeoutMs));
+    }
+  } catch (error) {
+    checks.push({
+      id: 'smoke.deposit.bind',
+      status: 'fail',
+      message: `Deposit bind failed: ${error instanceof Error ? error.message : String(error)}`,
+      suggestion: 'Check API service logs, DB connectivity, auth, and address pool capacity.',
+    });
+  }
+} else {
+  checks.push({
+    id: 'smoke.deposit.bind',
+    status: requireLive ? 'fail' : 'warn',
+    message: 'Deposit bind smoke check skipped because --bind-deposit was not provided.',
+    suggestion: 'Run with --bind-deposit plus --api-key/--token in sandbox/testnet.',
   });
 }
 

@@ -62,5 +62,12 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vitest": "^1.2.0"
+  },
+  "exports": {
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./package.json": "./package.json"
   }
 }

@@ -2495,6 +2495,44 @@ export class ConfigurationManager implements ConfigProvider {
   }
 
   /**
+   * Get deposit transfer statistics with neutral runtime/payment scope.
+   *
+   * Compatibility seam: aggregate deposit transfers through the scoped transfer
+   * listing API while repository layers still persist organization_id.
+   */
+  async getDepositTransferStatisticsForRuntimeScope(
+    scope: OrderRuntimeScope,
+    filters: {
+      protocol?: 'evm' | 'tron';
+      detectedAfter?: Date;
+      detectedBefore?: Date;
+    } = {}
+  ): Promise<{ totalDeposits: number; totalVolume: Record<string, number> }> {
+    const result = await this.listTransfersForRuntimeScope(scope, {
+      businessType: 'deposit',
+      chain: filters.protocol,
+      detectedAfter: filters.detectedAfter,
+      detectedBefore: filters.detectedBefore,
+      limit: 10000,
+    });
+
+    const totalVolume: Record<string, number> = {};
+    for (const transfer of result.transfers) {
+      const token = transfer.token;
+      if (!token) continue;
+      const amount = Number.parseFloat(String(transfer.amount ?? '0'));
+      if (Number.isFinite(amount)) {
+        totalVolume[token] = (totalVolume[token] ?? 0) + amount;
+      }
+    }
+
+    return {
+      totalDeposits: result.total,
+      totalVolume,
+    };
+  }
+
+  /**
    * Get transfers for order or deposit reference (proxy to Processor)
    */
   async getTransfers(

@@ -3,8 +3,8 @@
  * Loads and validates configuration from YAML file
  */
 
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { isAbsolute, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import YAML from 'yaml';
 
@@ -145,9 +145,30 @@ export function loadAppConfig(configPath?: string): AppConfig {
 }
 
 /**
- * Resolve manager config file path relative to config directory
+ * Resolve manager config file path.
+ *
+ * Bare filenames such as `manager.testnet.yaml` are resolved relative to the
+ * API config directory. Deployment-oriented relative paths such as
+ * `apps/api/config/manager.testnet.yaml` are resolved from the process working
+ * directory when the config-dir-relative candidate does not exist. This keeps
+ * local config ergonomics while avoiding duplicated paths like
+ * `apps/api/config/apps/api/config/manager.testnet.yaml` in Docker/Railway.
  */
 export function resolveManagerConfigPath(managerConfigFile: string): string {
+  if (isAbsolute(managerConfigFile)) {
+    return managerConfigFile;
+  }
+
   const configDir = resolve(__dirname, '../config');
-  return resolve(configDir, managerConfigFile);
+  const configRelativePath = resolve(configDir, managerConfigFile);
+  if (existsSync(configRelativePath)) {
+    return configRelativePath;
+  }
+
+  const cwdRelativePath = resolve(process.cwd(), managerConfigFile);
+  if (existsSync(cwdRelativePath)) {
+    return cwdRelativePath;
+  }
+
+  return configRelativePath;
 }

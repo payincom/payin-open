@@ -7,24 +7,56 @@ import { Hono } from 'hono';
 import { getManager } from '../manager-instance.js';
 import { html, raw } from 'hono/html';
 import { getScriptUrl, getStylesheetUrl, getViteClientScript } from '../utils/asset-helpers.js';
+import { getOpenRuntimeOrganizationId, isOpenRuntime } from '../open-runtime.js';
 
 const payDepositNew = new Hono();
 
+const supportedDepositProtocols = new Set(['evm', 'tron', 'solana']);
+
+function normalizeDepositProtocol(value: string | undefined): 'evm' | 'tron' | 'solana' {
+  if (value && supportedDepositProtocols.has(value)) {
+    return value as 'evm' | 'tron' | 'solana';
+  }
+
+  return 'evm';
+}
+
+async function resolveDepositAddress(manager: any, identifier: string, protocol: 'evm' | 'tron' | 'solana') {
+  const byAddress = await manager.getDepositByAddress(identifier);
+  if (byAddress) {
+    return byAddress;
+  }
+
+  if (!isOpenRuntime()) {
+    return null;
+  }
+
+  return await manager.getUserDepositAddress(
+    getOpenRuntimeOrganizationId(),
+    identifier,
+    protocol
+  );
+}
+
 /**
  * Get deposit payment page (New shadcn UI version)
- * GET /pay/deposit/:address
- * Public endpoint - No authentication required
- * Address is globally unique identifier
+ * GET /pay/deposit/:identifier
+ * Public endpoint - No authentication required.
+ *
+ * Historically this route accepted a globally unique deposit address. PayIn
+ * Open public links are generated with the user-facing deposit reference plus a
+ * protocol query (`/pay/deposit/:depositReference?protocol=evm`), so support
+ * both forms: resolve by address first, then by Open default-merchant reference.
  */
-payDepositNew.get('/:address', async (c) => {
+payDepositNew.get('/:identifier', async (c) => {
   try {
     const manager = getManager();
-    const address = c.req.param('address')!;
+    const identifier = c.req.param('identifier')!;
+    const protocolFromQuery = normalizeDepositProtocol(c.req.query('protocol'));
 
-    // Fetch deposit by address (public endpoint)
-    const depositAddress = await manager.getDepositByAddress(address);
+    const depositAddress = await resolveDepositAddress(manager, identifier, protocolFromQuery);
 
-    const depositReference = depositAddress?.deposit_reference ?? address;
+    const depositReference = depositAddress?.deposit_reference ?? identifier;
 
     if (!depositAddress || depositAddress.state !== 'bound' || !depositAddress.deposit_reference) {
       const stylesheetUrl = getStylesheetUrl();
@@ -98,7 +130,7 @@ payDepositNew.get('/:address', async (c) => {
         </body>
       </html>`);
   } catch (error) {
-    console.error(`Failed to load deposit payment page for ${c.req.param('depositReference')!}:`, error);
+    console.error(`Failed to load deposit payment page for ${c.req.param('identifier')!}:`, error);
     const stylesheetUrl = getStylesheetUrl();
     const viteClient = getViteClientScript();
 

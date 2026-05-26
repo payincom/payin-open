@@ -420,6 +420,8 @@ export function createDepositsRoutes(deps: DepositsRouteDependencies = {}) {
 
         const detectedAfter = c.req.query('detectedAfter');
         const detectedBefore = c.req.query('detectedBefore');
+        let detectedAfterDate: Date | undefined;
+        let detectedBeforeDate: Date | undefined;
 
         if (detectedAfter) {
           const parsed = new Date(detectedAfter);
@@ -438,6 +440,7 @@ export function createDepositsRoutes(deps: DepositsRouteDependencies = {}) {
               400
             );
           }
+          detectedAfterDate = parsed;
         }
 
         if (detectedBefore) {
@@ -457,6 +460,7 @@ export function createDepositsRoutes(deps: DepositsRouteDependencies = {}) {
               400
             );
           }
+          detectedBeforeDate = parsed;
         }
 
         // Get all deposit addresses for the organization
@@ -474,23 +478,22 @@ export function createDepositsRoutes(deps: DepositsRouteDependencies = {}) {
         );
         const activeReferences = uniqueReferences.size;
 
-        // For deposit transaction stats, we need to query transfers
-        // This is a placeholder - you'll need to implement getDepositTransfers in manager
-        // or use listTransfers from api
-        let totalDeposits = 0;
-        let totalVolume: Record<string, number> = {};
-
-        // This endpoint currently returns address-derived statistics only. Deposit
-        // transfer counting/volume can be added behind a runtime-scope manager seam
-        // when the processor exposes aggregate transfer statistics.
+        const transferStats = await manager.getDepositTransferStatisticsForRuntimeScope(
+          runtimeContext,
+          {
+            protocol,
+            detectedAfter: detectedAfterDate,
+            detectedBefore: detectedBeforeDate,
+          }
+        );
 
         return c.json({
           success: true,
           data: {
             boundAddressCount,
             activeReferences,
-            totalDeposits,
-            totalVolume,
+            totalDeposits: transferStats.totalDeposits,
+            totalVolume: transferStats.totalVolume,
           },
         });
       } catch (error) {

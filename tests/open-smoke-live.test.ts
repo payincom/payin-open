@@ -66,7 +66,46 @@ async function startSmokeServer() {
     if (req.method === 'GET' && url.pathname === '/api/order-status/order-smoke-1') {
       return sendJson(res, 200, { success: true, data: { status: 'pending' } });
     }
-    if (req.method === 'POST' && url.pathname === '/api/v1/notifications/endpoints/webhook-smoke-1/test') {
+    if (req.method === 'POST' && url.pathname === '/api/v1/deposits/bind') {
+      expect(req.headers.authorization).toBe('Bearer pk_smoke_test');
+      const body = JSON.parse(await readBody(req));
+      expect(body).toMatchObject({
+        depositReference: 'deposit-smoke-contract-test',
+        protocol: 'evm',
+      });
+      return sendJson(res, 201, {
+        success: true,
+        data: {
+          address: '0x0000000000000000000000000000000000000abc',
+          url: `http://127.0.0.1:${(server!.address() as any).port}/pay/deposit/0x0000000000000000000000000000000000000abc`,
+        },
+      });
+    }
+    if (
+      req.method === 'GET' &&
+      url.pathname === '/pay/deposit/0x0000000000000000000000000000000000000abc'
+    ) {
+      return sendHtml(res, 200, '<html><body><div id="deposit-payment-root"></div></body></html>');
+    }
+    if (
+      req.method === 'GET' &&
+      url.pathname === '/api/deposits/0x0000000000000000000000000000000000000abc'
+    ) {
+      return sendJson(res, 200, {
+        success: true,
+        deposit: { address: '0x0000000000000000000000000000000000000abc' },
+      });
+    }
+    if (
+      req.method === 'GET' &&
+      url.pathname === '/api/tokens/deposit/0x0000000000000000000000000000000000000abc/available'
+    ) {
+      return sendJson(res, 200, { success: true, tokens: [{ symbol: 'USDC' }] });
+    }
+    if (
+      req.method === 'POST' &&
+      url.pathname === '/api/v1/notifications/endpoints/webhook-smoke-1/test'
+    ) {
       expect(req.headers.authorization).toBe('Bearer pk_smoke_test');
       return sendJson(res, 200, { success: true, deliveryId: 'delivery-smoke-1' });
     }
@@ -80,8 +119,11 @@ async function startSmokeServer() {
   return { baseUrl: `http://127.0.0.1:${port}`, calls };
 }
 
-function runOpenCommand(script: string, args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  return new Promise((resolve) => {
+function runOpenCommand(
+  script: string,
+  args: string[]
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  return new Promise(resolve => {
     const child = spawn('npx', ['tsx', script, ...args], {
       cwd: process.cwd(),
       env: { ...process.env },
@@ -89,17 +131,25 @@ function runOpenCommand(script: string, args: string[]): Promise<{ code: number 
     });
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
-    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
-    child.on('close', (code) => resolve({ code, stdout, stderr }));
+    child.stdout.on('data', chunk => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', chunk => {
+      stderr += chunk.toString();
+    });
+    child.on('close', code => resolve({ code, stdout, stderr }));
   });
 }
 
-function runOpenSmoke(args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
+function runOpenSmoke(
+  args: string[]
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return runOpenCommand('scripts/open/open-smoke.ts', args);
 }
 
-function runOpenDoctor(args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
+function runOpenDoctor(
+  args: string[]
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return runOpenCommand('scripts/open/open-doctor.ts', args);
 }
 
@@ -115,21 +165,19 @@ describe('open:doctor live contract', () => {
   it('checks live API and authenticated monitor readiness when URL and API key are provided', async () => {
     const { baseUrl } = await startSmokeServer();
 
-    const result = await runOpenDoctor([
-      '--url', baseUrl,
-      '--api-key', 'pk_smoke_test',
-      '--json',
-    ]);
+    const result = await runOpenDoctor(['--url', baseUrl, '--api-key', 'pk_smoke_test', '--json']);
 
     expect(result.code).toBe(0);
     const summary = JSON.parse(result.stdout);
     expect(summary.ok).toBe(true);
-    expect(summary.checks.map((check: any) => check.id)).toEqual(expect.arrayContaining([
-      `http.${baseUrl}/health`,
-      `http.${baseUrl}/api/chains`,
-      `http.${baseUrl}/api/tokens`,
-      `http.${baseUrl}/api/v1/chains`,
-    ]));
+    expect(summary.checks.map((check: any) => check.id)).toEqual(
+      expect.arrayContaining([
+        `http.${baseUrl}/health`,
+        `http.${baseUrl}/api/chains`,
+        `http.${baseUrl}/api/tokens`,
+        `http.${baseUrl}/api/v1/chains`,
+      ])
+    );
   });
 
   it('fails strict mode when live API URL is not provided', async () => {
@@ -143,15 +191,22 @@ describe('open:doctor live contract', () => {
 });
 
 describe('open:smoke live contract', () => {
-  it('checks health, public config, monitor status, order page, order status, and webhook delivery', async () => {
+  it('checks health, public config, order/deposit pages, status APIs, and webhook delivery', async () => {
     const { baseUrl, calls } = await startSmokeServer();
 
     const result = await runOpenSmoke([
-      '--url', baseUrl,
-      '--api-key', 'pk_smoke_test',
+      '--url',
+      baseUrl,
+      '--api-key',
+      'pk_smoke_test',
       '--create-order',
-      '--order-reference', 'smoke-contract-test',
-      '--webhook-id', 'webhook-smoke-1',
+      '--order-reference',
+      'smoke-contract-test',
+      '--bind-deposit',
+      '--deposit-reference',
+      'deposit-smoke-contract-test',
+      '--webhook-id',
+      'webhook-smoke-1',
       '--require-live',
       '--json',
     ]);
@@ -160,26 +215,38 @@ describe('open:smoke live contract', () => {
     expect(result.code).toBe(0);
     const summary = JSON.parse(result.stdout);
     expect(summary.ok).toBe(true);
-    expect(summary.checks.map((check: any) => check.id)).toEqual(expect.arrayContaining([
-      `http.${baseUrl}/health`,
-      `http.${baseUrl}/api/chains`,
-      `http.${baseUrl}/api/tokens`,
-      `http.${baseUrl}/api/v1/chains`,
-      'smoke.order.create',
-      `http.${baseUrl}/pay/order/order-smoke-1`,
-      `http.${baseUrl}/api/order-status/order-smoke-1`,
-      'smoke.webhook.delivery',
-    ]));
-    expect(calls).toEqual(expect.arrayContaining([
-      'GET /health',
-      'GET /api/chains',
-      'GET /api/tokens',
-      'GET /api/v1/chains',
-      'POST /api/v1/orders',
-      'GET /pay/order/order-smoke-1',
-      'GET /api/order-status/order-smoke-1',
-      'POST /api/v1/notifications/endpoints/webhook-smoke-1/test',
-    ]));
+    expect(summary.checks.map((check: any) => check.id)).toEqual(
+      expect.arrayContaining([
+        `http.${baseUrl}/health`,
+        `http.${baseUrl}/api/chains`,
+        `http.${baseUrl}/api/tokens`,
+        `http.${baseUrl}/api/v1/chains`,
+        'smoke.order.create',
+        `http.${baseUrl}/pay/order/order-smoke-1`,
+        `http.${baseUrl}/api/order-status/order-smoke-1`,
+        'smoke.deposit.bind',
+        `http.${baseUrl}/pay/deposit/0x0000000000000000000000000000000000000abc`,
+        `http.${baseUrl}/api/deposits/0x0000000000000000000000000000000000000abc`,
+        `http.${baseUrl}/api/tokens/deposit/0x0000000000000000000000000000000000000abc/available`,
+        'smoke.webhook.delivery',
+      ])
+    );
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        'GET /health',
+        'GET /api/chains',
+        'GET /api/tokens',
+        'GET /api/v1/chains',
+        'POST /api/v1/orders',
+        'GET /pay/order/order-smoke-1',
+        'GET /api/order-status/order-smoke-1',
+        'POST /api/v1/deposits/bind',
+        'GET /pay/deposit/0x0000000000000000000000000000000000000abc',
+        'GET /api/deposits/0x0000000000000000000000000000000000000abc',
+        'GET /api/tokens/deposit/0x0000000000000000000000000000000000000abc/available',
+        'POST /api/v1/notifications/endpoints/webhook-smoke-1/test',
+      ])
+    );
   });
 
   it('fails require-live mode when authenticated smoke checks are missing', async () => {

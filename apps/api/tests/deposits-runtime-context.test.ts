@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
     getUserDepositAddressForRuntimeScope: vi.fn(),
     listDepositAddresses: vi.fn(),
     listDepositAddressesForRuntimeScope: vi.fn(),
+    getDepositTransferStatisticsForRuntimeScope: vi.fn(),
   };
 
   return { manager };
@@ -139,6 +140,10 @@ describe('deposits route runtime context resolution', () => {
           organizationId: _runtimeContext.paymentScope.id,
         })
     );
+    mocks.manager.getDepositTransferStatisticsForRuntimeScope.mockResolvedValue({
+      totalDeposits: 0,
+      totalVolume: {},
+    });
   });
 
   it('uses the default single-merchant scope for deposit binding in Open runtime without an authenticated organization id', async () => {
@@ -421,6 +426,8 @@ describe('deposits route runtime context resolution', () => {
 
   it('uses the runtime-scope manager seam when getting deposit stats in Open runtime', async () => {
     const restoreRuntime = setRuntime('open');
+    const detectedAfter = '2026-01-01T00:00:00Z';
+    const detectedBefore = '2026-01-31T23:59:59Z';
     mocks.manager.listDepositAddresses.mockResolvedValueOnce({
       addresses: [
         { deposit_reference: 'customer-1', protocol: 'evm', address: '0xabc' },
@@ -430,12 +437,25 @@ describe('deposits route runtime context resolution', () => {
       limit: 10000,
       total: 2,
     });
+    mocks.manager.getDepositTransferStatisticsForRuntimeScope.mockResolvedValueOnce({
+      totalDeposits: 3,
+      totalVolume: { USDC: 125.5, USDT: 10 },
+    });
     try {
-      const response = await createDepositsApp().request('/deposits/stats?protocol=evm');
+      const response = await createDepositsApp().request(
+        `/deposits/stats?protocol=evm&detectedAfter=${encodeURIComponent(
+          detectedAfter
+        )}&detectedBefore=${encodeURIComponent(detectedBefore)}`
+      );
       const body = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.data).toMatchObject({ boundAddressCount: 2, activeReferences: 2 });
+      expect(body.data).toMatchObject({
+        boundAddressCount: 2,
+        activeReferences: 2,
+        totalDeposits: 3,
+        totalVolume: { USDC: 125.5, USDT: 10 },
+      });
       expect(mocks.manager.listDepositAddressesForRuntimeScope).toHaveBeenCalledWith(
         expect.objectContaining({
           runtimeKind: 'single-tenant',
@@ -443,6 +463,65 @@ describe('deposits route runtime context resolution', () => {
         }),
         { protocol: 'evm', limit: 10000 }
       );
+      expect(mocks.manager.getDepositTransferStatisticsForRuntimeScope).toHaveBeenCalledWith(
+        expect.objectContaining({
+          runtimeKind: 'single-tenant',
+          paymentScope: expect.objectContaining({ id: DEFAULT_OPEN_ORGANIZATION_ID }),
+        }),
+        {
+          protocol: 'evm',
+          detectedAfter: new Date(detectedAfter),
+          detectedBefore: new Date(detectedBefore),
+        }
+      );
+    } finally {
+      restoreRuntime();
+    }
+  });
+
+  it('keeps deposit stats transfer aggregation scoped to the authenticated merchant', async () => {
+    const restoreRuntime = setRuntime('open');
+    const authenticatedOrganizationId = '44444444-4444-4444-8444-444444444444';
+    mocks.manager.listDepositAddresses.mockImplementation(async filters => {
+      expect(filters.organizationId).toBe(authenticatedOrganizationId);
+      return {
+        addresses: [{ deposit_reference: 'merchant-customer', protocol: 'tron', address: 'TABC' }],
+        page: 1,
+        limit: 10000,
+        total: 1,
+      };
+    });
+    mocks.manager.getDepositTransferStatisticsForRuntimeScope.mockImplementation(
+      async (runtimeContext, filters) => {
+        expect(runtimeContext.paymentScope.id).toBe(authenticatedOrganizationId);
+        expect(filters).toEqual({
+          protocol: 'tron',
+          detectedAfter: undefined,
+          detectedBefore: undefined,
+        });
+        return { totalDeposits: 1, totalVolume: { USDT: 42 } };
+      }
+    );
+
+    try {
+      const response = await createDepositsApp().request('/deposits/stats?protocol=tron', {
+        headers: { 'x-test-organization-id': authenticatedOrganizationId },
+      });
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.data).toMatchObject({
+        boundAddressCount: 1,
+        activeReferences: 1,
+        totalDeposits: 1,
+        totalVolume: { USDT: 42 },
+      });
+      expect(mocks.manager.listDepositAddresses).toHaveBeenCalledWith({
+        protocol: 'tron',
+        limit: 10000,
+        organizationId: authenticatedOrganizationId,
+      });
+      expect(mocks.manager.getDepositTransferStatisticsForRuntimeScope).toHaveBeenCalledTimes(1);
     } finally {
       restoreRuntime();
     }
@@ -455,6 +534,7 @@ describe('deposits route runtime context resolution', () => {
 
       expect(response.status).toBe(401);
       expect(mocks.manager.listDepositAddressesForRuntimeScope).not.toHaveBeenCalled();
+      expect(mocks.manager.getDepositTransferStatisticsForRuntimeScope).not.toHaveBeenCalled();
     } finally {
       restoreRuntime();
     }
