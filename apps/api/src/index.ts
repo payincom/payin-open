@@ -7,8 +7,6 @@ import { serve } from '@hono/node-server';
 import { loadAppConfig, interpolateEnvVars } from './config.js';
 import { initializeManager, shutdownManager } from './manager-instance.js';
 import { initializeAuth, shutdownAuth } from './auth-instance.js';
-import { initializeSocialAuth } from './social-auth-instance.js';
-import { initializeDirectOAuth } from './direct-oauth-instance.js';
 import { createApp } from './server.js';
 import { loadRootEnv } from '@payin/shared';
 import { resolve, dirname } from 'path';
@@ -44,20 +42,6 @@ async function main() {
     // Note: Database schema should be initialized separately using scripts/init-database.ts
     // This ensures clean separation between deployment and runtime
     await initializeAuth();
-
-    // Initialize Direct OAuth (Google/GitHub without Supabase)
-    try {
-      initializeDirectOAuth();
-    } catch (error) {
-      console.log('⚠️  DirectOAuth initialization skipped');
-    }
-
-    // Initialize SocialAuth (legacy Supabase OAuth, optional)
-    try {
-      await initializeSocialAuth();
-    } catch (error) {
-      console.log('⚠️  SocialAuth (Supabase) initialization skipped');
-    }
 
     // Initialize Manager
     const manager = await initializeManager();

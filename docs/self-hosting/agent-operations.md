@@ -8,7 +8,7 @@ The commands below are designed to keep PayIn Open merchant-first: operators sho
 
 PayIn also has an external operator CLI (`payin`) maintained at https://github.com/payincom/payin-cli. The CLI is an operations client for already-running PayIn Open or PayIn Cloud runtimes; it is not an installer or infrastructure deployment tool. Use deployment docs/templates for installation, then use the CLI for diagnostics, smoke checks, API keys, address pools, webhooks, and troubleshooting. Until npm publication, run it from GitHub with `npm exec --yes --package github:payincom/payin-cli -- payin ...`.
 
-In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations`, `/api/v1/users`, `/api/v1/auth/oauth/*`, `/api/v1/config-management`, and `/api/v1/config/diagnostics` are intentionally hidden. Use the Open single-merchant API plus the Agent/operator commands below instead.
+In Open runtime, hosted multi-tenant administration routes such as `/api/v1/organizations`, `/api/v1/users`, `/api/v1/config-management`, and `/api/v1/config/diagnostics` are intentionally hidden. PayIn Open core does not expose OAuth/Supabase login routes; hosted social login belongs in Cloud Layer or another Cloud-owned overlay. Use the Open single-merchant API plus the Agent/operator commands below instead.
 
 API keys remain available for merchant integrations in Open runtime, but they are scoped automatically to the Open merchant organization. Business API-key calls should not pass `X-Organization-Id` or choose an organization id. JWT operator calls made after the first `/auth/register` bootstrap should pass the Open merchant organization id until the workflow switches to API keys.
 

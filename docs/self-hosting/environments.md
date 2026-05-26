@@ -44,7 +44,7 @@ TRONGRID_API_KEY=<secret>
 HELIUS_API_KEY=<secret>
 ```
 
-`PAYIN_OPEN_ORGANIZATION_ID` is optional. Leave it unset unless you intentionally need a stable custom Open merchant-organization id; otherwise `open:init` uses the built-in merchant organization. API-key calls do not pass `X-Organization-Id`; JWT operator calls may need the Open merchant organization id while creating or rotating API keys.
+`PAYIN_OPEN_ORGANIZATION_ID` is optional. Leave it unset unless you intentionally need a stable custom Open merchant-organization id; otherwise `open:init` uses the built-in merchant organization. API-key calls do not pass `X-Organization-Id`; JWT operator calls may omit it in `PAYIN_RUNTIME=open` after the token is verified and membership in the Open merchant organization is confirmed.
 
 ## Local
 

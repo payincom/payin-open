@@ -10,17 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(255) PRIMARY KEY,
   username VARCHAR(100) UNIQUE NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255),  -- Optional: NULL for OAuth/magic link users
+  password_hash VARCHAR(255) NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT true,
   is_superadmin BOOLEAN NOT NULL DEFAULT false,
 
-  -- OAuth fields for social login
-  oauth_provider VARCHAR(50),
-  oauth_provider_id VARCHAR(255),
-  oauth_avatar_url TEXT,
-
-  -- Authentication type: password, oauth, or magic_link
-  auth_type VARCHAR(20) DEFAULT 'password' CHECK (auth_type IN ('password', 'oauth', 'magic_link')),
 
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -30,8 +23,6 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_users_superadmin ON users(is_superadmin) WHERE is_superadmin = true;
-CREATE INDEX IF NOT EXISTS idx_users_oauth_provider_id ON users(oauth_provider, oauth_provider_id) WHERE oauth_provider IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_users_auth_type ON users(auth_type);
 `;
 
 /**

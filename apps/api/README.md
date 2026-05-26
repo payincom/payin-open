@@ -65,7 +65,7 @@ Manager configuration metadata:
 ### Prerequisites
 
 - Node.js >= 18
-- PostgreSQL database (Supabase)
+- PostgreSQL database
 - PayIn packages: `@payin/manager`, `@payin/processor`
 
 ### Installation

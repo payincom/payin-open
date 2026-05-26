@@ -165,10 +165,8 @@ export function createApp(options: CreateAppOptions = {}) {
    */
   const api = app.basePath('/api/v1');
 
-  // Authentication API
-  // Hosted OAuth signup/profile bootstrap is Cloud-only; Open uses local first-operator registration.
-  api.use('/auth/oauth/*', cloudOnlyGuard('OAuth API'));
-  api.use('/auth/oauth', cloudOnlyGuard('OAuth API'));
+  // Authentication API. PayIn Open core exposes local operator/JWT/API-key auth only;
+  // hosted OAuth/Supabase login belongs in Cloud Layer, not this API surface.
   api.route('/auth', authRoutes);
 
   // Hosted user/admin management is Cloud-only; Open remains headless/operator-managed.

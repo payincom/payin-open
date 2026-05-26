@@ -16,7 +16,7 @@ PayIn Open 不通过 Admin UI 创建 API Key。使用 Open Agent/Skill、API，�
 建议流程：
 
 1. `open:init` 完成后，通过公开 `/auth/register` 注册第一个本地 Open operator。Open runtime 只允许首个 operator 使用该 bootstrap；创建后公开注册会锁定。
-2. 用该 operator 创建一个最小权限 API Key，例如 `backend-orders-service`。使用 JWT 调用 operator API 时传入 `X-Organization-Id: 00000000-0000-0000-0000-000000000001`（或你的 `PAYIN_OPEN_ORGANIZATION_ID`）；切换到 API Key 后 scope 会自动携带。
+2. 用该 operator 创建一个最小权限 API Key，例如 `backend-orders-service`。在 `PAYIN_RUNTIME=open` 下，JWT operator 请求可以省略 `X-Organization-Id`；服务端会在验证 token 后检查该用户是否属于 Open merchant organization。发送 `00000000-0000-0000-0000-000000000001`（或你的 `PAYIN_OPEN_ORGANIZATION_ID`）仍可用；切换到 API Key 后 scope 会自动携带。
 3. 只授予所需权限，例如：
    - 订单读写：`orders:read`、`orders:write`
    - 充值读写：`deposits:read`、`deposits:write`
@@ -30,8 +30,8 @@ PayIn Open 不通过 Admin UI 创建 API Key。使用 Open Agent/Skill、API，�
 **常见问题提醒**
 
 - PayIn Open API Key 会自动绑定内部 Open merchant organization；API Key 调用不需要传 `X-Organization-Id`。
-- 使用 JWT 登录态直接调用 operator API 时，需要传 `X-Organization-Id`，且用户必须是该 Open merchant organization 的 operator/owner。PayIn Open 不会把任意 JWT 用户自动提升为merchant organization owner。
-- 如果返回 `ORGANIZATION_CONTEXT_REQUIRED`，先检查 `open:init` 是否已完成merchant-organization bootstrap，以及 JWT 请求是否传入正确的 Open merchant organization id。
+- 使用 JWT 登录态直接调用 operator API 时，用户必须是该 Open merchant organization 的 operator/owner；在 `PAYIN_RUNTIME=open` 下可以省略 `X-Organization-Id`，服务端会解析到 Open merchant organization 并验证 membership。PayIn Open 不会把任意 JWT 用户自动提升为 merchant organization owner。
+- 如果返回 `ORGANIZATION_CONTEXT_REQUIRED`，先检查 `open:init` 是否已完成 merchant-organization bootstrap，以及 JWT 用户是否属于正确的 Open merchant organization。
 - 不要在聊天、日志、工单或文档中粘贴真实 API Key。
 
 ## 角色视角速览

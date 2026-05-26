@@ -541,15 +541,6 @@ export class AuthManager {
       return { success: false, error: 'User account is disabled' };
     }
 
-    // Check if user has a password (OAuth/magic link users have NULL password_hash)
-    if (!user.passwordHash) {
-      return {
-        success: false,
-        error:
-          'This account uses passwordless login. Please use magic link or social login instead.',
-      };
-    }
-
     // Verify password
     const passwordValid = await bcrypt.compare(credentials.password, user.passwordHash);
 

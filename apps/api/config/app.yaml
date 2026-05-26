@@ -6,7 +6,7 @@ server:
   port: ${PORT:-3000}
   host: ${HOST:-0.0.0.0}
 
-# Database connection (Supabase PostgreSQL)
+# Database connection (PostgreSQL)
 # Use DB_CONNECTION_STRING environment variable in production
 database:
   connectionString: ${DB_CONNECTION_STRING:-postgresql://postgres:postgres@localhost:5432/payin_test}

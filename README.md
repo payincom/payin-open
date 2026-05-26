@@ -129,6 +129,8 @@ The compose API service sets `PAYIN_RUNTIME=open` and uses `DB_CONNECTION_STRING
 
 PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, the PayIn operator CLI, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
 
+Authentication is local-first: `open:init` prepares the Open merchant organization, the first local operator registers through `/auth/register`, operators use JWT sessions for local administration, and merchant integrations use scoped API keys. PayIn Open core does not ship OAuth, Supabase Auth, hosted social login, or Cloud onboarding flows. If PayIn Cloud Layer needs third-party login or hosted tenant onboarding, that integration belongs in Cloud-owned code that composes with PayIn Open through explicit operator/API-key boundaries.
+
 The PayIn CLI is maintained separately at https://github.com/payincom/payin-cli. It is an operations client, not an installer. Use docs/templates/infra tools to deploy Open or Cloud, then use `payin` for diagnostics, smoke checks, API keys, address pools, webhooks, and runtime operations. Until the npm package is published, run it from GitHub:
 
 ```bash

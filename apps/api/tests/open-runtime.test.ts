@@ -166,7 +166,7 @@ describe('Open runtime API context', () => {
     expect(context.get('organizationRole')).toBeUndefined();
   });
 
-  it('hides hosted organization, admin, OAuth, and multi-tenant config routes in Open runtime', async () => {
+  it('hides hosted organization, admin, and multi-tenant config routes in Open runtime', async () => {
     const previousRuntime = process.env.PAYIN_RUNTIME;
     process.env.PAYIN_RUNTIME = 'open';
     try {
@@ -180,8 +180,6 @@ describe('Open runtime API context', () => {
         '/api/v1/config/diagnostics',
         '/api/v1/users',
         '/api/v1/users/operator-1',
-        '/api/v1/auth/oauth/config',
-        '/api/v1/auth/oauth/google',
       ]) {
         const response = await app.request(path);
 
@@ -194,7 +192,22 @@ describe('Open runtime API context', () => {
     }
   });
 
-  it('keeps hosted organization, admin, OAuth, and config routes available in Cloud runtime', async () => {
+  it('does not expose OAuth routes from PayIn Open core', async () => {
+    const app = createApp();
+
+    for (const path of [
+      '/api/v1/auth/oauth/config',
+      '/api/v1/auth/oauth/google',
+      '/api/v1/auth/oauth/github',
+      '/api/v1/auth/oauth/callback',
+    ]) {
+      const response = await app.request(path);
+
+      expect(response.status, path).toBe(404);
+    }
+  });
+
+  it('keeps hosted organization, admin, and config routes available in Cloud runtime', async () => {
     const previousRuntime = process.env.PAYIN_RUNTIME;
     process.env.PAYIN_RUNTIME = 'cloud';
     try {
@@ -205,7 +218,6 @@ describe('Open runtime API context', () => {
         '/api/v1/config-management/values',
         '/api/v1/config/diagnostics',
         '/api/v1/users',
-        '/api/v1/auth/oauth/config',
       ]) {
         const response = await app.request(path);
 

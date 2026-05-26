@@ -27,7 +27,7 @@ PAYIN_RUNTIME=open
 
 The Open profile is single-tenant by default. `open:init` prepares schemas and the internal Open merchant organization, using `PAYIN_OPEN_ORGANIZATION_ID` when an operator intentionally overrides the built-in merchant-organization id. It does not create `admin` / `admin123`, does not create an implicit operator, and does not bundle a Cloud Admin UI. After initialization, the first local operator bootstraps through `/auth/register`; public registration locks after that first operator.
 
-Keep local, sandbox, and production as separate profiles with separate databases, secrets, API keys, webhook endpoints, and RPC provider credentials. API-key business calls are scoped by the key and should not send `X-Organization-Id`. JWT operator calls may need `X-Organization-Id: ${PAYIN_OPEN_ORGANIZATION_ID}` or the built-in Open merchant organization id until the workflow switches to API-key auth. Hosted organization/user/OAuth/config-management/superadmin diagnostics surfaces are Cloud-only and hidden in Open runtime.
+Keep local, sandbox, and production as separate profiles with separate databases, secrets, API keys, webhook endpoints, and RPC provider credentials. API-key business calls are scoped by the key and should not send `X-Organization-Id`. JWT operator calls may omit `X-Organization-Id` in `PAYIN_RUNTIME=open` after membership in the Open merchant organization is verified; sending the Open merchant organization id remains accepted for compatibility. Hosted organization/user/config-management/superadmin diagnostics surfaces are Cloud-only and hidden in Open runtime. OAuth/Supabase hosted login is not part of PayIn Open core; Cloud Layer must own that integration if needed.
 
 ## 各层配置来源与优先级
 
