@@ -143,11 +143,29 @@ Useful commands:
 npm run boundary:check # Check Open / Cloud repository boundaries
 npm run open:verify    # Run the full Open independence verification suite
 npm exec --yes --package github:payincom/payin-cli -- payin --help # Run the PayIn operator CLI
-npm run build          # Build packages and apps
-npm run test           # Run tests
-npm run lint:check     # Check linting
-npm run open:init     # Initialize Open schema and default merchant scope
+npm run build            # Build packages and apps
+npm run test             # Run tests
+npm run test:e2e:order   # Run the Order business E2E test against local testnet services
+npm run test:e2e:deposit # Run the Deposit business E2E test against local testnet services
+npm run lint:check       # Check linting
+npm run open:init        # Initialize Open schema and default merchant scope
 ```
+
+Railway-hosted sandbox/testnet E2E reproduction:
+
+```bash
+export E2E_BASE_URL=https://your-payin-open.up.railway.app
+export TEST_USERNAME=admin
+export TEST_PASSWORD='use-your-sandbox-password'
+export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
+export TEST_CHAIN=ethereum-sepolia
+
+curl "$E2E_BASE_URL/health"
+npm run test:e2e:order
+npm run test:e2e:deposit
+```
+
+Use only a self-hosted PayIn Open sandbox/testnet deployment. Do not target mainnet RPCs, production databases, PayIn Cloud services, or print secrets in logs. Set `TEST_ORGANIZATION_ID` explicitly for Open deployments because the hosted multi-tenant `/organizations` route is disabled; set `TEST_CHAIN` to a funded chain with available address-pool capacity for deterministic Railway verification.
 
 ## RPC Defaults
 

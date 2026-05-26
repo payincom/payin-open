@@ -1,176 +1,138 @@
-# E2E 端到端测试
+# API Business E2E Tests
 
-这些测试通过 Web Server API 进行端到端测试，使用真实的区块链交易验证完整的支付流程。
+These tests exercise PayIn Open through the Web Server API. They create real Order and Deposit business flows and send real blockchain transactions on public testnets only.
 
-## 前置条件
+## Safety Scope
 
-1. **Web Server 必须运行**：测试会连接到 `http://localhost:3000`
-2. **数据库已初始化**：Manager 和 Processor 的数据库表已创建
-3. **Processor 和 Monitor 正在运行**：通过 Web Server 启动
+- Run these tests only against a local or Railway-hosted self-hosted PayIn Open sandbox/testnet deployment.
+- Do not point these tests at mainnet RPCs, production databases, or PayIn Cloud services.
+- The bundled test mnemonic is intended for testnet funds only. Never fund it with mainnet assets.
+- The tests use testnet chains selected by `E2ETestUtils`: `ethereum-sepolia`, `polygon-amoy`, and `tron-nile`.
 
-## 启动 Web Server
+## Prerequisites
 
-在运行测试之前，先启动 Web Server：
+1. Install dependencies from the repository root with `npm install`.
+2. Configure a local sandbox environment for PayIn Open, including `DB_CONNECTION_STRING`, `JWT_SECRET`, `WEBHOOK_SECRET`, `PAYIN_RUNTIME=open`, and `NODE_ENV=sandbox`.
+3. Initialize the Open database explicitly with `npm run open:init` or the appropriate documented database initialization command for your local setup.
+4. Start the local API, processor, and monitor from the repository root with `npm run dev:api`.
+5. Ensure the test account can authenticate and belongs to an organization.
+6. Ensure the bundled testnet wallet has enough testnet token balance and gas for the selected chains.
 
-```bash
-# 在 app 目录下
-cd app
+## Authentication Environment
 
-# 首次运行需要初始化数据库
-INIT_DB=true npm run dev
-
-# 后续运行不需要初始化
-npm run dev
-```
-
-确保看到以下输出表示服务器成功启动：
-
-```
-✅ Server is running!
-   Health check: http://localhost:3000/health
-   API base URL: http://localhost:3000/api/v1
-```
-
-## 运行测试
-
-在**另一个终端窗口**运行测试：
+The tests log in through the API before running business flows.
 
 ```bash
-# 在 app 目录下
-cd app
+# Optional; defaults are admin/admin123 when unset
+export TEST_USERNAME=admin
+export TEST_PASSWORD=admin123
 
-# 运行所有 E2E 测试
-npm run test
+# Recommended for PayIn Open; when unset, tests try the hosted/Cloud organizations route
+export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
 
-# 运行特定测试文件
-npx vitest run tests/e2e-order-payment.test.ts
-
-# 以 watch 模式运行（开发时使用）
-npx vitest tests/e2e-order-payment.test.ts
+# Optional; fixes the chain for deterministic deployment verification
+export TEST_CHAIN=ethereum-sepolia
 ```
 
-## 测试说明
+Use credentials from your Open sandbox. Do not use production or Cloud credentials. Do not print secrets in logs or shell history. For PayIn Open deployments, set `TEST_ORGANIZATION_ID` explicitly because the hosted multi-tenant `/organizations` route is disabled.
 
-### e2e-order-payment.test.ts
+## Start Local Services
 
-完整的订单支付流程测试：
-
-1. **初始化地址池**：通过 API 添加测试地址到地址池
-2. **创建订单**：通过 API 创建一个新订单
-3. **发送支付**：使用测试工具发送真实的测试网转账
-4. **等待确认**：轮询 API 等待订单状态变为 completed
-5. **验证结果**：检查订单状态、转账记录、统计数据
-
-测试使用真实的 Ethereum Sepolia 测试网交易，所以需要：
-- 测试助记词有足够的 testnet USDC
-- 网络连接正常
-- 有足够的 testnet ETH 支付 gas
-
-### 测试工具
-
-`test-utils.ts` 提供了两个主要工具类：
-
-1. **ApiClient**: HTTP 客户端，封装了所有 Web Server API 调用
-2. **E2ETestUtils**: 测试工具函数，包括：
-   - 地址生成和初始化
-   - 发送测试网支付
-   - 等待订单/转账状态
-   - 金额比较等辅助函数
-
-## 测试数据
-
-测试使用硬编码的测试助记词（仅包含测试网资金，安全提交到代码库）：
-
-```
-prepare panel behind window cram series basket exhibit topple icon solve gate
-```
-
-所有测试地址和支付都基于这个助记词生成。
-
-## 故障排查
-
-### Web Server 未运行
-
-```
-Error: Web Server is not running
-```
-
-**解决方案**: 先启动 Web Server: `cd app && npm run dev`
-
-### 地址池为空
-
-```
-Error: No available addresses for chain family: evm
-```
-
-**解决方案**: 测试会自动初始化地址池。如果失败，检查 Web Server 日志。
-
-### 超时错误
-
-```
-Error: Timeout waiting for order status completed
-```
-
-**可能原因**:
-1. 区块链网络延迟
-2. Monitor 未正常运行
-3. 测试网拥堵
-
-**解决方案**:
-- 检查 Web Server 日志中 Monitor 的运行状态
-- 增加超时时间
-- 等待测试网恢复正常
-
-### 交易失败
-
-```
-Error: Failed to send payment
-```
-
-**可能原因**:
-1. 测试账户余额不足
-2. Gas 价格过低
-3. 网络问题
-
-**解决方案**:
-- 检查测试账户余额
-- 从 testnet faucet 获取测试币
-- 检查网络连接
-
-## 调试
-
-启用详细日志输出：
+Run this in one terminal from the repository root:
 
 ```bash
-# 运行测试时查看详细输出
-npx vitest run tests/e2e-order-payment.test.ts --reporter=verbose
+npm run dev:api
 ```
 
-查看 Web Server 日志输出，了解 Processor 和 Monitor 的运行情况。
+`npm run dev:api` starts the API plus the processor and monitor packages required for transfer detection. `npm run dev` is also available for the full concurrent local development stack.
 
-## 持续集成
+The API must answer `http://localhost:3000/health` before running the E2E tests. Set `E2E_BASE_URL` to target a non-local sandbox API.
 
-在 CI 环境运行这些测试：
+## Run Focused E2E Tests
 
-1. 启动 Web Server（后台运行）
-2. 等待健康检查通过
-3. 运行测试
-4. 关闭 Web Server
-
-示例脚本：
+Run these commands from another terminal at the repository root:
 
 ```bash
-#!/bin/bash
-cd app
-npm run dev &
-SERVER_PID=$!
+# Order payment business flow
+npm run test:e2e:order
 
-# 等待服务器启动
-sleep 10
-
-# 运行测试
-npm run test
-
-# 清理
-kill $SERVER_PID
+# Deposit business flow
+npm run test:e2e:deposit
 ```
+
+The root scripts resolve to the exact API test files:
+
+```bash
+vitest run apps/api/tests/e2e-order-payment.test.ts
+vitest run apps/api/tests/e2e-deposit-flow.test.ts
+```
+
+## Railway-Hosted Reproduction
+
+Use this only for a Railway-hosted PayIn Open sandbox/testnet deployment that you control. Do not use mainnet RPCs, production databases, PayIn Cloud services, or commands that print secrets.
+
+```bash
+export E2E_BASE_URL=https://your-payin-open.up.railway.app
+export TEST_USERNAME=admin
+export TEST_PASSWORD='use-your-sandbox-password'
+export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
+export TEST_CHAIN=ethereum-sepolia
+
+curl "$E2E_BASE_URL/health"
+npm run test:e2e:order
+npm run test:e2e:deposit
+```
+
+`TEST_ORGANIZATION_ID` should be explicit for PayIn Open because the hosted multi-tenant `/organizations` route is disabled. Set `TEST_CHAIN` to a chain with funded sender wallet and available address-pool capacity; otherwise the tests choose randomly from `ethereum-sepolia`, `polygon-amoy`, and `tron-nile`.
+
+## What Each Test Covers
+
+### `e2e-order-payment.test.ts`
+
+1. Logs in and selects an organization.
+2. Initializes address-pool capacity through the API when needed.
+3. Creates an order through the API.
+4. Sends a real testnet payment to the order address.
+5. Polls the API until the order completes.
+6. Verifies transfer confirmation and order state.
+
+### `e2e-deposit-flow.test.ts`
+
+1. Logs in and selects an organization.
+2. Binds a deposit address through the API.
+3. Sends real testnet deposit payments.
+4. Polls the API for transfer detection.
+5. Verifies transfer records and deposit behavior.
+6. Exercises deposit address unbinding/reuse behavior.
+
+## Troubleshooting
+
+### Web Server is not running
+
+Start PayIn Open from the repository root:
+
+```bash
+npm run dev:api
+```
+
+Then verify:
+
+```bash
+curl http://localhost:3000/health
+```
+
+### Login fails
+
+Confirm `TEST_USERNAME`, `TEST_PASSWORD`, and `TEST_ORGANIZATION_ID` match your local initialized Open database. For PayIn Open, prefer setting `TEST_ORGANIZATION_ID` explicitly; when it is unset the tests try the hosted/Cloud `/organizations` lookup, which is disabled in Open deployments.
+
+### Address pool is empty
+
+The tests attempt to add test addresses through the API. If this fails, check the API logs and confirm your local Open database is initialized.
+
+### Transaction or timeout failures
+
+These flows depend on public testnets and local monitor polling. Check testnet token/gas balances, RPC connectivity, monitor logs, and current testnet congestion before retrying. Use `TEST_CHAIN` to avoid randomly selecting a chain without funded sender wallet, RPC access, or address-pool capacity. Override `SEPOLIA_RPC_URL`, `POLYGON_AMOY_RPC_URL`, or `TRON_NILE_API_URL` when public RPC defaults are slow or unavailable.
+
+## CI Guidance
+
+These tests are not hermetic unit tests. Only run them in CI jobs that provision an isolated sandbox database, start the local PayIn Open API stack, and use testnet-only funds and RPCs. Do not include them in default unit-test jobs.

@@ -5,11 +5,13 @@
  * It uses real blockchain transactions on testnet to verify the entire deposit process.
  *
  * Prerequisites:
- * - Web Server must be running at http://localhost:3000
+ * - Web Server must be running at E2E_BASE_URL or http://localhost:3000
  * - Database must be initialized
  * - Processor and Monitor must be running
  *
  * Environment Variables (optional):
+ * - E2E_BASE_URL: API base URL (default: 'http://localhost:3000')
+ * - TEST_CHAIN: Optional deterministic testnet chain (ethereum-sepolia, polygon-amoy, tron-nile)
  * - TEST_USERNAME: Username for login (default: 'admin')
  * - TEST_PASSWORD: Password for login (default: 'admin123')
  * - TEST_ORGANIZATION_ID: Organization ID to use (default: user's first organization)
@@ -40,16 +42,17 @@ describe('E2E Deposit Flow (via Web Server API)', () => {
   let api: ApiClient;
 
   beforeAll(async () => {
-    api = new ApiClient('http://localhost:3000');
+    const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
+    api = new ApiClient(baseUrl);
 
     // Verify server is running
-    console.log('🔍 Checking if Web Server is running...');
+    console.log(`🔍 Checking if Web Server is running at ${baseUrl}...`);
     try {
       const health = await api.health();
       console.log('✅ Web Server is healthy:', health);
     } catch (error) {
       throw new Error(
-        'Web Server is not running. Please start it with: cd app && npm run dev'
+        'Web Server is not running. Please start PayIn Open from the repository root with: npm run dev:api'
       );
     }
 

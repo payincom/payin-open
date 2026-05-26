@@ -45,14 +45,14 @@ const TRC20_ABI = [
 // Chain configurations
 const CHAIN_CONFIGS = {
   'ethereum-sepolia': {
-    rpcUrl: '${SEPOLIA_RPC_URL:-https://sepolia.infura.io/v3/your_infura_key}',
+    rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
     tokenContracts: {
       USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
       USDT: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0'
     }
   },
   'polygon-amoy': {
-    rpcUrl: '${POLYGON_AMOY_RPC_URL:-https://polygon-amoy.infura.io/v3/your_infura_key}',
+    rpcUrl: process.env.POLYGON_AMOY_RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com',
     tokenContracts: {
       USDC: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
       USDT: '0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97'

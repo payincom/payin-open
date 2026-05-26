@@ -159,7 +159,7 @@ INIT_DB=true DEMO_DATA=true npm run dev
 ```bash
 # Separate initialization from runtime
 npm run db:init:demo
-npm run dev
+npm run dev:api
 ```
 
 **Benefits**:

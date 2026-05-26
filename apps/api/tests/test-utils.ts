@@ -9,7 +9,7 @@ let MultiChainAddressGenerator: any;
 let MultiChainPaymentSender: any;
 
 try {
-  ({ MultiChainAddressGenerator } = await import('../../tools/generate-multichain-addresses.js'));
+  ({ MultiChainAddressGenerator } = await import('../../../tools/generate-multichain-addresses.js'));
 } catch (error) {
   MultiChainAddressGenerator = class {
     getMasterPublicKey() {
@@ -24,16 +24,9 @@ try {
 }
 
 try {
-  ({ MultiChainPaymentSender } = await import('../../tools/send-multichain-payment.js'));
+  ({ MultiChainPaymentSender } = await import('@payin/test-utils/blockchain'));
 } catch (error) {
-  MultiChainPaymentSender = class {
-    async sendPayment() {
-      return {
-        transactionHash: `0x${Date.now().toString(16).padStart(64, '0')}`,
-        status: 'sent',
-      };
-    }
-  };
+  throw new Error(`Failed to load real multi-chain payment sender: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 // Test MNEMONIC (hardcoded - only contains testnet funds, safe to commit)
@@ -444,7 +437,7 @@ export class E2ETestUtils {
       return await api.createOrder(orderParams);
     } catch (error: any) {
       // Check if error is due to no available addresses
-      if (error.message && error.message.includes('No available addresses')) {
+      if (error.message && (error.message.includes('No available addresses') || error.message.includes('ADDRESS_POOL_EXHAUSTED') || error.message.includes('Address pool exhausted'))) {
         console.log('⚠️  No available addresses detected. Auto-generating addresses...');
 
         // Determine protocol from chainId
@@ -480,7 +473,7 @@ export class E2ETestUtils {
       return await api.bindDepositAddress(bindParams);
     } catch (error: any) {
       // Check if error is due to no available addresses
-      if (error.message && error.message.includes('No available') && error.message.includes('deposit pool')) {
+      if (error.message && ((error.message.includes('No available') && error.message.includes('deposit pool')) || error.message.includes('ADDRESS_POOL_EXHAUSTED') || error.message.includes('Address pool exhausted'))) {
         console.log('⚠️  No available deposit addresses detected. Auto-generating addresses...');
 
         // Add 5 new addresses to the pool
@@ -498,7 +491,9 @@ export class E2ETestUtils {
   }
 
   /**
-   * Get a random chain from ethereum-sepolia, polygon-amoy, or tron-nile
+   * Get the selected test chain.
+   *
+   * Set TEST_CHAIN for deterministic deployment/E2E verification, otherwise a supported testnet is selected at random.
    */
   static getRandomChain(): 'ethereum-sepolia' | 'polygon-amoy' | 'tron-nile' {
     const chains: Array<'ethereum-sepolia' | 'polygon-amoy' | 'tron-nile'> = [
@@ -506,6 +501,16 @@ export class E2ETestUtils {
       'polygon-amoy',
       'tron-nile'
     ];
+
+    const requestedChain = process.env.TEST_CHAIN;
+    if (requestedChain) {
+      if (chains.includes(requestedChain as 'ethereum-sepolia' | 'polygon-amoy' | 'tron-nile')) {
+        return requestedChain as 'ethereum-sepolia' | 'polygon-amoy' | 'tron-nile';
+      }
+
+      throw new Error(`Unsupported TEST_CHAIN: ${requestedChain}. Supported values: ${chains.join(', ')}`);
+    }
+
     return chains[Math.floor(Math.random() * chains.length)];
   }
 
@@ -528,7 +533,25 @@ export class E2ETestUtils {
   }) {
     console.log(`💸 Sending ${params.amount} ${params.token} to ${params.toAddress} on ${params.chain}...`);
     // Pass token parameter to payment sender (will auto-select based on chain if not provided)
-    return this.getPaymentSender().sendPayment(params.chain, params.toAddress, params.amount, params.token);
+    const result = await this.getPaymentSender().sendPayment(params.chain, params.toAddress, params.amount, params.token);
+    const txHash = typeof result === 'string' ? result : result.txHash || result.transactionHash;
+
+    return {
+      success: Boolean(txHash),
+      txHash,
+      explorerUrl: this.getExplorerUrl(params.chain, txHash),
+      raw: result,
+    };
+  }
+
+  static getExplorerUrl(chain: string, txHash?: string): string | undefined {
+    if (!txHash) return undefined;
+
+    if (chain === 'ethereum-sepolia') return `https://sepolia.etherscan.io/tx/${txHash}`;
+    if (chain === 'polygon-amoy') return `https://amoy.polygonscan.com/tx/${txHash}`;
+    if (chain === 'tron-nile') return `https://nile.tronscan.org/#/transaction/${txHash}`;
+
+    return undefined;
   }
 
   /**

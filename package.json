@@ -27,6 +27,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e:order": "vitest run apps/api/tests/e2e-order-payment.test.ts",
+    "test:e2e:deposit": "vitest run apps/api/tests/e2e-deposit-flow.test.ts",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write .",
