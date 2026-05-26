@@ -14,19 +14,19 @@
  * - TEST_CHAIN: Optional deterministic testnet chain (ethereum-sepolia, polygon-amoy, tron-nile)
  * - TEST_USERNAME: Username for login (default: 'admin')
  * - TEST_PASSWORD: Password for login (default: 'admin123')
- * - TEST_ORGANIZATION_ID: Organization ID to use (default: user's first organization)
+ * - TEST_ORGANIZATION_ID: Optional organization ID override; Open runtime omits X-Organization-Id by default
  *
  * Example usage:
  * ```bash
- * # Use default admin account and auto-select first organization
+ * # Open runtime: use default admin/operator account and omit organization header
  * npm run test:e2e:deposit
  *
- * # Use specific account and organization
+ * # Cloud runtime or explicit Open compatibility override
  * TEST_USERNAME=alice_owner TEST_PASSWORD=Test1234! TEST_ORGANIZATION_ID=org-123 npm run test:e2e:deposit
  * ```
  *
  * Test flow:
- * 1. Login with credentials and select organization
+ * 1. Login with credentials; Open auto-resolves the default merchant, Cloud selects an organization
  * 2. Initialize address pool via API
  * 3. Bind deposit address for a user via API
  * 4. Send real testnet payments from multiple chains
@@ -69,11 +69,14 @@ describe('E2E Deposit Flow (via Web Server API)', () => {
       throw new Error(`Failed to login as ${username}. Make sure the database is initialized and credentials are correct.`);
     }
 
-    // Set organization ID for multi-tenant requests
-    // If TEST_ORGANIZATION_ID is provided, use it; otherwise get user's first organization
+    // Set organization ID only when explicitly provided, or when testing Cloud/multi-tenant runtime.
+    // In PayIn Open, omitted X-Organization-Id lets the API verify the operator and resolve
+    // the default Open merchant automatically.
     let organizationId = process.env.TEST_ORGANIZATION_ID;
+    const runtime = (process.env.PAYIN_RUNTIME || process.env.PAYIN_EDITION || 'open').toLowerCase();
+    const isOpenRuntime = runtime === 'open' || runtime === 'payin-open';
 
-    if (!organizationId) {
+    if (!organizationId && !isOpenRuntime) {
       // Get user's organizations
       const response = await api.get('/api/v1/organizations');
 
@@ -84,10 +87,16 @@ describe('E2E Deposit Flow (via Web Server API)', () => {
         throw new Error('User has no organizations. Please create one first.');
       }
     } else {
-      console.log(`📋 Using provided organization ID: ${organizationId}`);
+      if (organizationId) {
+        console.log(`📋 Using provided organization ID: ${organizationId}`);
+      } else {
+        console.log('📋 PayIn Open runtime: omitting X-Organization-Id; API will resolve default merchant');
+      }
     }
 
-    api.setOrganizationId(organizationId);
+    if (organizationId) {
+      api.setOrganizationId(organizationId);
+    }
   }, 30000);
 
   afterAll(async () => {

@@ -4,6 +4,18 @@
 
 import type { Context, Next } from 'hono';
 import type { AuthManager } from '../auth-manager.js';
+import { DEFAULT_OPEN_ORGANIZATION_ID } from '@payin/processor';
+
+const PAYIN_RUNTIME_OPEN = 'open';
+
+function isExplicitOpenRuntime(env: NodeJS.ProcessEnv = process.env): boolean {
+  const runtime = (env.PAYIN_RUNTIME || env.PAYIN_EDITION || '').toLowerCase();
+  return runtime === PAYIN_RUNTIME_OPEN || runtime === 'payin-open';
+}
+
+function getOpenRuntimeOrganizationId(env: NodeJS.ProcessEnv = process.env): string {
+  return env.PAYIN_OPEN_ORGANIZATION_ID || DEFAULT_OPEN_ORGANIZATION_ID;
+}
 
 /**
  * Create unified authentication middleware
@@ -11,7 +23,8 @@ import type { AuthManager } from '../auth-manager.js';
  * Automatically detects the type based on the token format
  *
  * For API Keys: Automatically sets organization context from the key
- * For JWT: Requires X-Organization-ID header and verifies membership
+ * For JWT: Verifies membership for X-Organization-ID, or for the default
+ * Open merchant when PAYIN_RUNTIME=open and the header is omitted
  */
 export function createAuthMiddleware(authManager: AuthManager) {
   return async (c: Context, next: Next): Promise<Response | void> => {
@@ -53,9 +66,11 @@ export function createAuthMiddleware(authManager: AuthManager) {
         return c.json({ error: 'Unauthorized', message: verification.error || 'Invalid token' }, 401);
       }
 
-      // X-Organization-ID header is optional for JWT authentication
-      // If provided, verify membership; if not, set basic user info only
-      const orgId = c.req.header('X-Organization-ID');
+      // X-Organization-ID header is optional for JWT authentication.
+      // In explicit PayIn Open runtime, omitted headers resolve to the default
+      // merchant only after active membership has been verified below.
+      const orgId = c.req.header('X-Organization-ID') ||
+        (isExplicitOpenRuntime() ? getOpenRuntimeOrganizationId() : undefined);
 
       if (orgId) {
         // Verify user membership in the organization

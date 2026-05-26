@@ -47,12 +47,22 @@ describe('Open runtime API context', () => {
     expect(org).toBe('33333333-3333-3333-3333-333333333333');
   });
 
-  it('injects default Open merchant context when auth has no organization', () => {
+  it('injects default Open merchant scope when no auth context is present', () => {
     const org = resolveBusinessOrganizationId(contextWithOrganizationId(undefined), {
       PAYIN_RUNTIME: 'open',
     } as any);
 
     expect(org).toBe(DEFAULT_OPEN_ORGANIZATION_ID);
+  });
+
+  it('does not resolve default Open scope for unverified JWT context', () => {
+    const context = contextWithOrganizationId(undefined);
+    context.set('authType', 'jwt');
+    context.set('userId', 'operator-1');
+
+    const org = resolveBusinessOrganizationId(context, { PAYIN_RUNTIME: 'open' } as any);
+
+    expect(org).toBeUndefined();
   });
 
   it('supports custom Open merchant context for compatibility migrations', () => {
@@ -70,9 +80,10 @@ describe('Open runtime API context', () => {
   });
 
   it('resolves neutral payment and runtime context for Open API routes', () => {
-    const context = contextWithOrganizationId(undefined);
+    const context = contextWithOrganizationId(DEFAULT_OPEN_ORGANIZATION_ID);
     context.set('userId', 'operator-1');
     context.set('authType', 'jwt');
+    context.set('organizationRole', 'owner');
 
     const scope = resolveBusinessPaymentScope(context, { PAYIN_RUNTIME: 'open' } as any);
     const runtimeContext = resolveRuntimeContext(context, { PAYIN_RUNTIME: 'open' } as any);
@@ -101,12 +112,12 @@ describe('Open runtime API context', () => {
     expect(organizationContextRequiredMessage(env)).toContain('JWT operator calls');
     expect(organizationContextRequiredSuggestions(env)).toEqual([
       'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
-      'For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: 44444444-4444-4444-4444-444444444444 until you switch to API-key auth.',
+      'For PayIn Open JWT operator calls, omit X-Organization-Id to use the default merchant (44444444-4444-4444-4444-444444444444) or send it explicitly for compatibility.',
       'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
     ]);
     expect(organizationContextRequiredPayload(env)).toMatchObject({
       code: 'ORGANIZATION_CONTEXT_REQUIRED',
-      suggestions: expect.arrayContaining([expect.stringContaining('/auth/register')]),
+      suggestions: expect.arrayContaining([expect.stringContaining('default merchant')]),
     });
     expect(organizationContextRequiredPayload(env).message).not.toContain('hosted organization');
   });

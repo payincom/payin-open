@@ -36,7 +36,17 @@ export function resolveBusinessPaymentScope(
     typeof authenticatedOrganizationId === 'string' &&
     authenticatedOrganizationId.trim() !== ''
   ) {
+    if (isOpenRuntime(env) && authenticatedOrganizationId === getOpenRuntimeOrganizationId(env)) {
+      return createOpenRuntimeContextProvider(env).getPaymentScope();
+    }
+
     return tenantPaymentScope(authenticatedOrganizationId);
+  }
+
+  const authType = c.get('authType');
+  const authenticatedUserId = c.get('userId');
+  if (authType === 'jwt' || authType === 'apikey' || typeof authenticatedUserId === 'string') {
+    return undefined;
   }
 
   if (isOpenRuntime(env)) {
@@ -98,14 +108,12 @@ export function resolveBusinessOrganizationId(
  * Preserve already verified Open authorization context.
  *
  * PayIn Open has a single merchant scope, but JWT users must still prove they
- * are operators for that scope. The shared auth middleware verifies that proof
- * when callers pass X-Organization-Id. This helper intentionally does not grant
- * a default owner role to an arbitrary JWT user, because public registration may
- * be reachable during bootstrap.
- *
- * API-key auth already carries a verified organization context. JWT operator
- * calls should pass X-Organization-Id with the Open merchant id returned by
- * open:init/registration.
+ * are operators for that scope. The shared auth middleware verifies active
+ * membership in the default Open merchant when JWT callers omit
+ * X-Organization-Id, and API-key auth already carries a verified organization
+ * context. This helper intentionally does not grant a default owner role to an
+ * arbitrary JWT user, because public registration may be reachable during
+ * bootstrap.
  */
 export function injectOpenRuntimeAuthContext(
   c: Context,
@@ -136,7 +144,7 @@ export function openRuntimeAuthContextMiddleware(env: NodeJS.ProcessEnv = proces
 
 export function organizationContextRequiredMessage(env: NodeJS.ProcessEnv = process.env): string {
   if (isOpenRuntime(env)) {
-    return 'PayIn Open could not resolve a verified merchant context for this request. Business API-key calls are scoped automatically; JWT operator calls must send the bootstrapped Open merchant id until you switch to API keys.';
+    return 'PayIn Open could not resolve a verified merchant context for this request. Business API-key calls are scoped automatically; JWT operator calls without X-Organization-Id are scoped to the default Open merchant only after active membership is verified.';
   }
 
   return 'Organization context is required for hosted multi-tenant operations.';
@@ -150,7 +158,7 @@ export function organizationContextRequiredSuggestions(
 
     return [
       'For PayIn Open business API-key calls, omit X-Organization-Id; API keys auto-scope to the Open merchant.',
-      `For JWT operator calls after /auth/register bootstrap, send X-Organization-Id: ${openMerchantId} until you switch to API-key auth.`,
+      `For PayIn Open JWT operator calls, omit X-Organization-Id to use the default merchant (${openMerchantId}) or send it explicitly for compatibility.`,
       'If this persists, run npm run open:init -- --check and confirm the Open merchant bootstrap completed.',
     ];
   }

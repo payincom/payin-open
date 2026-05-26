@@ -27,14 +27,15 @@ The tests log in through the API before running business flows.
 export TEST_USERNAME=admin
 export TEST_PASSWORD=admin123
 
-# Recommended for PayIn Open; when unset, tests try the hosted/Cloud organizations route
-export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
+# Optional in PayIn Open; set only to verify explicit-header compatibility.
+# Required in Cloud/multi-tenant runtime when the tests need a tenant context.
+# export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
 
 # Optional; fixes the chain for deterministic deployment verification
 export TEST_CHAIN=ethereum-sepolia
 ```
 
-Use credentials from your Open sandbox. Do not use production or Cloud credentials. Do not print secrets in logs or shell history. For PayIn Open deployments, set `TEST_ORGANIZATION_ID` explicitly because the hosted multi-tenant `/organizations` route is disabled.
+Use credentials from your Open sandbox. Do not use production or Cloud credentials. Do not print secrets in logs or shell history. In `PAYIN_RUNTIME=open`, leave `TEST_ORGANIZATION_ID` unset by default; JWT requests omit `X-Organization-Id`, and the API verifies the authenticated operator is an active member of the default Open merchant before resolving scope. Set `TEST_ORGANIZATION_ID` only when you want to confirm the explicit-header compatibility path. In Cloud/multi-tenant runtime, `TEST_ORGANIZATION_ID` remains required unless you use an organization-scoped API key.
 
 ## Start Local Services
 
@@ -75,7 +76,6 @@ Use this only for a Railway-hosted PayIn Open sandbox/testnet deployment that yo
 export E2E_BASE_URL=https://your-payin-open.up.railway.app
 export TEST_USERNAME=admin
 export TEST_PASSWORD='use-your-sandbox-password'
-export TEST_ORGANIZATION_ID=00000000-0000-0000-0000-000000000001
 export TEST_CHAIN=ethereum-sepolia
 
 curl "$E2E_BASE_URL/health"
@@ -83,13 +83,13 @@ npm run test:e2e:order
 npm run test:e2e:deposit
 ```
 
-`TEST_ORGANIZATION_ID` should be explicit for PayIn Open because the hosted multi-tenant `/organizations` route is disabled. Set `TEST_CHAIN` to a chain with funded sender wallet and available address-pool capacity; otherwise the tests choose randomly from `ethereum-sepolia`, `polygon-amoy`, and `tron-nile`.
+For PayIn Open, omit `TEST_ORGANIZATION_ID` by default so the tests cover organization-id independence; set it only for explicit-header compatibility. For Cloud/multi-tenant runtime, set `TEST_ORGANIZATION_ID` because the API requires tenant context. Set `TEST_CHAIN` to a chain with funded sender wallet and available address-pool capacity; otherwise the tests choose randomly from `ethereum-sepolia`, `polygon-amoy`, and `tron-nile`.
 
 ## What Each Test Covers
 
 ### `e2e-order-payment.test.ts`
 
-1. Logs in and selects an organization.
+1. Logs in; Open auto-resolves the default merchant, while Cloud selects an organization.
 2. Initializes address-pool capacity through the API when needed.
 3. Creates an order through the API.
 4. Sends a real testnet payment to the order address.
@@ -98,7 +98,7 @@ npm run test:e2e:deposit
 
 ### `e2e-deposit-flow.test.ts`
 
-1. Logs in and selects an organization.
+1. Logs in; Open auto-resolves the default merchant, while Cloud selects an organization.
 2. Binds a deposit address through the API.
 3. Sends real testnet deposit payments.
 4. Polls the API for transfer detection.
@@ -123,7 +123,7 @@ curl http://localhost:3000/health
 
 ### Login fails
 
-Confirm `TEST_USERNAME`, `TEST_PASSWORD`, and `TEST_ORGANIZATION_ID` match your local initialized Open database. For PayIn Open, prefer setting `TEST_ORGANIZATION_ID` explicitly; when it is unset the tests try the hosted/Cloud `/organizations` lookup, which is disabled in Open deployments.
+Confirm `TEST_USERNAME` and `TEST_PASSWORD` match your local initialized Open database. For PayIn Open, an unset `TEST_ORGANIZATION_ID` is expected; if login succeeds but business calls return membership errors, run `npm run open:init -- --check` and confirm the operator is an active member of the default Open merchant. For Cloud/multi-tenant runtime, confirm `TEST_ORGANIZATION_ID` is set to a tenant the user belongs to.
 
 ### Address pool is empty
 
