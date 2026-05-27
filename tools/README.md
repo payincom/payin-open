@@ -40,9 +40,9 @@
 **功能**：
 - 检查 Railway CLI 安装和登录状态
 - 创建新项目或链接现有项目
-- 导入环境变量（从 .env.production）
+- 配置 PayIn Open 必需变量（`PAYIN_RUNTIME=open`、`NODE_ENV=sandbox`、`DB_CONNECTION_STRING` Railway 引用、JWT/Webhook secrets）
 - 执行首次构建和部署
-- 提供部署后配置提示
+- 提供 Railway Dashboard one-off/scheduled task `npm run open:doctor`/`npm run open:init`、SSH fallback、Public Domain、readiness、First operator/API key/address pool 后续提示
 
 **使用场景**：
 - 创建新的 Railway 环境（production/staging/test）
@@ -98,17 +98,17 @@ railway logs
 ### 新项目设置流程
 
 ```bash
-# 1. 准备环境变量文件
-cp .env.example .env.production
-vim .env.production  # 填入生产环境值
+# 1. 登录 Railway，并准备一个 sandbox/testnet 项目
+railway login
 
 # 2. 运行自动化设置
 ./tools/setup-new-railway-project.sh
 
 # 3. 按提示完成配置
 # - 选择创建新项目或链接现有项目
-# - 确认导入环境变量
+# - 设置必需变量，secrets 保持 redacted
 # - 等待首次部署完成
+# - 优先使用 Railway one-off task/job 初始化数据库；SSH 仅作为 fallback，不使用本地 railway run 或 INIT_DB/DEMO_DATA 启动标志
 ```
 
 ---
@@ -116,8 +116,8 @@ vim .env.production  # 填入生产环境值
 ## 📚 相关文档
 
 完整的部署文档请参考：
-- [docs/self-hosting/DEPLOYMENT.md](../docs/self-hosting/DEPLOYMENT.md) - 部署总览
-- [docs/self-hosting/DATABASE_CONNECTION_OPTIMIZATION.md](../docs/self-hosting/DATABASE_CONNECTION_OPTIMIZATION.md) - 数据库优化
+- [docs/self-hosting/railway.md](../docs/self-hosting/railway.md) - Railway sandbox 部署
+- [docs/self-hosting/database-initialization.md](../docs/self-hosting/database-initialization.md) - 数据库初始化
 
 ---
 

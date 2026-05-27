@@ -34,6 +34,7 @@ RUN npm install
 COPY tsconfig.json ./
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
+COPY scripts/ ./scripts/
 
 # Build all packages in dependency order
 RUN echo "Building packages..." && \
@@ -89,6 +90,10 @@ COPY --from=builder /app/apps/api/config ./apps/api/config
 COPY --from=builder /app/packages/processor/config ./packages/processor/config
 COPY --from=builder /app/packages/monitor/config ./packages/monitor/config
 COPY --from=builder /app/packages/manager/config ./packages/manager/config
+
+# Copy operator scripts so the same image can run one-off init/smoke tasks.
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Expose port (Railway assigns PORT via env variable)
 EXPOSE 3000

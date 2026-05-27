@@ -63,30 +63,46 @@ Use this rule when adding features:
 - Keep PayIn-hosted multi-tenant SaaS concerns in PayIn Cloud.
 - Hide organization/tenant complexity from the Open self-hosted public surface whenever possible.
 
-## Quick Start: Local Open Sandbox
+## Quick Start: Docker Compose Sandbox
 
-This path starts PayIn Open in sandbox/testnet mode. The default Open demo monitors Ethereum Sepolia through publicnode, so no RPC provider signup is required for the first smoke test. Add Alchemy/Infura/Ankr/etc. keys later when you want dedicated RPC capacity.
+The fastest self-hosted path is Docker-first: run PostgreSQL, run database initialization as an explicit one-off task with the same API image and environment, then start the API. The default sandbox/testnet config can smoke Ethereum Sepolia through publicnode; add Alchemy/Infura/Ankr/etc. keys later when you need dedicated RPC capacity.
 
 ```bash
 git clone https://github.com/payincom/payin-open.git
 cd payin-open
+export JWT_SECRET="$(openssl rand -base64 32)"
+export WEBHOOK_SECRET="$(openssl rand -base64 32)"
+docker compose up -d postgres
+until docker compose exec -T postgres pg_isready; do sleep 2; done
+docker compose build api
+docker compose run --rm --no-deps api npm run open:doctor
+docker compose run --rm --no-deps api npm run open:init -- --check
+docker compose run --rm --no-deps api npm run open:init
+docker compose run --rm --no-deps api npm run open:init -- --check --strict
+docker compose up -d api
+```
+
+The two exported secrets are consumed by the Compose `api` service; keep them in the same shell for every `docker compose` command. Compose points `DB_CONNECTION_STRING` at its `postgres` service, so the `pg_isready` loop waits for the database container before `open:doctor` and the one-off init commands connect to it.
+
+Verify runtime and readiness after init:
+
+```bash
+curl http://localhost:3000/health
+curl http://localhost:3000/api/chains
+curl http://localhost:3000/api/tokens
+docker compose run --rm --no-deps api npm run open:smoke -- --url http://api:3000
+```
+
+`/health` is process health only; it can pass before schema/config is ready. Treat `/api/chains`, `/api/tokens`, and `open:smoke -- --url` after `open:init` as the deployment readiness checks. The compose API service sets `PAYIN_RUNTIME=open` and uses `DB_CONNECTION_STRING`, `JWT_SECRET`, and `WEBHOOK_SECRET`; do not use legacy `INIT_DB` container startup hooks.
+
+## Local Node Development
+
+Use local Node when you are changing code rather than validating a container deployment:
+
+```bash
 npm install
 cp .env.example .env.local
-```
-
-Edit `.env.local` and set at least:
-
-```bash
-DB_CONNECTION_STRING="postgresql://USER:PASSWORD@HOST:5432/DB_NAME"
-JWT_SECRET="$(openssl rand -base64 32)"
-WEBHOOK_SECRET="$(openssl rand -base64 32)"
-PAYIN_RUNTIME=open
-NODE_ENV=sandbox
-```
-
-Then run the Open operator gate:
-
-```bash
+# edit .env.local with DB_CONNECTION_STRING, JWT_SECRET, WEBHOOK_SECRET, PAYIN_RUNTIME=open, NODE_ENV=sandbox
 npm run open:doctor
 npm run open:init -- --check
 npm run open:init
@@ -100,7 +116,75 @@ In another terminal, verify the live API:
 npm run open:smoke -- --url http://localhost:3000
 ```
 
-For a live order smoke test, first run `open:init` (it creates no default login), register the first local Open operator through `/auth/register`, create an API key, add EVM addresses to the address pool, then run. Public registration is locked after the first operator. In `PAYIN_RUNTIME=open`, JWT operator requests may omit `X-Organization-Id`; after the token is verified, the API checks active membership in the Open merchant organization (`00000000-0000-0000-0000-000000000001`, or `PAYIN_OPEN_ORGANIZATION_ID` when intentionally overridden) before setting organization context. Sending that same `X-Organization-Id` remains supported for compatibility. Business API-key calls should not send `X-Organization-Id` because API keys auto-scope to the Open merchant organization. In Cloud/multi-tenant runtime, callers must still provide explicit organization context or use an organization-scoped API key:
+## Container Provider Deployment Model
+
+PayIn Open is provider-neutral. Any Docker/container-capable platform can run it if the provider supports a PostgreSQL database, environment variables/secrets, private networking from app containers to the database, and an explicit one-off job/task using the same image as the API service.
+
+Universal phases:
+
+1. Provision PostgreSQL and a private connection string reachable from application containers.
+2. Build/deploy the repository `Dockerfile` as the API image with `PAYIN_RUNTIME=open`, `NODE_ENV=sandbox` or `production`, `DB_CONNECTION_STRING`, `JWT_SECRET`, and `WEBHOOK_SECRET`.
+3. Run a one-off provider job/task using that same image, env, and private network: `npm run open:init -- --check`, `npm run open:init`, then `npm run open:init -- --check --strict`.
+4. Start or restart the long-running API process: `node apps/api/dist/index.js`.
+5. Expose a public HTTPS URL, set `BASE_URL`, then verify `/health`, `/api/chains`, `/api/tokens`, and `open:smoke -- --url https://...`.
+
+Do not run init from your laptop when the database hostname is private to the provider network. Do not bake initialization into container startup with `INIT_DB` or `DEMO_DATA`; keep it as an operator-controlled one-off task.
+
+## Railway Example: New Sandbox Project
+
+Railway is one provider example, not the required deployment target. Use the same universal model: deploy the Docker image, run init as a Railway-supported one-off task/job with the `payin-api` service image, variables, and private network, then start/verify the API. If your Railway workspace cannot run a one-off task with the service image and private network, Railway SSH is the fallback; avoid local `railway run ... open:init` when `DB_CONNECTION_STRING` uses Railway private Postgres references such as `${{Postgres.DATABASE_URL}}`.
+
+```bash
+railway init --name payin-open-sandbox
+railway add --service payin-api
+railway add --database postgres
+railway variables --service payin-api --set 'PAYIN_RUNTIME=open' --skip-deploys
+railway variables --service payin-api --set 'NODE_ENV=sandbox' --skip-deploys
+railway variables --service payin-api --set 'DB_CONNECTION_STRING=${{Postgres.DATABASE_URL}}' --skip-deploys
+railway variables --service payin-api --set "JWT_SECRET=$(openssl rand -base64 32)" --skip-deploys
+railway variables --service payin-api --set "WEBHOOK_SECRET=$(openssl rand -base64 32)" --skip-deploys
+railway up --service payin-api --detach
+railway status
+railway logs --service payin-api --deployment
+```
+
+For initialization, prefer Railway's provider-supported one-off/scheduled-execution mechanism on the deployed `payin-api` service image, with the service variables and private network attached. Railway documents custom start commands and scheduled executions in service settings; use the Dashboard flow for your workspace rather than an unverified local CLI shortcut. The command sequence for that one-off task is:
+
+```bash
+npm run open:doctor
+npm run open:init -- --check
+npm run open:init
+npm run open:init -- --check --strict
+```
+
+If a provider-supported one-off task is unavailable, use Railway SSH as a fallback after configuring an SSH key:
+
+```bash
+railway ssh --service payin-api
+# inside the Railway shell:
+npm run open:doctor
+npm run open:init -- --check
+npm run open:init
+npm run open:init -- --check --strict
+exit
+```
+
+Railway references: [Build and start commands](https://docs.railway.com/builds/build-and-start-commands), [Cron jobs](https://docs.railway.com/cron-jobs), and [Railway SSH](https://docs.railway.com/cli/ssh).
+
+Create a public Railway domain, set `BASE_URL`, and verify readiness:
+
+```bash
+railway domain --service payin-api
+railway variables --service payin-api --set 'BASE_URL=https://your-payin-open.up.railway.app' --skip-deploys
+curl https://your-payin-open.up.railway.app/health
+curl https://your-payin-open.up.railway.app/api/chains
+curl https://your-payin-open.up.railway.app/api/tokens
+npm run open:smoke -- --url https://your-payin-open.up.railway.app
+```
+
+For more detail, see [`docs/self-hosting/README.md`](docs/self-hosting/README.md) and [`docs/self-hosting/railway.md`](docs/self-hosting/railway.md).
+
+For a live order smoke test, first run `open:init` (it creates no default login), register the first local Open operator through `/auth/register`, create an API key, add EVM addresses to the address pool, then run:
 
 ```bash
 npm run open:smoke -- \
@@ -110,22 +194,6 @@ npm run open:smoke -- \
   --chain-id ethereum-sepolia \
   --currency USDC
 ```
-
-
-## Docker Compose: Self-hosted Open
-
-`docker-compose.yml` starts PostgreSQL plus the API image built from the repository `Dockerfile`. Initialize the database explicitly before starting the API container:
-
-```bash
-export JWT_SECRET="$(openssl rand -base64 32)"
-export WEBHOOK_SECRET="$(openssl rand -base64 32)"
-docker compose up -d postgres
-DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" PAYIN_RUNTIME=open npm run open:init -- --check
-DB_CONNECTION_STRING="postgresql://payin:payin_local_password@localhost:5432/payin_open" PAYIN_RUNTIME=open npm run open:init
-docker compose up -d api
-```
-
-The compose API service sets `PAYIN_RUNTIME=open` and uses `DB_CONNECTION_STRING`, `JWT_SECRET`, and `WEBHOOK_SECRET`; do not use legacy `INIT_DB` container startup hooks.
 
 PayIn Open is headless by default. It does not require the Cloud multi-tenant admin dashboard. Operate it through API, the PayIn operator CLI, and [`skills/payin-open/SKILL.md`](skills/payin-open/SKILL.md).
 

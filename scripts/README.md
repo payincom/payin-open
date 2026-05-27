@@ -49,11 +49,12 @@ DB_CONNECTION_STRING="postgresql://..." npm run db:init:demo
 # Production deployment
 DB_CONNECTION_STRING="postgresql://..." NODE_ENV=production npm run db:init
 
-# CI/CD pipeline
-npm ci
-npm run build
-npm run db:init
-npm start
+# Container provider one-off job/task
+# Run with the same image, env, and private network as the API service.
+npm run open:doctor
+npm run open:init -- --check
+npm run open:init
+npm run open:init -- --check --strict
 ```
 
 ## Directory Structure
@@ -85,25 +86,25 @@ Automates Railway project creation with PostgreSQL database.
 ```
 
 **What it does**:
-- ✅ Creates Railway project (`payin-api-{environment}`)
+- ✅ Creates Railway project and `payin-api` service
 - ✅ Adds PostgreSQL database
-- ✅ Configures environment variables
-- ✅ Test: Auto-configures testnet API keys
-- ✅ Production: Prompts for manual production keys configuration
+- ✅ Configures Open sandbox variables with secrets redacted
+- ✅ Sets `DB_CONNECTION_STRING` to the Railway Postgres reference
+- ✅ Prints safe one-off task initialization, Railway SSH fallback, public-domain, readiness, and bootstrap next steps
 
 **Example Output**:
 ```
-📦 Step 1/4: Creating Railway project...
+📦 Step 1/5: Creating Railway project...
 ✅ Project created: your-payin-api
 
-🗄️  Step 2/4: Adding PostgreSQL database...
+🗄️  Step 3/5: Adding PostgreSQL database...
 ✅ PostgreSQL database added
 
-⚙️  Step 3/4: Configuring environment variables...
-✅ Test environment variables configured
+⚙️  Step 4/5: Configuring environment variables...
+✅ Sandbox environment variables configured (secrets redacted)
 
-📊 Step 4/4: Getting database connection string...
-✅ Database URL configured
+📊 Step 5/5: Getting database connection string...
+✅ DB_CONNECTION_STRING configured as Railway Postgres reference
 ```
 
 ### build-for-railway.sh
@@ -158,7 +159,7 @@ INIT_DB=true DEMO_DATA=true npm run dev
 
 ```bash
 # Separate initialization from runtime
-npm run db:init:demo
+npm run open:init
 npm run dev:api
 ```
 
@@ -230,6 +231,6 @@ npm run db:init:force
 
 ## Related Documentation
 
-- [Environment Configuration](../docs/self-hosting/configuration-overview.md)
+- [Environment Configuration](../docs/self-hosting/configuration.md)
 - [Database Schema](../packages/processor/docs/database-schema-methods.md)
 - [Deployment Guide](../docs/self-hosting/README.md)

@@ -77,16 +77,18 @@ echo ""
 echo "⚙️  Step 4/5: Configuring environment variables..."
 echo ""
 
-# 设置初始环境为 test
-echo "Setting initial NODE_ENV=test (可在 Dashboard 切换为 production)..."
-railway variables --service "$SERVICE_NAME" --set "NODE_ENV=test"
+# 设置 Open sandbox runtime variables
+echo "Setting Open sandbox runtime variables..."
+railway variables --service "$SERVICE_NAME" --set "PAYIN_RUNTIME=open" --skip-deploys
+railway variables --service "$SERVICE_NAME" --set "NODE_ENV=sandbox" --skip-deploys
+railway variables --service "$SERVICE_NAME" --set 'DB_CONNECTION_STRING=${{Postgres.DATABASE_URL}}' --skip-deploys
 
 echo ""
 echo "Setting test environment API keys from local environment when provided..."
 for key in ALCHEMY_API_KEY INFURA_API_KEY TRONGRID_API_KEY ANKR_API_KEY HELIUS_API_KEY TATUM_API_KEY; do
     value="${!key:-}"
     if [ -n "$value" ]; then
-        railway variables --service "$SERVICE_NAME" --set "$key=$value"
+        railway variables --service "$SERVICE_NAME" --set "$key=$value" --skip-deploys
         echo "  ✅ $key configured"
     else
         echo "  ⏭️  $key not set locally; configure it later in Railway if needed"
@@ -95,9 +97,13 @@ done
 
 # Generate JWT_SECRET
 JWT_SECRET=$(openssl rand -base64 32)
-railway variables --service "$SERVICE_NAME" --set "JWT_SECRET=$JWT_SECRET"
+railway variables --service "$SERVICE_NAME" --set "JWT_SECRET=$JWT_SECRET" --skip-deploys
 
-echo "✅ Test environment variables configured"
+# Generate WEBHOOK_SECRET
+WEBHOOK_SECRET=$(openssl rand -base64 32)
+railway variables --service "$SERVICE_NAME" --set "WEBHOOK_SECRET=$WEBHOOK_SECRET" --skip-deploys
+
+echo "✅ Sandbox environment variables configured (secrets redacted)"
 echo ""
 echo "📝 切换到 Production 环境："
 echo "   1. 在 Railway Dashboard 修改 NODE_ENV=production"
@@ -107,6 +113,7 @@ echo "      - INFURA_API_KEY (production key)"
 echo "      - TRONGRID_API_KEY (production key)"
 echo "      - HELIUS_API_KEY (production key)"
 echo "      - JWT_SECRET (新生成: openssl rand -base64 32)"
+echo "      - WEBHOOK_SECRET (新生成: openssl rand -base64 32)"
 echo "      - BASE_URL (production domain)"
 echo "   3. 使用 production 配置部署："
 echo "      ./scripts/deployment/deploy-to-railway.sh production"
@@ -116,19 +123,9 @@ echo ""
 echo "📊 Step 5/5: Getting database connection string..."
 echo ""
 
-# 尝试获取数据库 URL
-DB_URL=$(railway variables --service "$SERVICE_NAME" --json 2>/dev/null | grep -o '"DATABASE_URL":"[^"]*"' | cut -d'"' -f4 || echo "")
-
-if [ -z "$DB_URL" ]; then
-    echo "⚠️  Database URL not available yet"
-    echo "   It will be automatically available once the database is fully provisioned"
-    echo "   Check with: railway variables --service $SERVICE_NAME | grep DATABASE_URL"
-else
-    echo "✅ Database URL configured"
-    echo ""
-    echo "Database connection string (for local initialization):"
-    echo "$DB_URL"
-fi
+echo "✅ DB_CONNECTION_STRING configured as Railway Postgres reference"
+echo "   Do not print or copy the raw DATABASE_URL."
+echo "   Run initialization as a provider one-off/scheduled task on the service image; use SSH only as fallback."
 echo ""
 
 # 完成提示
@@ -143,29 +140,37 @@ echo "  - postgres (database)"
 echo ""
 echo "Next steps:"
 echo ""
-echo "1. Get database connection string:"
-echo "   railway variables --service $SERVICE_NAME | grep DATABASE_URL"
-echo ""
-echo "2. Initialize database schema:"
-if [ "$ENVIRONMENT" = "production" ]; then
-    echo "   export DB_CONNECTION_STRING=\$(railway variables --service $SERVICE_NAME --json | grep -o '\"DATABASE_URL\":\"[^\"]*\"' | cut -d'\"' -f4)"
-    echo "   export NODE_ENV=production"
-    echo "   export PAYIN_RUNTIME=open"
-    echo "   npm run open:init"
-else
-    echo "   export DB_CONNECTION_STRING=\$(railway variables --service $SERVICE_NAME --json | grep -o '\"DATABASE_URL\":\"[^\"]*\"' | cut -d'\"' -f4)"
-    echo "   export PAYIN_RUNTIME=open"
-    echo "   npm run open:init -- --demo-data"
-fi
-echo ""
-echo "3. Deploy your application:"
+echo "1. Deploy your application:"
 echo "   ./scripts/deployment/deploy-to-railway.sh $ENVIRONMENT"
+echo ""
+echo "2. Initialize database schema as a one-off task inside Railway private networking:"
+echo "   Prefer Railway Dashboard one-off/scheduled execution support for the $SERVICE_NAME image"
+echo "   with the same variables, private network, and custom start command. Docs:"
+echo "   https://docs.railway.com/builds/build-and-start-commands"
+echo "   https://docs.railway.com/cron-jobs"
+echo "   Then run this command sequence in that task:"
+echo "   npm run open:doctor"
+echo "   npm run open:init -- --check"
+echo "   npm run open:init"
+echo "   npm run open:init -- --check --strict"
+echo "   If a one-off task is unavailable, configure an SSH key and use:"
+echo "   railway ssh --service $SERVICE_NAME"
+echo "   # run the same four npm commands inside the Railway shell, then exit"
+echo ""
+echo "3. Generate a public domain and set BASE_URL:"
+echo "   railway domain --service $SERVICE_NAME --environment $ENVIRONMENT"
+echo "   railway variables --service $SERVICE_NAME --set 'BASE_URL=https://your-payin-open.up.railway.app' --skip-deploys"
 echo ""
 echo "4. View project in dashboard:"
 echo "   railway open"
 echo ""
 echo "5. Monitor logs:"
 echo "   railway logs --service $SERVICE_NAME"
+echo ""
+echo "6. Bootstrap first operator/API key/address pool:"
+echo "   Register the first operator through /auth/register, create a scoped API key,"
+echo "   add sandbox/testnet address-pool capacity, then verify /api/chains, /api/tokens,"
+echo "   and run open:smoke with --api-key <redacted>."
 echo ""
 
 if [ "$ENVIRONMENT" = "production" ]; then

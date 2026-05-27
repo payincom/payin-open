@@ -8,6 +8,8 @@
 
 set -e
 
+SERVICE_NAME=${SERVICE_NAME:-payin-api}
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,6 +17,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+echo ""
+echo -e "${YELLOW}Note: PayIn Open no longer uses INIT_DB or DEMO_DATA startup flags.${NC}"
+echo "Database initialization is an explicit one-off task using the service image + env; Railway SSH is fallback."
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
 echo "║                                                          ║"
@@ -86,70 +91,52 @@ else
 fi
 echo ""
 
-# Step 4: Import environment variables
-echo -e "${BLUE}🔧 Step 4: Setting up environment variables...${NC}"
+# Step 4: Configure required Railway variables
+echo -e "${BLUE}🔧 Step 4: Setting up required Open sandbox variables...${NC}"
 echo ""
+echo "This helper does not import .env files. Keep secrets in Railway and redacted in logs."
+echo ""
+read -p "Configure required variables now? (y/n): " manual_choice
 
-if [ -f ".env.production" ]; then
-    echo "Found .env.production file"
-    read -p "Import variables from .env.production? (y/n): " import_choice
+if [ "$manual_choice" = "y" ] || [ "$manual_choice" = "Y" ]; then
+    echo ""
+    echo "Setting required PayIn Open variables:"
+    echo "  - PAYIN_RUNTIME=open"
+    echo "  - NODE_ENV=sandbox"
+    echo "  - DB_CONNECTION_STRING=Railway Postgres reference"
+    echo "  - JWT_SECRET=<generated/redacted>"
+    echo "  - WEBHOOK_SECRET=<generated/redacted>"
+    echo ""
 
-    if [ "$import_choice" = "y" ] || [ "$import_choice" = "Y" ]; then
-        ./import-railway-variables.sh .env.production
-    else
-        echo -e "${YELLOW}Skipped variable import${NC}"
-        echo "You can import later with: ./import-railway-variables.sh"
+    railway variables --set 'DB_CONNECTION_STRING=${{Postgres.DATABASE_URL}}' --skip-deploys
+
+    read -p "JWT Secret (press Enter to auto-generate): " jwt_secret
+    if [ -z "$jwt_secret" ]; then
+        jwt_secret=$(openssl rand -base64 32)
+        echo "Generated JWT Secret: <redacted>"
     fi
+    railway variables --set "JWT_SECRET=$jwt_secret" --skip-deploys
+
+    webhook_secret=$(openssl rand -base64 32)
+    railway variables --set "WEBHOOK_SECRET=$webhook_secret" --skip-deploys
+
+    railway variables --set "PAYIN_RUNTIME=open" --skip-deploys
+    railway variables --set "NODE_ENV=sandbox" --skip-deploys
+
+    echo ""
+    echo -e "${GREEN}✅ Required variables set (secrets redacted)${NC}"
+    echo "Set optional sandbox/testnet RPC provider keys later with:"
+    echo "  railway variables --set 'ALCHEMY_API_KEY=<redacted>' --skip-deploys"
 else
-    echo -e "${YELLOW}⚠️  .env.production file not found${NC}"
     echo ""
-    echo "Please create .env.production with your production variables:"
+    echo "Please set required variables manually before deploy:"
+    echo "  railway variables --set 'PAYIN_RUNTIME=open' --skip-deploys"
+    echo "  railway variables --set 'NODE_ENV=sandbox' --skip-deploys"
+    echo "  railway variables --set 'DB_CONNECTION_STRING=${{Postgres.DATABASE_URL}}' --skip-deploys"
+    echo "  railway variables --set 'JWT_SECRET=<redacted>' --skip-deploys"
+    echo "  railway variables --set 'WEBHOOK_SECRET=<redacted>' --skip-deploys"
     echo ""
-    echo "  1. Copy template:"
-    echo "     cp .env.example .env.production"
-    echo ""
-    echo "  2. Edit with your values:"
-    echo "     vim .env.production"
-    echo ""
-    echo "  3. Import variables:"
-    echo "     ./import-railway-variables.sh"
-    echo ""
-    echo "  4. Deploy:"
-    echo "     ./deploy-fast.sh"
-    echo ""
-
-    read -p "Do you want to manually set key variables now? (y/n): " manual_choice
-
-    if [ "$manual_choice" = "y" ] || [ "$manual_choice" = "Y" ]; then
-        echo ""
-        echo "Let's set up the essential variables:"
-        echo ""
-
-        read -p "Database connection string: " db_conn
-        railway variables --set "DB_CONNECTION_STRING=$db_conn" --skip-deploys
-
-        read -p "JWT Secret (press Enter to auto-generate): " jwt_secret
-        if [ -z "$jwt_secret" ]; then
-            jwt_secret=$(openssl rand -base64 32)
-            echo "Generated JWT Secret: $jwt_secret"
-        fi
-        railway variables --set "JWT_SECRET=$jwt_secret" --skip-deploys
-
-        railway variables --set "NODE_ENV=production" --skip-deploys
-        railway variables --set "INIT_DB=true" --skip-deploys
-        railway variables --set "DEMO_DATA=false" --skip-deploys
-
-        echo ""
-        echo -e "${GREEN}✅ Essential variables set${NC}"
-        echo "You can set remaining variables later with:"
-        echo "  ./import-railway-variables.sh"
-    else
-        echo ""
-        echo "Please set variables manually:"
-        echo "  railway variables --set \"KEY=VALUE\""
-        echo ""
-        exit 0
-    fi
+    exit 0
 fi
 echo ""
 
@@ -189,17 +176,32 @@ if [ "$deploy_choice" = "y" ] || [ "$deploy_choice" = "Y" ]; then
     echo "1. Get your app URL:"
     echo "   railway status"
     echo ""
-    echo "2. Update BASE_URL variable:"
+    echo "2. Generate a public Railway domain and update BASE_URL:"
+    echo "   railway domain --service $SERVICE_NAME"
     echo "   railway variables --set \"BASE_URL=https://your-app.up.railway.app\""
     echo ""
-    echo "3. After first successful run, disable database init:"
-    echo "   railway variables --set \"INIT_DB=false\""
+    echo "3. Initialize database schema as a one-off task inside Railway private networking:"
+    echo "   Prefer Railway Dashboard one-off/scheduled execution support for the $SERVICE_NAME image"
+    echo "   with the same variables, private network, and custom start command. Docs:"
+    echo "   https://docs.railway.com/builds/build-and-start-commands"
+    echo "   https://docs.railway.com/cron-jobs"
+    echo "   Then run this command sequence in that task:"
+    echo "   npm run open:doctor"
+    echo "   npm run open:init -- --check"
+    echo "   npm run open:init"
+    echo "   npm run open:init -- --check --strict"
+    echo "   If a one-off task is unavailable, configure an SSH key and use:"
+    echo "   railway ssh --service $SERVICE_NAME"
+    echo "   # run the same four npm commands inside the Railway shell, then exit"
     echo ""
-    echo "4. Redeploy to apply changes:"
+    echo "4. Redeploy to apply BASE_URL and any other variable changes:"
     echo "   ./deploy-fast.sh"
     echo ""
-    echo "5. Verify deployment:"
+    echo "5. Verify deployment after open:init:"
     echo "   curl https://your-app.up.railway.app/health"
+    echo "   curl https://your-app.up.railway.app/api/chains"
+    echo "   curl https://your-app.up.railway.app/api/tokens"
+    echo "   npm run open:smoke -- --url https://your-app.up.railway.app"
     echo ""
 else
     echo ""
